@@ -1,3 +1,11 @@
+.DS_Store
+
+# Local large datasets
+flower_jpg/
+flower_jpg_examples/
+flower_np_examples/
+cap_challenge/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

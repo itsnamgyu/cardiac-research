@@ -31,7 +31,7 @@ LABEL_NAMES = [
         "UNLABELED",
         "OUT_OF_APICAL",
         "APICAL",
-        "MID",
+        "MIDDLE",
         "BASAL",
         "OUT_OF_BASAL"
         ]
@@ -179,6 +179,12 @@ def on_key_press(event):
         subject_index -= 1
     if event.key == 'right':
         subject_index += 1
+
+    if event.key == 'h':
+        subject_index -= 10
+    if event.key == 'l':
+        subject_index += 10
+
     try:
         index = int(event.key)
         if 0 <= index <= len(LABEL_NAMES) - 1:
@@ -251,6 +257,7 @@ def main():
     try:
         ndarray = np.load(LABEL_FILE)
         label_dict = ndarray_to_dict(ndarray)
+        print('successfully retrieved labeling data from {}'.format('LABEL_FILE'))
     except OSError:
         print("could not find data file: {}".format(LABEL_FILE))
         print("initializing new data")
@@ -272,6 +279,8 @@ def main():
     
     ndarray = dict_to_ndarray(label_dict)
     np.save(LABEL_FILE, ndarray)
+
+    print('data successfully saved to {}'.format(LABEL_FILE))
 
 
 if __name__ == "__main__":

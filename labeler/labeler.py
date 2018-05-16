@@ -212,6 +212,8 @@ def main():
 
     print('labeled images saved')
 
+    os._exit(1)
+
 
 
 if __name__ == "__main__":

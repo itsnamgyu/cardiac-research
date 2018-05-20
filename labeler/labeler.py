@@ -8,6 +8,7 @@ from dicom_dataset import DicomDataset
 import scipy.misc
 from enum import Enum
 
+
 DISPLAY_NAMES = [
         'NaN', 'OUT_AP', 'AP',
         'MID', 'BA', 'OUT_BA',
@@ -33,6 +34,14 @@ subjects: List[DicomDataset.Subject] = []
 subject_index = 0
 displayed_subject: DicomDataset.Subject = None
 
+color_labels = [
+        'ORIGINAL',
+        'COLOR_SCALED',
+        'EQUALIZED'
+        ]
+color_index = 0
+displayed_color = 0
+
 axes = []
 
 current_label = Label.UNLABELED
@@ -48,6 +57,7 @@ LABEL_FILE = 'label_data.npy'
 def get_window_title():
     global load_error
     global dcm_labels, subjects, subject_index, current_subject, displayed_subject
+    global color_labels, color_index
 
     subject = subjects[subject_index]
     if load_error:
@@ -55,41 +65,54 @@ def get_window_title():
     else:
         title = 'Subject #{} [{}]'.format(subject_index, subject.id)
     title += ' [{}]'.format(current_label.display_name())
+    title += ' [{}]'.format(color_labels[color_index])
+
+    if not subject.sorted:
+        title += ' [UNSORTED]'
 
     return title
 
 
 def update_plot():
     global dcm_labels, subjects, subject_index, displayed_subject
-
-    fig.canvas.set_window_title(get_window_title())
+    global color_labels, color_index, displayed_color
 
     subject = subjects[subject_index]
-    if displayed_subject is not subject:
+    if displayed_subject is not subject or displayed_color is not color_index:
+        displayed_color = color_index
         displayed_subject = subject
 
         fig.clf()
         del axes[:]
-        for i, ndcm in enumerate(subject.get_sorted_ndcms()):
+        for i, ndcm in enumerate(subject.get_ndcms()):
             axes.append(fig.add_subplot(4, 6, i + 1))
             ndcm.load()
-            axes[i].imshow(ndcm.img_processed, cmap=plt.cm.gray)
+            axes[i].imshow(ndcm.processed_images[color_index], cmap=plt.cm.gray)
             axes[i].set_axis_off()
 
-
-    for i, ndcm in enumerate(subject.get_sorted_ndcms()):
+    for i, ndcm in enumerate(subject.get_ndcms()):
         label = dcm_labels.get(ndcm, Label.UNLABELED).display_name()
-        axes[i].set_title('{} [{:.4f}]'.format(label, ndcm.get_data().SliceLocation), fontsize='small', snap=True)
+        dcm = ndcm.get_data()
+        if hasattr(dcm, 'SliceLocation'):
+            axes[i].set_title('{} [{:.4f}]'.format(label, dcm.SliceLocation), fontsize='small', snap=True)
+        else:
+            axes[i].set_title('{}'.format(label), fontsize='small', snap=True)
 
+    fig.canvas.set_window_title(get_window_title())
     fig.canvas.draw()
 
 
 def update():
+    # save labels to label_data.npy
+    global dcm_labels
+    save_dcm_labels(dcm_labels, verbal=False)
+
     update_plot()
 
 
 def on_key_press(event):
     global dcm_labels, subjects, subject_index, displayed_subject, current_label
+    global color_index, color_labels
 
     if event.key == 'left':
         subject_index -= 1
@@ -100,6 +123,10 @@ def on_key_press(event):
         subject_index -= 10
     if event.key == 'l':
         subject_index += 10
+
+    if event.key == 't':
+        color_index += 1
+        color_index %= len(color_labels)
 
     subject_index %= len(subjects)
 
@@ -119,7 +146,7 @@ def on_button_press(event):
     subject = subjects[subject_index]
     for i, ax in enumerate(axes):
         if event.inaxes == ax:
-            ndcm = subject.get_sorted_ndcms()[i]
+            ndcm = subject.get_ndcms()[i]
             dcm_labels[ndcm] = current_label
 
     update()
@@ -153,12 +180,14 @@ def load_dcm_labels(dcm_dataset: DicomDataset, label_file=LABEL_FILE):
     return dcm_labels
 
 
-def save_dcm_labels(dcm_labels: Dict[DicomDataset.NamedDicom, Label], label_file=LABEL_FILE):
+def save_dcm_labels(dcm_labels: Dict[DicomDataset.NamedDicom, Label], label_file=LABEL_FILE, verbal=True):
     array = []
     for ndcm, label in dcm_labels.items():
         array.append((ndcm.name, label.value))
     np.save(label_file, np.array(array))
-    print('data successfully saved to {}'.format(label_file))
+
+    if verbal:
+        print('data successfully saved to {}'.format(label_file))
 
 
 def main():
@@ -185,6 +214,8 @@ def main():
     fig.canvas.mpl_connect('key_press_event', on_key_press)
     fig.canvas.mpl_connect('button_press_event', on_button_press)
 
+    plt.subplots_adjust(top = 0.95, bottom = 0.05, right = 1, left = 0,
+            hspace = 0.2, wspace = 0)
     update()
     plt.show()
 
@@ -213,7 +244,6 @@ def main():
     print('labeled images saved')
 
     os._exit(1)
-
 
 
 if __name__ == "__main__":

@@ -13,7 +13,7 @@ pip install -r requirements.txt
 
 ## Run Module
 ```
-python3 dicom_labeler.py
+python3 labeler.py
 ```
 
 ## Usage
@@ -29,7 +29,8 @@ python3 dicom_labeler.py
 2. Left click on the MRI images to assign the selected label
 3. Use the left, right arrow keys to move between subjects
 4. Use the h, l keys to quickly skip between subjects (10 at a time)
-5. Close the plot window and the labeling data will be automatically saved to `labels.npy`
+5. Use the t key to switch between color modes
+5. Close the plot window and the labeling data will be saved to `label_data.npy`, and the labeled images will be saved to directory `cap_labeled`
 
 ## Test First!
 *I recommend to test the data save/load functions before you label  multiple images.*

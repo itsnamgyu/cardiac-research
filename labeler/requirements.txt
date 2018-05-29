@@ -1,4 +1,3 @@
 matplotlib
 pydicom
-flake8
 scikit-image

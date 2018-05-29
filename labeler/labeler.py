@@ -10,9 +10,9 @@ from enum import Enum
 
 
 DISPLAY_NAMES = [
-        'NaN', 'OUT_AP', 'AP',
-        'MID', 'BA', 'OUT_BA',
-        ]
+    'NaN', 'OUT_AP', 'AP',
+    'MID', 'BA', 'OUT_BA',
+]
 
 
 class Label(Enum):
@@ -35,10 +35,10 @@ subject_index = 0
 displayed_subject: DicomDataset.Subject = None
 
 color_labels = [
-        'ORIGINAL',
-        'COLOR_SCALED',
-        'EQUALIZED'
-        ]
+    'ORIGINAL',
+    'COLOR_SCALED',
+    'EQUALIZED'
+]
 color_index = 0
 displayed_color = 0
 
@@ -87,14 +87,16 @@ def update_plot():
         for i, ndcm in enumerate(subject.get_ndcms()):
             axes.append(fig.add_subplot(4, 6, i + 1))
             ndcm.load()
-            axes[i].imshow(ndcm.processed_images[color_index], cmap=plt.cm.gray)
+            axes[i].imshow(ndcm.processed_images[color_index],
+                           cmap=plt.cm.gray)
             axes[i].set_axis_off()
 
     for i, ndcm in enumerate(subject.get_ndcms()):
         label = dcm_labels.get(ndcm, Label.UNLABELED).display_name()
         dcm = ndcm.get_data()
         if hasattr(dcm, 'SliceLocation'):
-            axes[i].set_title('{} [{:.4f}]'.format(label, dcm.SliceLocation), fontsize='small', snap=True)
+            axes[i].set_title('{} [{:.4f}]'.format(
+                label, dcm.SliceLocation), fontsize='small', snap=True)
         else:
             axes[i].set_title('{}'.format(label), fontsize='small', snap=True)
 
@@ -214,8 +216,8 @@ def main():
     fig.canvas.mpl_connect('key_press_event', on_key_press)
     fig.canvas.mpl_connect('button_press_event', on_button_press)
 
-    plt.subplots_adjust(top = 0.95, bottom = 0.05, right = 1, left = 0,
-            hspace = 0.2, wspace = 0)
+    plt.subplots_adjust(top=0.95, bottom=0.05, right=1, left=0,
+                        hspace=0.2, wspace=0)
     update()
     plt.show()
 
@@ -238,7 +240,7 @@ def main():
         except OSError:
             pass
 
-        image_array = ndcm.get_data().pixel_array
+        image_array = ndcm.processed_images[1]
         scipy.misc.imsave(jpg_path, image_array)
 
     print('labeled images saved')

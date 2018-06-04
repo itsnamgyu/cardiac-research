@@ -7,6 +7,9 @@ flower_np_examples/
 cap_*/
 label_data*
 *_summary/
+train_summaries/
+train_models/
+train_outputs/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

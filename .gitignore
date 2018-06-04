@@ -6,6 +6,7 @@ flower_jpg_examples/
 flower_np_examples/
 cap_*/
 label_data*
+*_summary/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

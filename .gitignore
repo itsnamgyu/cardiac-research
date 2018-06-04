@@ -10,6 +10,7 @@ label_data*
 train_summaries/
 train_models/
 train_outputs/
+train_checkpoints/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

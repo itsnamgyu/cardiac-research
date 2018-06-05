@@ -1,0 +1,717 @@
+INFO:tensorflow:Looking for images in 'APICAL'
+INFO:tensorflow:Looking for images in 'BASAL'
+INFO:tensorflow:Looking for images in 'MIDDLE'
+INFO:tensorflow:Looking for images in 'OUT_OF_APICAL'
+INFO:tensorflow:Looking for images in 'OUT_OF_BASAL'
+INFO:tensorflow:Set up graph
+2018-06-05 00:58:19.873669: I tensorflow/core/platform/cpu_feature_guard.cc:140] Your CPU supports instructions that this TensorFlow binary was not compiled to use: AVX2 FMA
+INFO:tensorflow:1000 bottleneck files loaded.
+INFO:tensorflow:2000 bottleneck files loaded.
+INFO:tensorflow:3000 bottleneck files loaded.
+INFO:tensorflow:4000 bottleneck files loaded.
+INFO:tensorflow:5000 bottleneck files loaded.
+INFO:tensorflow:6000 bottleneck files loaded.
+INFO:tensorflow:7000 bottleneck files loaded.
+INFO:tensorflow:8000 bottleneck files loaded.
+INFO:tensorflow:9000 bottleneck files loaded.
+INFO:tensorflow:10000 bottleneck files loaded.
+INFO:tensorflow:11000 bottleneck files loaded.
+INFO:tensorflow:12000 bottleneck files loaded.
+INFO:tensorflow:13000 bottleneck files loaded.
+INFO:tensorflow:14000 bottleneck files loaded.
+INFO:tensorflow:15000 bottleneck files loaded.
+INFO:tensorflow:2018-06-05 01:00:11.822762: Step 0: Train accuracy = 25.0%
+INFO:tensorflow:2018-06-05 01:00:11.822943: Step 0: Cross entropy = 1.605148
+INFO:tensorflow:2018-06-05 01:00:22.854445: Step 0: Validation accuracy = 21.6% (N=1000)
+INFO:tensorflow:2018-06-05 01:05:07.379126: Step 1000: Train accuracy = 56.0%
+INFO:tensorflow:2018-06-05 01:05:07.379237: Step 1000: Cross entropy = 1.103508
+INFO:tensorflow:2018-06-05 01:05:12.943382: Step 1000: Validation accuracy = 60.7% (N=1000)
+INFO:tensorflow:2018-06-05 01:07:16.097771: Step 2000: Train accuracy = 65.0%
+INFO:tensorflow:2018-06-05 01:07:16.097882: Step 2000: Cross entropy = 0.946852
+INFO:tensorflow:2018-06-05 01:07:21.442695: Step 2000: Validation accuracy = 64.8% (N=1000)
+INFO:tensorflow:2018-06-05 01:09:26.067723: Step 3000: Train accuracy = 72.0%
+INFO:tensorflow:2018-06-05 01:09:26.067849: Step 3000: Cross entropy = 0.866970
+INFO:tensorflow:2018-06-05 01:09:33.280005: Step 3000: Validation accuracy = 68.6% (N=1000)
+INFO:tensorflow:2018-06-05 01:11:46.722831: Step 4000: Train accuracy = 70.0%
+INFO:tensorflow:2018-06-05 01:11:46.722941: Step 4000: Cross entropy = 0.839144
+INFO:tensorflow:2018-06-05 01:11:53.588260: Step 4000: Validation accuracy = 67.4% (N=1000)
+INFO:tensorflow:2018-06-05 01:14:05.545984: Step 5000: Train accuracy = 67.0%
+INFO:tensorflow:2018-06-05 01:14:05.546095: Step 5000: Cross entropy = 0.897096
+INFO:tensorflow:2018-06-05 01:14:12.405253: Step 5000: Validation accuracy = 72.2% (N=1000)
+INFO:tensorflow:2018-06-05 01:16:25.626136: Step 6000: Train accuracy = 71.0%
+INFO:tensorflow:2018-06-05 01:16:25.626248: Step 6000: Cross entropy = 0.777792
+INFO:tensorflow:2018-06-05 01:16:32.372859: Step 6000: Validation accuracy = 70.0% (N=1000)
+INFO:tensorflow:2018-06-05 01:18:44.059131: Step 7000: Train accuracy = 64.0%
+INFO:tensorflow:2018-06-05 01:18:44.059246: Step 7000: Cross entropy = 0.769785
+INFO:tensorflow:2018-06-05 01:18:50.975904: Step 7000: Validation accuracy = 68.3% (N=1000)
+INFO:tensorflow:2018-06-05 01:22:18.171269: Step 8000: Train accuracy = 67.0%
+INFO:tensorflow:2018-06-05 01:22:18.171384: Step 8000: Cross entropy = 0.814337
+INFO:tensorflow:2018-06-05 01:22:28.874607: Step 8000: Validation accuracy = 71.6% (N=1000)
+INFO:tensorflow:2018-06-05 01:26:17.792995: Step 9000: Train accuracy = 78.0%
+INFO:tensorflow:2018-06-05 01:26:17.793105: Step 9000: Cross entropy = 0.642777
+INFO:tensorflow:2018-06-05 01:26:26.663620: Step 9000: Validation accuracy = 74.0% (N=1000)
+INFO:tensorflow:2018-06-05 01:29:03.292914: Step 10000: Train accuracy = 79.0%
+INFO:tensorflow:2018-06-05 01:29:03.293026: Step 10000: Cross entropy = 0.627609
+INFO:tensorflow:2018-06-05 01:29:12.857204: Step 10000: Validation accuracy = 72.2% (N=1000)
+INFO:tensorflow:2018-06-05 01:31:57.278686: Step 11000: Train accuracy = 73.0%
+INFO:tensorflow:2018-06-05 01:31:57.278796: Step 11000: Cross entropy = 0.698909
+INFO:tensorflow:2018-06-05 01:32:07.328511: Step 11000: Validation accuracy = 74.2% (N=1000)
+INFO:tensorflow:2018-06-05 01:34:52.847424: Step 12000: Train accuracy = 76.0%
+INFO:tensorflow:2018-06-05 01:34:52.847535: Step 12000: Cross entropy = 0.726767
+INFO:tensorflow:2018-06-05 01:35:02.566537: Step 12000: Validation accuracy = 73.5% (N=1000)
+INFO:tensorflow:2018-06-05 01:37:52.331568: Step 13000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 01:37:52.331681: Step 13000: Cross entropy = 0.618028
+INFO:tensorflow:2018-06-05 01:38:02.302978: Step 13000: Validation accuracy = 75.7% (N=1000)
+INFO:tensorflow:2018-06-05 01:41:09.268491: Step 14000: Train accuracy = 74.0%
+INFO:tensorflow:2018-06-05 01:41:09.268601: Step 14000: Cross entropy = 0.656098
+INFO:tensorflow:2018-06-05 01:41:18.958628: Step 14000: Validation accuracy = 74.8% (N=1000)
+INFO:tensorflow:2018-06-05 01:44:40.958045: Step 15000: Train accuracy = 80.0%
+INFO:tensorflow:2018-06-05 01:44:40.958156: Step 15000: Cross entropy = 0.564283
+INFO:tensorflow:2018-06-05 01:44:50.917775: Step 15000: Validation accuracy = 76.0% (N=1000)
+INFO:tensorflow:2018-06-05 01:48:47.047867: Step 16000: Train accuracy = 76.0%
+INFO:tensorflow:2018-06-05 01:48:47.047990: Step 16000: Cross entropy = 0.592690
+INFO:tensorflow:2018-06-05 01:48:56.609500: Step 16000: Validation accuracy = 76.7% (N=1000)
+INFO:tensorflow:2018-06-05 01:52:13.921740: Step 17000: Train accuracy = 76.0%
+INFO:tensorflow:2018-06-05 01:52:13.921851: Step 17000: Cross entropy = 0.580640
+INFO:tensorflow:2018-06-05 01:52:22.947142: Step 17000: Validation accuracy = 76.5% (N=1000)
+INFO:tensorflow:2018-06-05 01:54:58.237520: Step 18000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 01:54:58.237635: Step 18000: Cross entropy = 0.569175
+INFO:tensorflow:2018-06-05 01:55:07.602387: Step 18000: Validation accuracy = 76.3% (N=1000)
+INFO:tensorflow:2018-06-05 01:57:42.223919: Step 19000: Train accuracy = 72.0%
+INFO:tensorflow:2018-06-05 01:57:42.224030: Step 19000: Cross entropy = 0.663342
+INFO:tensorflow:2018-06-05 01:57:52.114032: Step 19000: Validation accuracy = 78.4% (N=1000)
+INFO:tensorflow:2018-06-05 02:00:33.812182: Step 20000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 02:00:33.812297: Step 20000: Cross entropy = 0.530178
+INFO:tensorflow:2018-06-05 02:00:43.465057: Step 20000: Validation accuracy = 74.9% (N=1000)
+INFO:tensorflow:2018-06-05 02:03:46.388081: Step 21000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 02:03:46.388191: Step 21000: Cross entropy = 0.536689
+INFO:tensorflow:2018-06-05 02:03:55.505937: Step 21000: Validation accuracy = 77.2% (N=1000)
+INFO:tensorflow:2018-06-05 02:07:16.979573: Step 22000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 02:07:16.979689: Step 22000: Cross entropy = 0.569641
+INFO:tensorflow:2018-06-05 02:07:26.453204: Step 22000: Validation accuracy = 74.3% (N=1000)
+INFO:tensorflow:2018-06-05 02:11:03.410251: Step 23000: Train accuracy = 78.0%
+INFO:tensorflow:2018-06-05 02:11:03.410366: Step 23000: Cross entropy = 0.589759
+INFO:tensorflow:2018-06-05 02:11:12.717478: Step 23000: Validation accuracy = 78.2% (N=1000)
+INFO:tensorflow:2018-06-05 02:15:24.351193: Step 24000: Train accuracy = 77.0%
+INFO:tensorflow:2018-06-05 02:15:24.351307: Step 24000: Cross entropy = 0.561964
+INFO:tensorflow:2018-06-05 02:15:33.490005: Step 24000: Validation accuracy = 77.2% (N=1000)
+INFO:tensorflow:2018-06-05 02:19:58.864007: Step 25000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 02:19:58.864120: Step 25000: Cross entropy = 0.551494
+INFO:tensorflow:2018-06-05 02:20:08.613622: Step 25000: Validation accuracy = 79.1% (N=1000)
+INFO:tensorflow:2018-06-05 02:25:06.877814: Step 26000: Train accuracy = 79.0%
+INFO:tensorflow:2018-06-05 02:25:06.877929: Step 26000: Cross entropy = 0.552094
+INFO:tensorflow:2018-06-05 02:25:16.400356: Step 26000: Validation accuracy = 78.4% (N=1000)
+INFO:tensorflow:2018-06-05 02:30:33.730869: Step 27000: Train accuracy = 79.0%
+INFO:tensorflow:2018-06-05 02:30:33.730983: Step 27000: Cross entropy = 0.564141
+INFO:tensorflow:2018-06-05 02:30:43.098982: Step 27000: Validation accuracy = 78.4% (N=1000)
+INFO:tensorflow:2018-06-05 02:36:42.698507: Step 28000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 02:36:42.698618: Step 28000: Cross entropy = 0.516916
+INFO:tensorflow:2018-06-05 02:36:51.965233: Step 28000: Validation accuracy = 78.2% (N=1000)
+INFO:tensorflow:2018-06-05 02:43:12.231167: Step 29000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 02:43:12.231290: Step 29000: Cross entropy = 0.469649
+INFO:tensorflow:2018-06-05 02:43:21.873691: Step 29000: Validation accuracy = 77.5% (N=1000)
+INFO:tensorflow:2018-06-05 02:50:05.682292: Step 30000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 02:50:05.682407: Step 30000: Cross entropy = 0.553453
+INFO:tensorflow:2018-06-05 02:50:15.200461: Step 30000: Validation accuracy = 80.0% (N=1000)
+INFO:tensorflow:2018-06-05 02:57:11.718561: Step 31000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 02:57:11.718675: Step 31000: Cross entropy = 0.494961
+INFO:tensorflow:2018-06-05 02:57:21.526327: Step 31000: Validation accuracy = 77.5% (N=1000)
+INFO:tensorflow:2018-06-05 03:04:49.458771: Step 32000: Train accuracy = 77.0%
+INFO:tensorflow:2018-06-05 03:04:49.458886: Step 32000: Cross entropy = 0.563827
+INFO:tensorflow:2018-06-05 03:04:59.534102: Step 32000: Validation accuracy = 76.7% (N=1000)
+INFO:tensorflow:2018-06-05 03:13:46.881158: Step 33000: Train accuracy = 80.0%
+INFO:tensorflow:2018-06-05 03:13:46.881273: Step 33000: Cross entropy = 0.540778
+INFO:tensorflow:2018-06-05 03:13:55.952556: Step 33000: Validation accuracy = 77.4% (N=1000)
+INFO:tensorflow:2018-06-05 03:23:10.969714: Step 34000: Train accuracy = 80.0%
+INFO:tensorflow:2018-06-05 03:23:10.969837: Step 34000: Cross entropy = 0.504377
+INFO:tensorflow:2018-06-05 03:23:20.225185: Step 34000: Validation accuracy = 77.2% (N=1000)
+INFO:tensorflow:2018-06-05 03:36:39.180138: Step 35000: Train accuracy = 72.0%
+INFO:tensorflow:2018-06-05 03:36:39.180254: Step 35000: Cross entropy = 0.710183
+INFO:tensorflow:2018-06-05 03:36:48.931550: Step 35000: Validation accuracy = 80.1% (N=1000)
+INFO:tensorflow:2018-06-05 03:47:45.400185: Step 36000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 03:47:45.400299: Step 36000: Cross entropy = 0.530727
+INFO:tensorflow:2018-06-05 03:47:53.712277: Step 36000: Validation accuracy = 77.8% (N=1000)
+INFO:tensorflow:2018-06-05 03:55:16.434346: Step 37000: Train accuracy = 78.0%
+INFO:tensorflow:2018-06-05 03:55:16.434461: Step 37000: Cross entropy = 0.586783
+INFO:tensorflow:2018-06-05 03:55:26.314591: Step 37000: Validation accuracy = 81.4% (N=1000)
+INFO:tensorflow:2018-06-05 04:02:57.018239: Step 38000: Train accuracy = 88.0%
+INFO:tensorflow:2018-06-05 04:02:57.018350: Step 38000: Cross entropy = 0.483161
+INFO:tensorflow:2018-06-05 04:03:06.694413: Step 38000: Validation accuracy = 79.7% (N=1000)
+INFO:tensorflow:2018-06-05 04:10:56.913736: Step 39000: Train accuracy = 80.0%
+INFO:tensorflow:2018-06-05 04:10:56.913851: Step 39000: Cross entropy = 0.522454
+INFO:tensorflow:2018-06-05 04:11:05.931190: Step 39000: Validation accuracy = 79.2% (N=1000)
+INFO:tensorflow:2018-06-05 04:19:02.783305: Step 40000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 04:19:02.783415: Step 40000: Cross entropy = 0.477560
+INFO:tensorflow:2018-06-05 04:19:12.399186: Step 40000: Validation accuracy = 78.9% (N=1000)
+INFO:tensorflow:2018-06-05 04:27:39.885059: Step 41000: Train accuracy = 88.0%
+INFO:tensorflow:2018-06-05 04:27:39.885175: Step 41000: Cross entropy = 0.442076
+INFO:tensorflow:2018-06-05 04:27:49.239006: Step 41000: Validation accuracy = 80.1% (N=1000)
+INFO:tensorflow:2018-06-05 04:36:11.028965: Step 42000: Train accuracy = 78.0%
+INFO:tensorflow:2018-06-05 04:36:11.029081: Step 42000: Cross entropy = 0.548432
+INFO:tensorflow:2018-06-05 04:36:20.703682: Step 42000: Validation accuracy = 79.4% (N=1000)
+INFO:tensorflow:2018-06-05 04:45:59.786854: Step 43000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 04:45:59.786974: Step 43000: Cross entropy = 0.474219
+INFO:tensorflow:2018-06-05 04:46:09.510134: Step 43000: Validation accuracy = 79.0% (N=1000)
+INFO:tensorflow:2018-06-05 04:55:56.619303: Step 44000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 04:55:56.619419: Step 44000: Cross entropy = 0.492597
+INFO:tensorflow:2018-06-05 04:56:06.057527: Step 44000: Validation accuracy = 79.3% (N=1000)
+INFO:tensorflow:2018-06-05 05:06:45.547503: Step 45000: Train accuracy = 89.0%
+INFO:tensorflow:2018-06-05 05:06:45.547619: Step 45000: Cross entropy = 0.409563
+INFO:tensorflow:2018-06-05 05:06:54.909729: Step 45000: Validation accuracy = 80.8% (N=1000)
+INFO:tensorflow:2018-06-05 05:17:40.281791: Step 46000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 05:17:40.281904: Step 46000: Cross entropy = 0.478079
+INFO:tensorflow:2018-06-05 05:17:49.392102: Step 46000: Validation accuracy = 78.3% (N=1000)
+INFO:tensorflow:2018-06-05 05:29:21.069381: Step 47000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 05:29:21.069495: Step 47000: Cross entropy = 0.453963
+INFO:tensorflow:2018-06-05 05:29:30.713216: Step 47000: Validation accuracy = 81.2% (N=1000)
+INFO:tensorflow:2018-06-05 05:41:06.040274: Step 48000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 05:41:06.040388: Step 48000: Cross entropy = 0.485219
+INFO:tensorflow:2018-06-05 05:41:15.658560: Step 48000: Validation accuracy = 80.5% (N=1000)
+INFO:tensorflow:2018-06-05 05:52:45.799002: Step 49000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 05:52:45.799118: Step 49000: Cross entropy = 0.540057
+INFO:tensorflow:2018-06-05 05:52:54.868703: Step 49000: Validation accuracy = 82.8% (N=1000)
+INFO:tensorflow:2018-06-05 06:04:25.733982: Step 50000: Train accuracy = 88.0%
+INFO:tensorflow:2018-06-05 06:04:25.734096: Step 50000: Cross entropy = 0.399027
+INFO:tensorflow:2018-06-05 06:04:35.178627: Step 50000: Validation accuracy = 81.4% (N=1000)
+INFO:tensorflow:2018-06-05 06:16:47.140789: Step 51000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 06:16:47.140903: Step 51000: Cross entropy = 0.425889
+INFO:tensorflow:2018-06-05 06:16:56.839062: Step 51000: Validation accuracy = 83.3% (N=1000)
+INFO:tensorflow:2018-06-05 06:29:14.854344: Step 52000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 06:29:14.854459: Step 52000: Cross entropy = 0.440696
+INFO:tensorflow:2018-06-05 06:29:24.211950: Step 52000: Validation accuracy = 81.7% (N=1000)
+INFO:tensorflow:2018-06-05 06:42:23.776343: Step 53000: Train accuracy = 88.0%
+INFO:tensorflow:2018-06-05 06:42:23.776458: Step 53000: Cross entropy = 0.420532
+INFO:tensorflow:2018-06-05 06:42:33.098741: Step 53000: Validation accuracy = 81.9% (N=1000)
+INFO:tensorflow:2018-06-05 06:55:52.203463: Step 54000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 06:55:52.203578: Step 54000: Cross entropy = 0.451031
+INFO:tensorflow:2018-06-05 06:56:01.891149: Step 54000: Validation accuracy = 80.7% (N=1000)
+INFO:tensorflow:2018-06-05 07:09:37.472698: Step 55000: Train accuracy = 77.0%
+INFO:tensorflow:2018-06-05 07:09:37.472810: Step 55000: Cross entropy = 0.520205
+INFO:tensorflow:2018-06-05 07:09:46.889376: Step 55000: Validation accuracy = 78.7% (N=1000)
+INFO:tensorflow:2018-06-05 07:24:42.197741: Step 56000: Train accuracy = 90.0%
+INFO:tensorflow:2018-06-05 07:24:42.197856: Step 56000: Cross entropy = 0.414906
+INFO:tensorflow:2018-06-05 07:24:51.535937: Step 56000: Validation accuracy = 80.7% (N=1000)
+INFO:tensorflow:2018-06-05 07:40:05.653811: Step 57000: Train accuracy = 81.0%
+INFO:tensorflow:2018-06-05 07:40:05.653933: Step 57000: Cross entropy = 0.519782
+INFO:tensorflow:2018-06-05 07:40:14.668877: Step 57000: Validation accuracy = 80.8% (N=1000)
+INFO:tensorflow:2018-06-05 07:55:15.206564: Step 58000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 07:55:15.206678: Step 58000: Cross entropy = 0.424454
+INFO:tensorflow:2018-06-05 07:55:24.718809: Step 58000: Validation accuracy = 82.3% (N=1000)
+INFO:tensorflow:2018-06-05 08:10:35.141322: Step 59000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 08:10:35.141434: Step 59000: Cross entropy = 0.421144
+INFO:tensorflow:2018-06-05 08:10:44.412642: Step 59000: Validation accuracy = 83.2% (N=1000)
+INFO:tensorflow:2018-06-05 08:26:34.077683: Step 60000: Train accuracy = 89.0%
+INFO:tensorflow:2018-06-05 08:26:34.077797: Step 60000: Cross entropy = 0.418539
+INFO:tensorflow:2018-06-05 08:26:43.300470: Step 60000: Validation accuracy = 80.7% (N=1000)
+INFO:tensorflow:2018-06-05 08:45:24.352697: Step 61000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 08:45:24.352812: Step 61000: Cross entropy = 0.401813
+INFO:tensorflow:2018-06-05 08:45:34.058870: Step 61000: Validation accuracy = 81.7% (N=1000)
+INFO:tensorflow:2018-06-05 08:58:45.305321: Step 62000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 08:58:45.305434: Step 62000: Cross entropy = 0.473546
+INFO:tensorflow:2018-06-05 08:58:54.739967: Step 62000: Validation accuracy = 82.2% (N=1000)
+INFO:tensorflow:2018-06-05 09:10:56.700356: Step 63000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 09:10:56.700470: Step 63000: Cross entropy = 0.476073
+INFO:tensorflow:2018-06-05 09:11:06.486603: Step 63000: Validation accuracy = 82.5% (N=1000)
+INFO:tensorflow:2018-06-05 09:23:33.547734: Step 64000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 09:23:33.547848: Step 64000: Cross entropy = 0.491350
+INFO:tensorflow:2018-06-05 09:23:42.766403: Step 64000: Validation accuracy = 82.2% (N=1000)
+INFO:tensorflow:2018-06-05 09:36:46.133256: Step 65000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 09:36:46.133379: Step 65000: Cross entropy = 0.480390
+INFO:tensorflow:2018-06-05 09:36:55.775938: Step 65000: Validation accuracy = 80.0% (N=1000)
+INFO:tensorflow:2018-06-05 09:49:25.837539: Step 66000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 09:49:25.837652: Step 66000: Cross entropy = 0.393296
+INFO:tensorflow:2018-06-05 09:49:35.662785: Step 66000: Validation accuracy = 81.4% (N=1000)
+INFO:tensorflow:2018-06-05 09:59:38.318655: Step 67000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 09:59:38.318770: Step 67000: Cross entropy = 0.469872
+INFO:tensorflow:2018-06-05 09:59:47.945123: Step 67000: Validation accuracy = 81.1% (N=1000)
+INFO:tensorflow:2018-06-05 10:07:58.014022: Step 68000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 10:07:58.014137: Step 68000: Cross entropy = 0.352541
+INFO:tensorflow:2018-06-05 10:08:07.657961: Step 68000: Validation accuracy = 84.6% (N=1000)
+INFO:tensorflow:2018-06-05 10:18:47.986085: Step 69000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 10:18:47.986199: Step 69000: Cross entropy = 0.406564
+INFO:tensorflow:2018-06-05 10:18:57.203894: Step 69000: Validation accuracy = 81.9% (N=1000)
+INFO:tensorflow:2018-06-05 10:29:08.280465: Step 70000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 10:29:08.280583: Step 70000: Cross entropy = 0.463910
+INFO:tensorflow:2018-06-05 10:29:17.519411: Step 70000: Validation accuracy = 82.8% (N=1000)
+INFO:tensorflow:2018-06-05 10:41:06.498612: Step 71000: Train accuracy = 90.0%
+INFO:tensorflow:2018-06-05 10:41:06.498724: Step 71000: Cross entropy = 0.364530
+INFO:tensorflow:2018-06-05 10:41:15.596243: Step 71000: Validation accuracy = 80.9% (N=1000)
+INFO:tensorflow:2018-06-05 10:53:00.428112: Step 72000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 10:53:00.428227: Step 72000: Cross entropy = 0.449573
+INFO:tensorflow:2018-06-05 10:53:09.926887: Step 72000: Validation accuracy = 82.6% (N=1000)
+INFO:tensorflow:2018-06-05 11:03:57.149348: Step 73000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 11:03:57.149460: Step 73000: Cross entropy = 0.392035
+INFO:tensorflow:2018-06-05 11:04:06.945212: Step 73000: Validation accuracy = 81.8% (N=1000)
+INFO:tensorflow:2018-06-05 11:14:27.995983: Step 74000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 11:14:27.996095: Step 74000: Cross entropy = 0.482656
+INFO:tensorflow:2018-06-05 11:14:37.496850: Step 74000: Validation accuracy = 82.4% (N=1000)
+INFO:tensorflow:2018-06-05 11:26:33.390649: Step 75000: Train accuracy = 78.0%
+INFO:tensorflow:2018-06-05 11:26:33.390763: Step 75000: Cross entropy = 0.485097
+INFO:tensorflow:2018-06-05 11:26:42.872181: Step 75000: Validation accuracy = 80.2% (N=1000)
+INFO:tensorflow:2018-06-05 11:38:26.092603: Step 76000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 11:38:26.092720: Step 76000: Cross entropy = 0.460333
+INFO:tensorflow:2018-06-05 11:38:35.450034: Step 76000: Validation accuracy = 83.1% (N=1000)
+INFO:tensorflow:2018-06-05 11:40:53.883523: Step 77000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 11:40:53.883638: Step 77000: Cross entropy = 0.444521
+INFO:tensorflow:2018-06-05 11:40:59.173341: Step 77000: Validation accuracy = 80.7% (N=1000)
+INFO:tensorflow:2018-06-05 11:43:01.776027: Step 78000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 11:43:01.776139: Step 78000: Cross entropy = 0.469469
+INFO:tensorflow:2018-06-05 11:43:05.141370: Step 78000: Validation accuracy = 80.8% (N=1000)
+INFO:tensorflow:2018-06-05 11:45:07.640799: Step 79000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 11:45:07.640921: Step 79000: Cross entropy = 0.436842
+INFO:tensorflow:2018-06-05 11:45:10.006235: Step 79000: Validation accuracy = 83.7% (N=1000)
+INFO:tensorflow:2018-06-05 11:47:12.618421: Step 80000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 11:47:12.618532: Step 80000: Cross entropy = 0.353474
+INFO:tensorflow:2018-06-05 11:47:14.479478: Step 80000: Validation accuracy = 81.2% (N=1000)
+INFO:tensorflow:2018-06-05 11:49:16.604225: Step 81000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 11:49:16.604337: Step 81000: Cross entropy = 0.412977
+INFO:tensorflow:2018-06-05 11:49:18.156937: Step 81000: Validation accuracy = 81.7% (N=1000)
+INFO:tensorflow:2018-06-05 11:51:20.695029: Step 82000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 11:51:20.695145: Step 82000: Cross entropy = 0.462048
+INFO:tensorflow:2018-06-05 11:51:22.295036: Step 82000: Validation accuracy = 82.2% (N=1000)
+INFO:tensorflow:2018-06-05 11:53:24.329112: Step 83000: Train accuracy = 82.0%
+INFO:tensorflow:2018-06-05 11:53:24.329222: Step 83000: Cross entropy = 0.493795
+INFO:tensorflow:2018-06-05 11:53:25.698456: Step 83000: Validation accuracy = 82.5% (N=1000)
+INFO:tensorflow:2018-06-05 11:55:27.782477: Step 84000: Train accuracy = 91.0%
+INFO:tensorflow:2018-06-05 11:55:27.782592: Step 84000: Cross entropy = 0.385712
+INFO:tensorflow:2018-06-05 11:55:29.095172: Step 84000: Validation accuracy = 82.0% (N=1000)
+INFO:tensorflow:2018-06-05 11:57:31.081380: Step 85000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 11:57:31.081491: Step 85000: Cross entropy = 0.450406
+INFO:tensorflow:2018-06-05 11:57:32.405697: Step 85000: Validation accuracy = 84.4% (N=1000)
+INFO:tensorflow:2018-06-05 11:59:34.193645: Step 86000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 11:59:34.193756: Step 86000: Cross entropy = 0.401915
+INFO:tensorflow:2018-06-05 11:59:35.470538: Step 86000: Validation accuracy = 83.1% (N=1000)
+INFO:tensorflow:2018-06-05 12:01:37.292347: Step 87000: Train accuracy = 91.0%
+INFO:tensorflow:2018-06-05 12:01:37.292459: Step 87000: Cross entropy = 0.323719
+INFO:tensorflow:2018-06-05 12:01:38.610222: Step 87000: Validation accuracy = 81.4% (N=1000)
+INFO:tensorflow:2018-06-05 12:03:40.768117: Step 88000: Train accuracy = 90.0%
+INFO:tensorflow:2018-06-05 12:03:40.768233: Step 88000: Cross entropy = 0.322373
+INFO:tensorflow:2018-06-05 12:03:42.006952: Step 88000: Validation accuracy = 83.6% (N=1000)
+INFO:tensorflow:2018-06-05 12:05:43.879512: Step 89000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 12:05:43.879623: Step 89000: Cross entropy = 0.386440
+INFO:tensorflow:2018-06-05 12:05:45.130838: Step 89000: Validation accuracy = 82.7% (N=1000)
+INFO:tensorflow:2018-06-05 12:09:25.231183: Step 90000: Train accuracy = 89.0%
+INFO:tensorflow:2018-06-05 12:09:25.231296: Step 90000: Cross entropy = 0.386516
+INFO:tensorflow:2018-06-05 12:09:34.232330: Step 90000: Validation accuracy = 82.6% (N=1000)
+INFO:tensorflow:2018-06-05 12:11:38.543451: Step 91000: Train accuracy = 83.0%
+INFO:tensorflow:2018-06-05 12:11:38.543566: Step 91000: Cross entropy = 0.367472
+INFO:tensorflow:2018-06-05 12:11:44.020526: Step 91000: Validation accuracy = 83.2% (N=1000)
+INFO:tensorflow:2018-06-05 12:13:46.071020: Step 92000: Train accuracy = 85.0%
+INFO:tensorflow:2018-06-05 12:13:46.071132: Step 92000: Cross entropy = 0.404683
+INFO:tensorflow:2018-06-05 12:13:49.685611: Step 92000: Validation accuracy = 81.5% (N=1000)
+INFO:tensorflow:2018-06-05 12:15:51.478669: Step 93000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 12:15:51.478780: Step 93000: Cross entropy = 0.409599
+INFO:tensorflow:2018-06-05 12:15:53.864456: Step 93000: Validation accuracy = 83.8% (N=1000)
+INFO:tensorflow:2018-06-05 12:17:55.745435: Step 94000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 12:17:55.745550: Step 94000: Cross entropy = 0.399865
+INFO:tensorflow:2018-06-05 12:17:57.795889: Step 94000: Validation accuracy = 80.0% (N=1000)
+INFO:tensorflow:2018-06-05 12:19:59.821240: Step 95000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 12:19:59.821349: Step 95000: Cross entropy = 0.416348
+INFO:tensorflow:2018-06-05 12:20:01.373954: Step 95000: Validation accuracy = 84.1% (N=1000)
+INFO:tensorflow:2018-06-05 12:22:03.070489: Step 96000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 12:22:03.070604: Step 96000: Cross entropy = 0.400315
+INFO:tensorflow:2018-06-05 12:22:04.521891: Step 96000: Validation accuracy = 82.8% (N=1000)
+INFO:tensorflow:2018-06-05 12:24:07.456546: Step 97000: Train accuracy = 84.0%
+INFO:tensorflow:2018-06-05 12:24:07.456662: Step 97000: Cross entropy = 0.391948
+INFO:tensorflow:2018-06-05 12:24:09.392735: Step 97000: Validation accuracy = 82.4% (N=1000)
+INFO:tensorflow:2018-06-05 12:30:13.023459: Step 98000: Train accuracy = 87.0%
+INFO:tensorflow:2018-06-05 12:30:13.023582: Step 98000: Cross entropy = 0.414532
+INFO:tensorflow:2018-06-05 12:30:22.044743: Step 98000: Validation accuracy = 83.2% (N=1000)
+INFO:tensorflow:2018-06-05 12:32:25.089905: Step 99000: Train accuracy = 86.0%
+INFO:tensorflow:2018-06-05 12:32:25.090019: Step 99000: Cross entropy = 0.428982
+INFO:tensorflow:2018-06-05 12:32:30.424982: Step 99000: Validation accuracy = 82.0% (N=1000)
+INFO:tensorflow:2018-06-05 12:34:32.403605: Step 99999: Train accuracy = 89.0%
+INFO:tensorflow:2018-06-05 12:34:32.403717: Step 99999: Cross entropy = 0.369574
+INFO:tensorflow:2018-06-05 12:34:35.627936: Step 99999: Validation accuracy = 83.1% (N=1000)
+INFO:tensorflow:Save last checkpoint
+INFO:tensorflow:Running final evaluation
+INFO:tensorflow:Final test accuracy = 79.4% (N=1527)
+INFO:tensorflow:=== MISCLASSIFIED TEST IMAGES ===
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000101_SA2_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000101_SA2_ph0_r265.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000101_SA4_ph0_r270.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000801_SA2_ph0_r095.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000801_SA3_ph0_r085.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0000801_SA3_ph0_r090.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001101_SA10_ph0_r180.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001101_SA10_ph0_r270.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001201_SA10_ph0_r185.jpg  basal
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001201_SA11_ph0_r090.jpg  basal
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001201_SA12_ph0_r085.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001401_SA11_ph0_r275.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0001501_SA12_ph0_r005.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0001601_SA5_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0001701_SA2_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0001801_SA3_ph0_r005.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0001801_SA3_ph0_r095.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0001801_SA3_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0002001_SA9_ph0_r005.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0002401_SA2_ph0_r090.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0002401_SA2_ph0_r185.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0002601_SA4_ph0_r265.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0002601_SA5_ph0_r090.jpg  middle
+INFO:tensorflow:                     cap_augmented/APICAL/DET0002901_SA12_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003101_SA4_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003101_SA6_ph0_r000.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003301_SA5_ph0_r000.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003301_SA5_ph0_r180.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003301_SA6_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003401_SA4_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003401_SA7_ph0_r185.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003601_SA2_ph0_r180.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003601_SA2_ph0_r265.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003601_SA2_ph0_r275.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003601_SA2_ph0_r355.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003601_SA5_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003701_SA3_ph0_r185.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003701_SA6_ph0_r270.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003901_SA5_ph0_r175.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0003901_SA5_ph0_r270.jpg  middle
+INFO:tensorflow:                     cap_augmented/APICAL/DET0004001_SA10_ph0_r175.jpg  middle
+INFO:tensorflow:                     cap_augmented/APICAL/DET0004401_SA11_ph0_r090.jpg  basal
+INFO:tensorflow:                     cap_augmented/APICAL/DET0004401_SA13_ph0_r095.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0004601_SA12_ph0_r090.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0004701_SA7_ph0_r000.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0004801_SA3_ph0_r005.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0004801_SA3_ph0_r185.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0005001_SA5_ph0_r270.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0005401_SA3_ph0_r090.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0005701_SA3_ph0_r090.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0005901_SA4_ph0_r005.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0006001_SA5_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0006001_SA6_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0006001_SA6_ph0_r265.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0006101_SA8_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0007101_SA7_ph0_r185.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0007101_SA8_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0007101_SA8_ph0_r355.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0008801_SA4_ph0_r095.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0009801_SA5_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0009801_SA5_ph0_r270.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0009801_SA6_ph0_r270.jpg  out of basal
+INFO:tensorflow:                     cap_augmented/APICAL/DET0010601_SA11_ph0_r095.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0012801_SA4_ph0_r090.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0014101_SA12_ph0_r270.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0014101_SA8_ph0_r270.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0015201_SA3_ph0_r085.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0015201_SA3_ph0_r265.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0016101_SA7_ph0_r265.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0021501_SA5_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0021501_SA7_ph0_r265.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0021701_SA2_ph0_r275.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0023001_SA4_ph0_r005.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0023001_SA6_ph0_r275.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0024401_SA2_ph0_r180.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0024501_SA3_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0024501_SA3_ph0_r270.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0024501_SA4_ph0_r000.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0026801_SA3_ph0_r355.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0026801_SA4_ph0_r185.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0026901_SA3_ph0_r275.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0028601_SA3_ph0_r005.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0028601_SA4_ph0_r005.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0028601_SA4_ph0_r095.jpg  middle
+INFO:tensorflow:                     cap_augmented/APICAL/DET0030901_SA10_ph0_r005.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0040201_SA10_ph0_r005.jpg  out of apical
+INFO:tensorflow:                     cap_augmented/APICAL/DET0040201_SA10_ph0_r355.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0042501_SA5_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0042601_SA3_ph0_r175.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0042601_SA4_ph0_r085.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0042601_SA5_ph0_r095.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043201_SA6_ph0_r265.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043201_SA6_ph0_r275.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043501_SA3_ph0_r085.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043501_SA3_ph0_r095.jpg  out of apical
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043501_SA7_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043701_SA6_ph0_r270.jpg  basal
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043701_SA8_ph0_r090.jpg  middle
+INFO:tensorflow:                      cap_augmented/APICAL/DET0043701_SA8_ph0_r265.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0000101_SA10_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0001101_SA13_ph0_r185.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0001201_SA5_ph0_r005.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0001401_SA2_ph0_r005.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0001401_SA2_ph0_r275.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0001501_SA5_ph0_r355.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0002001_SA4_ph0_r355.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0002701_SA11_ph0_r005.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0002701_SA11_ph0_r355.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0002901_SA2_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003001_SA11_ph0_r005.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003001_SA11_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003201_SA10_ph0_r265.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003201_SA12_ph0_r085.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003201_SA12_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003301_SA10_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003301_SA11_ph0_r095.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003301_SA12_ph0_r355.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003401_SA11_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003401_SA13_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003601_SA10_ph0_r005.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003701_SA11_ph0_r175.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003901_SA12_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003901_SA12_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003901_SA12_ph0_r095.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0003901_SA12_ph0_r265.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0003901_SA9_ph0_r275.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004001_SA4_ph0_r090.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004101_SA3_ph0_r270.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004101_SA5_ph0_r175.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004201_SA4_ph0_r355.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004301_SA3_ph0_r000.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004301_SA4_ph0_r270.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004301_SA5_ph0_r095.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004301_SA5_ph0_r270.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0004701_SA11_ph0_r180.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004901_SA7_ph0_r005.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0004901_SA7_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0005101_SA12_ph0_r355.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0005301_SA14_ph0_r095.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0005601_SA13_ph0_r085.jpg  out of apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006101_SA4_ph0_r180.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006201_SA3_ph0_r005.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006201_SA3_ph0_r275.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006301_SA4_ph0_r090.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006501_SA3_ph0_r180.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0006501_SA3_ph0_r265.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0007101_SA2_ph0_r275.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0007101_SA3_ph0_r275.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0008801_SA12_ph0_r270.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0008801_SA12_ph0_r275.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0008901_SA9_ph0_r175.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0009001_SA10_ph0_r095.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0009301_SA7_ph0_r275.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0009301_SA8_ph0_r185.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0009801_SA12_ph0_r085.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0010601_SA2_ph0_r085.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0014101_SA4_ph0_r085.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0015201_SA11_ph0_r085.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0015201_SA11_ph0_r275.jpg  apical
+INFO:tensorflow:                       cap_augmented/BASAL/DET0016101_SA4_ph0_r265.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0023001_SA19_ph0_r005.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0023001_SA22_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0023001_SA22_ph0_r180.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0026901_SA10_ph0_r085.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0028801_SA9_ph0_r180.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0039401_SA3_ph0_r085.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0040101_SA7_ph0_r090.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0040101_SA8_ph0_r005.jpg  middle
+INFO:tensorflow:                       cap_augmented/BASAL/DET0040201_SA5_ph0_r185.jpg  out of basal
+INFO:tensorflow:                       cap_augmented/BASAL/DET0042001_SA9_ph0_r085.jpg  middle
+INFO:tensorflow:                      cap_augmented/BASAL/DET0042401_SA10_ph0_r355.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0042601_SA10_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0042601_SA10_ph0_r090.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0042601_SA10_ph0_r355.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0043501_SA13_ph0_r095.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0043901_SA11_ph0_r000.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0044801_SA11_ph0_r095.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/BASAL/DET0044801_SA11_ph0_r180.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0000201_SA8_ph0_r180.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0000801_SA5_ph0_r000.jpg  apical
+INFO:tensorflow:                     cap_augmented/MIDDLE/DET0001101_SA11_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001101_SA8_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001201_SA9_ph0_r000.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001201_SA9_ph0_r275.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001301_SA6_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001301_SA7_ph0_r265.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001501_SA9_ph0_r180.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001701_SA5_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001701_SA5_ph0_r085.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001701_SA5_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0001701_SA6_ph0_r275.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002001_SA6_ph0_r185.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002501_SA6_ph0_r085.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002701_SA6_ph0_r000.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002701_SA6_ph0_r270.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002701_SA9_ph0_r180.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002801_SA6_ph0_r095.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002801_SA8_ph0_r085.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002801_SA8_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0002901_SA8_ph0_r090.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003001_SA7_ph0_r180.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003201_SA9_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003201_SA9_ph0_r180.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003301_SA7_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003301_SA7_ph0_r185.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003301_SA8_ph0_r185.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0003501_SA6_ph0_r085.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004101_SA9_ph0_r095.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004101_SA9_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004201_SA6_ph0_r090.jpg  basal
+INFO:tensorflow:                     cap_augmented/MIDDLE/DET0004401_SA10_ph0_r265.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004401_SA9_ph0_r005.jpg  apical
+INFO:tensorflow:                     cap_augmented/MIDDLE/DET0004601_SA10_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004701_SA8_ph0_r000.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004701_SA9_ph0_r090.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0004901_SA6_ph0_r270.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005001_SA6_ph0_r270.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005001_SA6_ph0_r355.jpg  basal
+INFO:tensorflow:                     cap_augmented/MIDDLE/DET0005101_SA10_ph0_r090.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005101_SA7_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005101_SA8_ph0_r000.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005301_SA9_ph0_r095.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005401_SA8_ph0_r355.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005501_SA8_ph0_r000.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005501_SA9_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005701_SA6_ph0_r175.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005701_SA8_ph0_r265.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005801_SA6_ph0_r265.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0005901_SA6_ph0_r180.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006001_SA7_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006001_SA8_ph0_r005.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006201_SA6_ph0_r090.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006201_SA6_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006301_SA5_ph0_r085.jpg  out of basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0006401_SA4_ph0_r265.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0007101_SA5_ph0_r185.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0007101_SA6_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0008901_SA7_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0009801_SA7_ph0_r090.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0009801_SA7_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0010601_SA4_ph0_r000.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0014101_SA6_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0014101_SA7_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0015401_SA6_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0015601_SA8_ph0_r000.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0024401_SA5_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0024401_SA6_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0024501_SA6_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0024501_SA8_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0026801_SA7_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0028801_SA7_ph0_r185.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0029001_SA6_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0030101_SA6_ph0_r000.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0030101_SA7_ph0_r355.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0030101_SA8_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0039401_SA6_ph0_r005.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0039401_SA7_ph0_r095.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0039401_SA8_ph0_r180.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0040001_SA4_ph0_r005.jpg  basal
+INFO:tensorflow:                     cap_augmented/MIDDLE/DET0040101_SA12_ph0_r090.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0040201_SA7_ph0_r175.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0040201_SA7_ph0_r185.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0040201_SA8_ph0_r185.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0042001_SA6_ph0_r005.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0042601_SA6_ph0_r085.jpg  apical
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0043101_SA9_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0043901_SA7_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0043901_SA8_ph0_r085.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0043901_SA9_ph0_r265.jpg  basal
+INFO:tensorflow:                      cap_augmented/MIDDLE/DET0043901_SA9_ph0_r275.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0000201_SA1_ph0_r000.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0000201_SA1_ph0_r175.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0000201_SA1_ph0_r180.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0000801_SA1_ph0_r085.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0002701_SA1_ph0_r180.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0004101_SA1_ph0_r180.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0004201_SA9_ph0_r355.jpg  apical
+INFO:tensorflow:              cap_augmented/OUT_OF_APICAL/DET0004401_SA14_ph0_r270.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0004701_SA3_ph0_r000.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0006001_SA2_ph0_r355.jpg  apical
+INFO:tensorflow:              cap_augmented/OUT_OF_APICAL/DET0016101_SA10_ph0_r180.jpg  apical
+INFO:tensorflow:              cap_augmented/OUT_OF_APICAL/DET0016101_SA10_ph0_r265.jpg  apical
+INFO:tensorflow:              cap_augmented/OUT_OF_APICAL/DET0035501_SA14_ph0_r180.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0039301_SA4_ph0_r000.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0040001_SA9_ph0_r265.jpg  apical
+INFO:tensorflow:              cap_augmented/OUT_OF_APICAL/DET0040101_SA16_ph0_r175.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0042001_SA3_ph0_r090.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0042501_SA3_ph0_r275.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0043101_SA3_ph0_r275.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0043701_SA4_ph0_r265.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0043901_SA2_ph0_r270.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0044601_SA2_ph0_r095.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_APICAL/DET0044801_SA2_ph0_r185.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0003001_SA12_ph0_r185.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0004301_SA1_ph0_r005.jpg  middle
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0004301_SA1_ph0_r090.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0004301_SA1_ph0_r175.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0004701_SA13_ph0_r275.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0005201_SA13_ph0_r185.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0005401_SA11_ph0_r185.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0007101_SA1_ph0_r265.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0014101_SA2_ph0_r175.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0014101_SA3_ph0_r000.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0014101_SA3_ph0_r005.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0014101_SA3_ph0_r175.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0014101_SA3_ph0_r270.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0023001_SA23_ph0_r175.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0023001_SA23_ph0_r185.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0026801_SA13_ph0_r085.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0028801_SA10_ph0_r185.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0029001_SA10_ph0_r090.jpg  basal
+INFO:tensorflow:                cap_augmented/OUT_OF_BASAL/DET0039501_SA1_ph0_r185.jpg  apical
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0042401_SA11_ph0_r005.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0042601_SA11_ph0_r185.jpg  basal
+INFO:tensorflow:               cap_augmented/OUT_OF_BASAL/DET0043201_SA11_ph0_r095.jpg  basal
+INFO:tensorflow:Save final result to : /tmp/output_graph.pb
+2018-06-05 12:37:07.033940: W tensorflow/core/framework/op_kernel.cc:1318] OP_REQUIRES failed at save_restore_v2_ops.cc:184 : Not found: Key module/cell_0/1x1/weights not found in checkpoint
+Traceback (most recent call last):
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1322, in _do_call
+    return fn(*args)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1307, in _run_fn
+    options, feed_dict, fetch_list, target_list, run_metadata)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1409, in _call_tf_sessionrun
+    run_metadata)
+tensorflow.python.framework.errors_impl.NotFoundError: Key module/cell_0/1x1/weights not found in checkpoint
+	 [[Node: save_3/RestoreV2 = RestoreV2[dtypes=[DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, ..., DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT], _device="/job:localhost/replica:0/task:0/device:CPU:0"](_arg_save_3/Const_0_0, save_3/RestoreV2/tensor_names, save_3/RestoreV2/shape_and_slices)]]
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "tf_min.py", line 1233, in <module>
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 126, in run
+    _sys.exit(main(argv))
+  File "tf_min.py", line 1049, in main
+    save_graph_to_file(graph, FLAGS.output_graph, module_spec, class_count)
+  File "tf_min.py", line 791, in save_graph_to_file
+    sess, _, _, _, _, _ = build_eval_session(module_spec, class_count)
+  File "tf_min.py", line 780, in build_eval_session
+    tf.train.Saver().restore(eval_sess, CHECKPOINT_NAME)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 1802, in restore
+    {self.saver_def.filename_tensor_name: save_path})
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 900, in run
+    run_metadata_ptr)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1135, in _run
+    feed_dict_tensor, options, run_metadata)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1316, in _do_run
+    run_metadata)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/client/session.py", line 1335, in _do_call
+    raise type(e)(node_def, op, message)
+tensorflow.python.framework.errors_impl.NotFoundError: Key module/cell_0/1x1/weights not found in checkpoint
+	 [[Node: save_3/RestoreV2 = RestoreV2[dtypes=[DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, ..., DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT], _device="/job:localhost/replica:0/task:0/device:CPU:0"](_arg_save_3/Const_0_0, save_3/RestoreV2/tensor_names, save_3/RestoreV2/shape_and_slices)]]
+
+Caused by op 'save_3/RestoreV2', defined at:
+  File "tf_min.py", line 1233, in <module>
+    tf.app.run(main=main, argv=[sys.argv[0]] + unparsed)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/platform/app.py", line 126, in run
+    _sys.exit(main(argv))
+  File "tf_min.py", line 1049, in main
+    save_graph_to_file(graph, FLAGS.output_graph, module_spec, class_count)
+  File "tf_min.py", line 791, in save_graph_to_file
+    sess, _, _, _, _, _ = build_eval_session(module_spec, class_count)
+  File "tf_min.py", line 780, in build_eval_session
+    tf.train.Saver().restore(eval_sess, CHECKPOINT_NAME)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 1338, in __init__
+    self.build()
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 1347, in build
+    self._build(self._filename, build_save=True, build_restore=True)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 1384, in _build
+    build_save=build_save, build_restore=build_restore)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 835, in _build_internal
+    restore_sequentially, reshape)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 472, in _AddRestoreOps
+    restore_sequentially)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/training/saver.py", line 886, in bulk_restore
+    return io_ops.restore_v2(filename_tensor, names, slices, dtypes)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/ops/gen_io_ops.py", line 1463, in restore_v2
+    shape_and_slices=shape_and_slices, dtypes=dtypes, name=name)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/framework/op_def_library.py", line 787, in _apply_op_helper
+    op_def=op_def)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 3392, in create_op
+    op_def=op_def)
+  File "/Users/release/.ho/venv/lib/python3.6/site-packages/tensorflow/python/framework/ops.py", line 1718, in __init__
+    self._traceback = self._graph._extract_stack()  # pylint: disable=protected-access
+
+NotFoundError (see above for traceback): Key module/cell_0/1x1/weights not found in checkpoint
+	 [[Node: save_3/RestoreV2 = RestoreV2[dtypes=[DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, ..., DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT, DT_FLOAT], _device="/job:localhost/replica:0/task:0/device:CPU:0"](_arg_save_3/Const_0_0, save_3/RestoreV2/tensor_names, save_3/RestoreV2/shape_and_slices)]]
+

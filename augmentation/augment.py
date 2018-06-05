@@ -1,4 +1,3 @@
-import matplotlib
 import glob
 import os
 import argparse
@@ -18,23 +17,24 @@ def append_to_basename(jpg_path, append_string):
 
 
 augment_angles = [
-        0, 355, 5,
-        90, 95, 85,
-        180, 185, 175,
-        270, 275, 265,
-        ]
+    0, 355, 5,
+    90, 95, 85,
+    180, 185, 175,
+    270, 275, 265,
+]
+
 
 def main():
-    parser = argparse.ArgumentParser(description='augment your jpg files!')
+    parser = argparse.ArgumentParser(description='Augment your jpg files')
     parser.add_argument('-d', '--directory', type=str, default='cap_labeled')
     parser.add_argument('-t', '--target', type=str, default='cap_augmented')
     parser.add_argument('-v', '--verbal', action='store_true')
     args = parser.parse_args()
-    
+
     jpg_paths = get_jpg_paths(args.directory)
     jpg_count = len(jpg_paths)
     fives = 0
-    
+
     print('augmenting %d images...' % jpg_count)
 
     for index, path in enumerate(jpg_paths):
@@ -50,10 +50,12 @@ def main():
 
         for angle in augment_angles:
             positive_angle = angle % 360
-            rotated_image = scipy.ndimage.interpolation.rotate(img_array, positive_angle)
-            augmented_path = append_to_basename(target_path, '_r%03d' % positive_angle)
+            rotated_image = scipy.ndimage.interpolation.rotate(
+                img_array, positive_angle)
+            augmented_path = append_to_basename(
+                target_path, '_r%03d' % positive_angle)
             scipy.misc.imsave(augmented_path, rotated_image)
-        
+
         if args.verbal:
             print('(%d/%d) %s' % (index + 1, jpg_count, local_path))
         else:

@@ -9,7 +9,7 @@ label_data*
 *_summary/
 train_summaries/
 train_models/
-train_outputs/
+train_misclassified/
 train_checkpoints/
 
 # Byte-compiled / optimized / DLL files

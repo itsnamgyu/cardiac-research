@@ -12,5 +12,6 @@ python tf_min.py \
 	--how_many_training_steps=$2 \
 	--summaries_dir=train_summaries/$3_$2 \
 	--saved_model_dir=train_models/$3_$2 \
+	--misclassified_image_dir=train_misclassified/$3_$2 \
 	--print_misclassified_test_images \
 	 2>&1 | tee train_outputs/$3_$2.txt

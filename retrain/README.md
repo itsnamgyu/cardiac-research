@@ -2,6 +2,11 @@
 
 This module automatically trains, validates, and tests retrained classifiers and outputs misclassified test images into a seperate directory for visual examination.
 
+## Environment
+```
+pip3 install -r requirements.txt
+```
+
 ## Usage
 1. Place augmented images in subdirectory `cap_augmented`
 2. Use the run.sh convenience script with the following format.

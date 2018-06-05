@@ -1,11 +1,14 @@
 # Augmentation Module
 
-## augment.py
-
 This module is used to apply rotation augmentations to an image dataset. It recursively searches a directory for images and saves the augmented versions of those images in a separate target directory—preserving directory structure.
 
-### Rotations
+## Rotations
 The rotations applied are 0, 90, 180, 270 (+- 5) degress, resulting in 12 varients of each image.
+
+## Environment
+```
+pip3 install -r requirements.txt
+```
 
 ### Usage
 1. Move you labeled files to `cap_labeled`

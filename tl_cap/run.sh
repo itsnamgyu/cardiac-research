@@ -3,7 +3,7 @@ echo STEPS=$2
 echo NAME=$3
 echo MODULE=$4
 
-python tf_min.py \
+python tf_save_unlabeled.py \
 	--image_dir=cap_augmented \
 	--tfhub_module=$4 \
 	--learning_rate=$1 \

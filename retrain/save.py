@@ -14,7 +14,7 @@ def main():
 
     labels = [
             'OUT_OF_BASAL',
-            'OUT_OF_APICAL'
+            'OUT_OF_APICAL',
             'BASAL',
             'MIDDLE',
             'APICAL',
@@ -36,9 +36,6 @@ def main():
             values = line.split()
             path = values[1]
             prediction = '_'.join(values[2:]).upper()
-
-            print('copying %s' % path)
-            print('not', prediction, 'but', truth)
 
             new_basename = truth + '_' + os.path.basename(path)
             save_dir = os.path.join(args.dest_dir, prediction)

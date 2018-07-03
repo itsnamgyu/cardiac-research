@@ -12,13 +12,6 @@ def append_to_basename(jpg_path, append_string):
     return jpg_path[:-4] + append_string + '.jpg'
 
 
-def append_to_basename(jpg_path, append_string):
-    if jpg_path[-4:] != '.jpg':
-        raise ValueError("jpg_path does not conform to format '*.jpg'")
-
-    return jpg_path[:-4] + append_string + '.jpg'
-
-
 def main():
     images = glob.glob('images/**/*.jpg')
     crop_ratio = 0.2

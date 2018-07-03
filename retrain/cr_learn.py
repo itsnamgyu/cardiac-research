@@ -62,7 +62,7 @@ def generate_augmented_images(image_dir):
         for angle in augment_angles:
             positive_angle = angle % 360
             augmented_path = append_to_basename(
-                path, 'R%03d.aug' % positive_angle)
+                path, '_R%03d.aug' % positive_angle)
 
             if augmented_path not in aug_paths:
                 if loaded_image[0] != index:

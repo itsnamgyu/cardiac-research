@@ -1019,8 +1019,8 @@ def main(_):
 
     # Set up the pre-trained graph.
     tf.logging.info('Set up graph')
-    tf.logging.set_verbosity(tf.logging.ERROR)
     module_spec = hub.load_module_spec(FLAGS.tfhub_module)
+    tf.logging.set_verbosity(tf.logging.ERROR)
     graph, bottleneck_tensor, resized_image_tensor, wants_quantization = (
         create_module_graph(module_spec))
     tf.logging.set_verbosity(tf.logging.INFO)

@@ -79,7 +79,7 @@ def save_training_data():
                 dest = os.path.join(IMAGES_DIR, dest)
         if cr[0] == 1:
             dest = 'testing_{}.jpg'.format(cr_code)
-            dest = os.path.join('nan', dest)
+            dest = os.path.join('oap', dest)
             dest = os.path.join(IMAGES_DIR, dest)
         src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
         os.makedirs(os.path.dirname(dest), exist_ok=True)

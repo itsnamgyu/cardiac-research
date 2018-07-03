@@ -2,6 +2,14 @@ import glob
 from functools import reduce
 import numpy
 import scipy.ndimage
+import os
+
+
+def append_to_basename(jpg_path, append_string):
+    if jpg_path[-4:] != '.jpg':
+        raise ValueError("jpg_path does not conform to format '*.jpg'")
+
+    return jpg_path[:-4] + append_string + '.jpg'
 
 
 def main():
@@ -18,7 +26,9 @@ def main():
         lx, ly = image.shape
         cropped_image = image[int(lx * crop_ratio): int(- lx * crop_ratio), 
                 int(ly * crop_ratio): int(- ly * crop_ratio)]
-        scipy.misc.imsave(path, cropped_image)
+        os.remove(path)
+        scipy.misc.imsave(append_to_basename(path, '_CP20'), cropped_image)
+
 
 if __name__ == '__main__':
     main()

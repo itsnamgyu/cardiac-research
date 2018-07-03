@@ -38,3 +38,9 @@ python3 retrain.py -h
 
 ## TF-Hub Modules
 Refer to `tfhub_modules.txt` for common tfhub modules
+
+## `save.py`
+Save mislabeled files in directories based on stdout output from `retrain.py`. This is done within recent versions of`retrain.py`.
+
+### Usage
+`python3 save.py -h`

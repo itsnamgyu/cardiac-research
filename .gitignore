@@ -12,6 +12,9 @@ train_models/
 train_misclassified/
 train_checkpoints/
 
+# Backup
+.bak
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

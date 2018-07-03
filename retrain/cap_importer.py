@@ -32,7 +32,8 @@ class DcmDataReference(cr_importer.DataReference):
 
 
 class DataImporter(cr_importer.DataImporter):
-    def __init__(self):
+    def __init__(self, import_path='cap_challenge_validation'):
+        self.import_path = import_path
         super().__init__()
 
     DEFAULT_DCM_PATH_FORMAT = '**/DET*SA*ph0.dcm'
@@ -59,7 +60,7 @@ class DataImporter(cr_importer.DataImporter):
         self.patients: Dict[int, List] = {}
 
         patient_dict: Dict[int, pydicom.dataset.Dataset] = {}
-        filtered_paths = DataImporter.get_filtered_dcm_paths('cap_challenge_validation')
+        filtered_paths = DataImporter.get_filtered_dcm_paths(self.import_path)
         
         for dcm_path in filtered_paths:
             match = re_dcm.search(dcm_path)

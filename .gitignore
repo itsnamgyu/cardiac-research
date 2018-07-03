@@ -11,6 +11,7 @@ train_summaries/
 train_models/
 train_misclassified/
 train_checkpoints/
+images/
 
 # Backup
 *.bak

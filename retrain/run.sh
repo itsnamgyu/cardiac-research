@@ -3,6 +3,9 @@ echo STEPS=$2
 echo NAME=$3
 echo MODULE=$4
 
+mkdir results
+mkdir results/$3
+
 python cr_learn.py \
 	--tfhub_module=$4 \
 	--learning_rate=$1 \

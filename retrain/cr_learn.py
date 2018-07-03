@@ -84,6 +84,7 @@ def generate_augmented_images(image_dir):
                     index * aug_count,
                     total_count)
                 )
+        os.remove(path)
 
     # remaining aug_paths are useless
 

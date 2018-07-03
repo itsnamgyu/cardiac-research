@@ -13,10 +13,15 @@ import random
 import re
 import sys
 import shutil
+import re
+import json
+from functools import reduce
+import glob
 
 import numpy as np
 import tensorflow as tf
 import tensorflow_hub as hub
+import scipy
 
 FLAGS = None
 
@@ -31,6 +36,74 @@ FAKE_QUANT_OPS = ('FakeQuantWithMinMaxVars',
                   'FakeQuantWithMinMaxVarsPerChannel')
 
 
+def generate_augmented_images(image_dir):
+    def append_to_basename(jpg_path, append_string):
+        if jpg_path[-4:] != '.jpg':
+            raise ValueError("jpg_path does not conform to format '*.jpg'")
+
+        return jpg_path[:-4] + append_string + '.jpg'
+
+    augment_angles = [
+        355, 0, 5, 85, 90, 95
+    ]
+    aug_count = len(augment_angles)
+
+    jpg_paths = glob.glob(os.path.join(image_dir, '**/training_*.jpg'))
+    src_paths = list(filter(lambda path: '.aug' not in path, jpg_paths))
+    aug_paths = list(filter(lambda path: '.aug' in path, jpg_paths))
+    fives = 0
+
+    total_count = len(src_paths) * aug_count
+    tf.logging.info('Augmenting %d * %d = %d images' % (
+        len(src_paths), aug_count, total_count))
+
+    loaded_image = (None, None)  # index, ndimage
+    for index, path in enumerate(src_paths):
+        for angle in augment_angles:
+            positive_angle = angle % 360
+            augmented_path = append_to_basename(
+                path, 'R%03d.aug' % positive_angle)
+
+            if augmented_path not in aug_paths:
+                if loaded_image[0] != index:
+                    loaded_image = (index, scipy.ndimage.imread(path))
+
+                positive_angle = angle % 360
+                rotated_image = scipy.ndimage.interpolation.rotate(
+                    loaded_image[1], positive_angle)
+
+                scipy.misc.imsave(augmented_path, rotated_image)
+            else:
+                aug_paths.remove(augmented_path)
+
+            current_percentage = (index + 1) / len(src_paths) * 100
+            if fives != current_percentage // 5:
+                fives = current_percentage // 5
+                tf.logging.info('%.0f%% complete (%d / %d)' % (
+                    current_percentage,
+                    index * aug_count,
+                    total_count)
+                )
+
+    # remaining aug_paths are useless
+
+
+def get_hash_percentage(hash_name):
+    # This looks a bit magical, but we need to decide whether this file should
+    # go into the training, testing, or validation sets, and we want to keep
+    # existing files in the same set even if more files are subsequently
+    # added.
+    # To do that, we need a stable way of deciding based on just the file name
+    # itself, so we do a hash of that and then use that to generate a
+    # probability value that we use to assign it.
+    hash_name_hashed = hashlib.sha1(
+        tf.compat.as_bytes(hash_name)).hexdigest()
+    percentage_hash = ((int(hash_name_hashed, 16) %
+                        (MAX_NUM_IMAGES_PER_CLASS + 1)) *
+                       (100.0 / MAX_NUM_IMAGES_PER_CLASS))
+    return percentage_hash
+
+
 def create_image_lists(image_dir, testing_percentage, validation_percentage):
     """Builds a list of training images from the file system.
 
@@ -41,6 +114,7 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
     Args:
       image_dir: String path to a folder containing subfolders of images.
       testing_percentage: Integer percentage of the images to reserve for tests.
+      UNUSED
       validation_percentage: Integer percentage of images reserved for validation.
 
     Returns:
@@ -48,12 +122,17 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
       split into training, testing, and validation sets within each label.
       The order of items defines the class indices.
     """
+
+    # Create augmented images
+    generate_augmented_images(image_dir)
+
     if not tf.gfile.Exists(image_dir):
         tf.logging.error("Image directory '" + image_dir + "' not found.")
         return None
     result = collections.OrderedDict()
     sub_dirs = sorted(x[0] for x in tf.gfile.Walk(image_dir))
     # The root directory comes first, so skip it.
+
     is_root_dir = True
     for sub_dir in sub_dirs:
         if is_root_dir:
@@ -64,6 +143,7 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
         dir_name = os.path.basename(sub_dir)
         if dir_name == image_dir:
             continue
+
         tf.logging.info("Looking for images in '" + dir_name + "'")
         for extension in extensions:
             file_glob = os.path.join(image_dir, dir_name, '*.' + extension)
@@ -82,32 +162,28 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
         training_images = []
         testing_images = []
         validation_images = []
+
         for file_name in file_list:
             base_name = os.path.basename(file_name)
-            # We want to ignore anything after '_nohash_' in the file name when
-            # deciding which set to put an image in, the data set creator has a way of
-            # grouping photos that are close variations of each other. For example
-            # this is used in the plant disease data set to group multiple pictures of
-            # the same leaf.
-            hash_name = re.sub(r'_nohash_.*$', '', file_name)
-            # This looks a bit magical, but we need to decide whether this file should
-            # go into the training, testing, or validation sets, and we want to keep
-            # existing files in the same set even if more files are subsequently
-            # added.
-            # To do that, we need a stable way of deciding based on just the file name
-            # itself, so we do a hash of that and then use that to generate a
-            # probability value that we use to assign it.
-            hash_name_hashed = hashlib.sha1(
-                tf.compat.as_bytes(hash_name)).hexdigest()
-            percentage_hash = ((int(hash_name_hashed, 16) %
-                                (MAX_NUM_IMAGES_PER_CLASS + 1)) *
-                               (100.0 / MAX_NUM_IMAGES_PER_CLASS))
-            if percentage_hash < validation_percentage:
-                validation_images.append(base_name)
-            elif percentage_hash < (testing_percentage + validation_percentage):
+            testing = re.search(
+                'testing_D([0-9]+)_P([0-9]+)_P([0-9]+)_S([0-9]+)', base_name)
+            training = re.search(
+                'training_D([0-9]+)_P([0-9]+)_P([0-9]+)_S([0-9]+)', base_name)
+            if training:
+
+                dataset = training.group(1)
+                subject = training.group(2)
+                hash_name = dataset + subject  # string concat
+                percentage_hash = get_hash_percentage(hash_name)
+
+                if percentage_hash < validation_percentage:
+                    validation_images.append(base_name)
+                else:
+                    training_images.append(base_name)
+            elif testing:
                 testing_images.append(base_name)
             else:
-                training_images.append(base_name)
+                print('{} invalid'.format(file_name))
         result[label_name] = {
             'dir': dir_name,
             'training': training_images,
@@ -749,24 +825,44 @@ def run_final_eval(train_session, module_spec, class_count, image_lists,
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' %
                     (test_accuracy * 100, len(test_bottlenecks)))
 
-    if FLAGS.print_misclassified_test_images:
-        tf.logging.info('Saving misclassified test images...')
-        tf.logging.info('=== MISCLASSIFIED TEST IMAGES ===')
-        for i, test_filename in enumerate(test_filenames):
-            if predictions[i] != test_ground_truth[i]:
-                keys = list(image_lists.keys())
-                prediction = keys[predictions[i]].upper().replace(' ', '_')
-                truth = keys[test_ground_truth[i]].upper().replace(' ', '_')
-                save_dir = os.path.join(
-                    FLAGS.misclassified_image_dir, prediction)
-                new_basename = truth + '_' + os.path.basename(test_filename)
-                new_path = os.path.join(save_dir, new_basename)
+    tf.logging.info('Saving results')
 
-                os.makedirs(save_dir, exist_ok=True)
-                shutil.copy(test_filename, new_path)
+    results = {}
+    results['tfhub_module'] = FLAGS.tfhub_module
+    results['training_steps'] = FLAGS.how_many_training_steps
+    results['learning_rate'] = str(FLAGS.learning_rate)
+    results['validation_percentage'] = FLAGS.validation_percentage
+    # should be equal to validation
+    results['batch_size'] = FLAGS.train_batch_size
+    results['test_accuaracy'] = str(test_accuracy)
 
-                tf.logging.info('%70s  %s' %
-                                (test_filename, keys[predictions[i]]))
+    def get_cr_code(image_path):
+        basename = os.path.basename(image_path)
+        name = os.path.splitext(basename)[0]  # remove ext
+        name.replace('training_', '')  # remove training tag
+        name.replace('testing_', '')  # remove testing tag
+        return name
+
+    # Save training images for future reference
+    training_images = []
+    for image_list in image_lists.values():
+        training_images += image_list['training']
+    training_images = list(map(get_cr_code, training_images))
+    results['training_images'] = training_images
+
+    # save predictions (prediction, truth)
+    prediction_dict = {}
+    keys = list(image_lists.keys())
+    for i, test_filename in enumerate(test_filenames):
+        prediction = keys[predictions[i]]
+        truth = keys[test_ground_truth[i]]
+        prediction_dict[get_cr_code(test_filename)] = prediction, truth
+    results['predictions'] = prediction_dict
+
+    with open(FLAGS.result_dir + '/results.json', 'w') as f:
+        json.dump(results, f)
+
+    tf.logging.info('Complete')
 
 
 def build_eval_session(module_spec, class_count):
@@ -817,9 +913,9 @@ def save_graph_to_file(graph, graph_file_name, module_spec, class_count):
 
 def prepare_file_system():
     # Setup the directory we'll write summaries to for TensorBoard
-    if tf.gfile.Exists(FLAGS.summaries_dir):
-        tf.gfile.DeleteRecursively(FLAGS.summaries_dir)
-    tf.gfile.MakeDirs(FLAGS.summaries_dir)
+    if tf.gfile.Exists(FLAGS.result_dir + '/summaries'):
+        tf.gfile.DeleteRecursively(FLAGS.result_dir + '/summaries')
+    tf.gfile.MakeDirs(FLAGS.result_dir + '/summaries')
     if FLAGS.intermediate_store_frequency > 0:
         ensure_dir_exists(FLAGS.intermediate_output_graphs_dir)
     return
@@ -903,7 +999,7 @@ def main(_):
     prepare_file_system()
 
     # Look at the folder structure, and create lists of all the images.
-    image_lists = create_image_lists(FLAGS.image_dir, FLAGS.testing_percentage,
+    image_lists = create_image_lists(FLAGS.image_dir, None,
                                      FLAGS.validation_percentage)
     class_count = len(image_lists.keys())
     if class_count == 0:
@@ -965,11 +1061,11 @@ def main(_):
 
         # Merge all the summaries and write them out to the summaries_dir
         merged = tf.summary.merge_all()
-        train_writer = tf.summary.FileWriter(FLAGS.summaries_dir + '/train',
+        train_writer = tf.summary.FileWriter(FLAGS.result_dir + '/summaries',
                                              sess.graph)
 
         validation_writer = tf.summary.FileWriter(
-            FLAGS.summaries_dir + '/validation')
+            FLAGS.result_dir + '/summaries')
 
         # Create a train saver that is used to restore values into an eval graph
         # when exporting models.
@@ -998,7 +1094,6 @@ def main(_):
                 [merged, train_step],
                 feed_dict={bottleneck_input: train_bottlenecks,
                            ground_truth_input: train_ground_truth})
-            train_writer.add_summary(train_summary, i)
 
             # Every so often, print out how well the graph is training.
             is_last_step = (i + 1 == FLAGS.how_many_training_steps)
@@ -1021,6 +1116,9 @@ def main(_):
                         decoded_image_tensor, resized_image_tensor, bottleneck_tensor,
                         FLAGS.tfhub_module))
 
+                # Write train summary only on evaluation steps
+                # >> no need to do this every time
+                train_writer.add_summary(train_summary, i)
                 # Run a validation step and capture training summaries for TensorBoard
                 # with the `merged` op.
                 validation_summary, validation_accuracy = sess.run(
@@ -1070,8 +1168,9 @@ def main(_):
         with tf.gfile.FastGFile(FLAGS.output_labels, 'w') as f:
             f.write('\n'.join(image_lists.keys()) + '\n')
 
-        if FLAGS.saved_model_dir:
-            export_model(module_spec, class_count, FLAGS.saved_model_dir)
+        if FLAGS.result_dir:
+            export_model(module_spec, class_count,
+                         os.path.join(FLAGS.result_dir, 'model'))
         tf.logging.set_verbosity(tf.logging.INFO)
 
 
@@ -1080,7 +1179,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--image_dir',
         type=str,
-        default='',
+        default='images',
         help='Path to folders of labeled images.'
     )
     parser.add_argument(
@@ -1119,7 +1218,7 @@ if __name__ == '__main__':
     parser.add_argument(
         '--how_many_training_steps',
         type=int,
-        default=4000,
+        default=10000,
         help='How many training steps to run before ending.'
     )
     parser.add_argument(
@@ -1129,21 +1228,15 @@ if __name__ == '__main__':
         help='How large a learning rate to use when training.'
     )
     parser.add_argument(
-        '--testing_percentage',
-        type=int,
-        default=10,
-        help='What percentage of images to use as a test set.'
-    )
-    parser.add_argument(
         '--validation_percentage',
         type=int,
-        default=10,
+        default=20,
         help='What percentage of images to use as a validation set.'
     )
     parser.add_argument(
         '--eval_step_interval',
         type=int,
-        default=10,
+        default=1000,
         help='How often to evaluate the training results.'
     )
     parser.add_argument(
@@ -1249,10 +1342,10 @@ if __name__ == '__main__':
         default='',
         help='Where to save the exported graph.')
     parser.add_argument(
-        '--misclassified_image_dir',
+        '--result_dir',
         type=str,
-        default='',
-        help='Where to save the misclassified images.')
+        required=True,
+        help='Results')
 
     FLAGS, unparsed = parser.parse_known_args()
 

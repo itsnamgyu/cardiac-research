@@ -1,2 +1,5 @@
 tensorflow
 tensorflow_hub
+matplotlib
+pydicom
+scikit-image

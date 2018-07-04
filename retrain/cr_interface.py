@@ -1,7 +1,7 @@
 import os
 import json
 import shutil
-from typing import List, Dict
+from typing import Dict
 import re
 import glob
 
@@ -92,17 +92,17 @@ def prepare_images():
     print('Saving test data.')
     metadata = load_metadata()
 
-    pairs: Dict[str] = {} # { patient_index: cr_code }
+    pairs: Dict[str] = {}  # { patient_index: cr_code }
 
     for cr_code, info in metadata.items():
         cr = parse_cr_code(cr_code)
         if cr[0] == 0:
             pairs[cr[1]] = cr_code, info
-    
+
     patient_indices = list(sorted(pairs.keys()))
     train_count = int(len(patient_indices) * 0.8)
     test_count = len(patient_indices) - train_count
-    train_patients =  patient_indices[:train_count]
+    train_patients = patient_indices[:train_count]
     print('Training data: %d patients.' % train_count)
     print('Test data: %d patients.' % test_count)
 
@@ -126,12 +126,20 @@ def visualize_metadata():
 
 
 def load_results(results_dir='results'):
-    result_paths = glob.glob(os.path.join(resuts_dir, '**/results.json'))
+    result_paths = glob.glob(os.path.join(results_dir, '**/results.json'))
     results = []
-    
+
     for path in result_paths:
         with open(path) as f:
-            results.append(json.load(f))
+            result = json.load(f)
+
+        # typo fix
+        if 'test_accuaracy' in result:
+            result['test_accuracy'] = result['test_accuaracy']
+            del result['test_accuaracy']
+
+        results.append(result)
+        json.dump(result, open(path, 'w'))
 
     return results
 
@@ -139,7 +147,7 @@ def load_results(results_dir='results'):
 def main():
     # visualize_metadata()
     # save_training_data()
-    #save_training_data()
+    # save_training_data()
     prepare_images()
 
 

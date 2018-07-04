@@ -198,7 +198,7 @@ def main():
     global dicom_dict, dcm_labels, subjects, LABEL_FILE
 
     parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--dir', dest='dir',  type=str, nargs=1, default='cap_challenge',
+    parser.add_argument('--dir', dest='dir',  type=str, default='cap_challenge',
                         help='top directory of dicom files')
 
     args = parser.parse_args()
@@ -231,6 +231,19 @@ def main():
     except FileNotFoundError:
         pass
 
+    for ndcm, label in dcm_labels.items():
+        directory = os.path.join('cap_labeled', label.name)
+        jpg_path = os.path.join(directory, ndcm.name + '.jpg')
+
+        try:
+            os.makedirs(directory)
+        except OSError:
+            pass
+
+        image_array = ndcm.processed_images[1]
+        scipy.misc.imsave(jpg_path, image_array)
+
+    # save as jpegs by subject
     for ndcm, label in dcm_labels.items():
         directory = os.path.join('cap_labeled', label.name)
         jpg_path = os.path.join(directory, ndcm.name + '.jpg')

@@ -835,7 +835,7 @@ def run_final_eval(train_session, module_spec, class_count, image_lists,
     results['validation_percentage'] = FLAGS.validation_percentage
     # should be equal to validation
     results['batch_size'] = FLAGS.train_batch_size
-    results['test_accuaracy'] = str(test_accuracy)
+    results['test_accuracy'] = str(test_accuracy)
 
     def get_cr_code(image_path):
         basename = os.path.basename(image_path)

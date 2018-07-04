@@ -3,6 +3,7 @@ import json
 import shutil
 from typing import List, Dict
 import re
+import glob
 
 DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'

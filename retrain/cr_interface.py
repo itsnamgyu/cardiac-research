@@ -86,6 +86,39 @@ def save_training_data():
         shutil.copy(src, dest)
 
 
+# Temp Function: save only images w/ labels (CAP training set)
+def prepare_images():
+    print('Saving test data.')
+    metadata = load_metadata()
+
+    pairs: Dict[str] = {} # { patient_index: cr_code }
+
+    for cr_code, info in metadata.items():
+        cr = parse_cr_code(cr_code)
+        if cr[0] == 0:
+            pairs[cr[1]] = cr_code, info
+    
+    patient_indices = list(sorted(pairs.keys()))
+    train_count = int(len(patient_indices) * 0.8)
+    test_count = len(patient_indices) - train_count
+    train_patients =  patient_indices[:train_count]
+    print('Training data: %d patients.' % train_count)
+    print('Test data: %d patients.' % test_count)
+
+    for cr_code, info in metadata.items():
+        cr = parse_cr_code(cr_code)
+        if cr[0] == 0 and 'label' in info:
+            if cr[1] in train_patients:
+                dest = 'training_{}.jpg'.format(cr_code)
+            else:
+                dest = 'testing_{}.jpg'.format(cr_code)
+            dest = os.path.join(info['label'], dest)
+            dest = os.path.join(IMAGES_DIR, dest)
+            src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
+            os.makedirs(os.path.dirname(dest), exist_ok=True)
+            shutil.copy(src, dest)
+
+
 def visualize_metadata():
     metadata = load_metadata()
     print(json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
@@ -94,7 +127,8 @@ def visualize_metadata():
 def main():
     # visualize_metadata()
     # save_training_data()
-    save_training_data()
+    #save_training_data()
+    prepare_images()
 
 
 if __name__ == "__main__":

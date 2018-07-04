@@ -124,6 +124,17 @@ def visualize_metadata():
     print(json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
+def load_results(results_dir='results'):
+    result_paths = glob.glob(os.path.join(resuts_dir, '**/results.json'))
+    results = []
+    
+    for path in result_paths:
+        with open(path) as f:
+            results.append(json.load(f))
+
+    return results
+
+
 def main():
     # visualize_metadata()
     # save_training_data()

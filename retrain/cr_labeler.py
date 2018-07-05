@@ -1,147 +1,199 @@
 import os
-import shutil
+import argparse
+import collections
+
 import numpy as np
 import matplotlib.pyplot as plt
-import argparse
-from typing import List, Dict
-from dicom_dataset import DicomDataset
+
+import cr_interface as cri
 import scipy.misc
-from enum import Enum
+import scipy.ndimage
 
 
-DISPLAY_NAMES = [
-    'NaN', 'OUT_AP', 'AP',
-    'MID', 'BA', 'OUT_BA',
-]
+LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
 
-
-class Label(Enum):
-    UNLABELED = 0
-    OUT_OF_APICAL = 1
-    APICAL = 2
-    MIDDLE = 3
-    BASAL = 4
-    OUT_OF_BASAL = 5
-
-    def display_name(self):
-        return DISPLAY_NAMES[self.value]
-
+DISPLAY_NAME = {
+    'oap': 'OUT_AP',
+    'ap': 'AP',
+    'md': 'MID',
+    'bs': 'BS',
+    'obs': 'OUT_BS',
+    'nan': '-'
+}
 
 axes = []
+predictions = None
 
-current_label = Label.UNLABELED
+current_label = None
 fig = plt.figure()
+index = 0
+last_index = None
 
 
 def get_window_title():
-    global load_error
-    global dcm_labels, subjects, subject_index, current_subject, displayed_subject
-    global color_labels, color_index
+    global metadata, results, predictions, image_collection, index, current_label
+    patient = image_collection[index]
 
-    subject = subjects[subject_index]
-    if load_error:
-        title = 'Error Loading Subject #{} [{}]'.format(subject_index, subject)
+    if current_label:
+        label = DISPLAY_NAME[current_label]
     else:
-        title = 'Subject #{} [{}]'.format(subject_index, subject.id)
-    title += ' [{}]'.format(current_label.display_name())
-    title += ' [{}]'.format(color_labels[color_index])
+        label = 'NO_LABEL'
 
-    if not subject.sorted:
-        title += ' [UNSORTED]'
+
+    title = 'DB#{:02d} PATIENT{:08d} ({:03d}/{:03d}) [ {:^10s} ]'
+    title = title.format(patient[0][0], patient[0][1], index + 1, len(image_collection), label)
 
     return title
 
 
 def update_plot():
-    global dcm_labels, subjects, subject_index, displayed_subject
-    global color_labels, color_index, displayed_color
+    global metadata, results, predictions, image_collection, index, last_index, current_label
+    patient = image_collection[index]
 
-    subject = subjects[subject_index]
-    if displayed_subject is not subject or displayed_color is not color_index:
-        displayed_color = color_index
-        displayed_subject = subject
-
-        fig.clf()
+    if last_index != index:
         del axes[:]
-        for i, ndcm in enumerate(subject.get_ndcms()):
-            axes.append(fig.add_subplot(4, 6, i + 1))
-            ndcm.load()
-            axes[i].imshow(ndcm.processed_images[color_index],
-                           cmap=plt.cm.gray)
-            axes[i].set_axis_off()
+        fig.clf()
 
-    for i, ndcm in enumerate(subject.get_ndcms()):
-        label = dcm_labels.get(ndcm, Label.UNLABELED).display_name()
-        dcm = ndcm.get_data()
-        if hasattr(dcm, 'SliceLocation'):
-            axes[i].set_title('{} [{:.4f}]'.format(
-                label, dcm.SliceLocation), fontsize='small', snap=True)
+        for i, cr_code in enumerate(patient[1]):
+            path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
+
+            axes.append(fig.add_subplot(4, 6, i + 1))
+
+            image = scipy.ndimage.imread(path)
+            axes[i].imshow(image, cmap=plt.cm.gray)
+            axes[i].set_axis_off()
+    
+    for i, cr_code in enumerate(patient[1]):
+        l = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
+        label = '{}'.format(DISPLAY_NAME[metadata[cr_code].get('label', 'nan')])
+        if predictions:
+            p = DISPLAY_NAME[predictions[cr_code]]
+            label += ' / {} (P)'.format(DISPLAY_NAME[predictions[cr_code]])
+            if l == '-':
+                color = (0.2, 0.2, 0.2)
+            else:
+                if l == p:
+                    color = (0, 0.6, 0)
+                else:
+                    color = (0.75, 0, 0)
         else:
-            axes[i].set_title('{}'.format(label), fontsize='small', snap=True)
+            color = (0, 0, 0)
+        axes[i].set_title(label, fontsize='small', snap=True, color=color)
 
     fig.canvas.set_window_title(get_window_title())
     fig.canvas.draw()
 
 
 def update():
-    # save labels to label_data.npy
-    global dcm_labels
-    save_dcm_labels(dcm_labels, verbal=False)
-
     update_plot()
 
 
 def on_key_press(event):
-    global dcm_labels, subjects, subject_index, displayed_subject, current_label
-    global color_index, color_labels
+    global metadata, results, predictions, image_collection, index, last_index, current_label
+    last_index = index
 
     if event.key == 'left':
-        subject_index -= 1
+        index -= 1
     if event.key == 'right':
-        subject_index += 1
+        index += 1
 
     if event.key == 'h':
-        subject_index -= 10
+        index -= 10
     if event.key == 'l':
-        subject_index += 10
+        index += 10
 
-    if event.key == 't':
-        color_index += 1
-        color_index %= len(color_labels)
+    if event.key == ' ':
+        patient = image_collection[index]
+        for i, cr_code in enumerate(patient[1]):
+            metadata[cr_code]['label'] = predictions[cr_code]
 
-    subject_index %= len(subjects)
+    index %= len(image_collection)
 
     try:
-        current_label = Label(int(event.key))
-    except(ValueError, KeyError):
+        current_label = LABELS[int(event.key)]
+    except(ValueError, KeyError, IndexError):
         pass
 
     update()
 
 
 def on_button_press(event):
-    global subject_index, axes, subjects, dcm_labels, dicom_dict, current_label
+    global metadata, results, predictions, image_collection, index, last_index
+    patient = image_collection[index]
 
-    fig.canvas.draw()
-
-    subject = subjects[subject_index]
     for i, ax in enumerate(axes):
         if event.inaxes == ax:
-            ndcm = subject.get_ndcms()[i]
-            dcm_labels[ndcm] = current_label
+            cr_code = patient[i]
+            if current_label:
+                metadata[cr_code]['label'] = current_label
+            else:
+                del metadata[cr_code]['label']
 
+    fig.canvas.draw()
     update()
 
 
 def main():
-    global dcm_dataset
-    global subject_index, axes, subjects, dcm_labels, current_label
-    global dicom_dict, dcm_labels, subjects, LABEL_FILE
+    global metadata, results, predictions, image_collection
+    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
 
-    dcm_dataset = DicomDataset(data_directory=args.dir, preload_data=True)
-    subjects = list(dcm_dataset.subjects.values())
+    metadata = cri.load_metadata()
+    for p in metadata:
+        if 'label' in p:
+            print(p['label'])
+    results = cri.load_results()
 
-    dcm_labels = load_dcm_labels(dcm_dataset)
+    parser = argparse.ArgumentParser()
+    description = \
+        '''Start in prediction mode. Note that in predicitons mode, 
+    you can press the spacebar to use the predictions to label the images'''
+    parser.add_argument('-P', '--predictions', help=description,
+                        action='store_true')
+    args = parser.parse_args()
+
+    if args.predictions:
+        print()
+        print('{:-^80}'.format(' Predictions List '))
+        for i, result in enumerate(results):
+            print('%d.\tModule: %s' % (i, result['tfhub_module']))
+            print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' % (
+                result['training_steps'],
+                result['learning_rate'],
+                result['test_accuracy'])
+            )
+            print()
+
+        while True:
+            try:
+                index = int(input('Which of the predictions would you like to use? '))
+                p = results[index]['predictions']
+                break
+            except (IndexError, ValueError):
+                print('Invalid index')
+                continue
+
+        predictions = {}
+        for basename, result in p.items():
+            cr_code = cri.extract_cr_code(basename)
+            predictions[cr_code] = result[0]
+
+        image_collection = {}
+        for basename, result in predictions.items():
+            cr = cri.parse_cr_code(basename, match=False)
+            image_collection[(cr[0], cr[1])] = []
+
+        # get list of patients then add all of their images (not just from predictions)
+        for cr_code in metadata.keys():
+            cr = cri.parse_cr_code(cr_code)
+            if (cr[0], cr[1]) in image_collection:
+                image_collection[(cr[0], cr[1])].append(cr_code)
+    else:
+        image_collection = collections.defaultdict(list)
+        for cr_code in metadata.keys():
+            cr = cri.parse_cr_code(cr_code)
+            image_collection[(cr[0], cr[1])].append(cr_code)
+
+    image_collection = sorted(image_collection.items())
 
     fig.canvas.mpl_connect('key_press_event', on_key_press)
     fig.canvas.mpl_connect('button_press_event', on_button_press)
@@ -150,18 +202,6 @@ def main():
                         hspace=0.2, wspace=0)
     update()
     plt.show()
-
-    save_dcm_labels(dcm_labels)
-
-    # save as jpegs
-    print('saving labeled images...')
-
-    try:
-        shutil.rmtree('cap_labeled')
-    except FileNotFoundError:
-        pass
-
-    os._exit(1)
 
 
 if __name__ == "__main__":

@@ -36,6 +36,8 @@ FAKE_QUANT_OPS = ('FakeQuantWithMinMaxVars',
                   'FakeQuantWithMinMaxVarsPerChannel')
 
 
+training_image_paths = []
+
 def generate_augmented_images(image_dir):
     def append_to_basename(jpg_path, append_string):
         if jpg_path[-4:] != '.jpg':
@@ -44,7 +46,7 @@ def generate_augmented_images(image_dir):
         return jpg_path[:-4] + append_string + '.jpg'
 
     augment_angles = [
-        355, 5, 85, 90, 95
+        355, 5, 85, 90, 95, 0
     ]
     aug_count = len(augment_angles)
 
@@ -62,19 +64,25 @@ def generate_augmented_images(image_dir):
         for angle in augment_angles:
             positive_angle = angle % 360
             augmented_path = append_to_basename(
-                path, '_R%03d.aug' % positive_angle)
+                path, '_CP20_R%03d.aug' % positive_angle)
+            training_image_paths.append(augmented_path)
 
             if augmented_path not in aug_paths:
                 if loaded_image[0] != index:
                     loaded_image = (index, scipy.ndimage.imread(path))
 
                 positive_angle = angle % 360
+
+                crop_ratio = 0.2
+                lx, ly = loaded_image[1].shape
+                cropped_image = loaded_image[1][int(lx * crop_ratio): int(- lx * crop_ratio), 
+                        int(ly * crop_ratio): int(- ly * crop_ratio)]
+
                 rotated_image = scipy.ndimage.interpolation.rotate(
-                    loaded_image[1], positive_angle)
+                    cropped_image, positive_angle)
 
                 scipy.misc.imsave(augmented_path, rotated_image)
-            else:
-                aug_paths.remove(augmented_path)
+
 
             current_percentage = (index + 1) / len(src_paths) * 100
             if fives != current_percentage // 5:
@@ -84,9 +92,6 @@ def generate_augmented_images(image_dir):
                     index * aug_count,
                     total_count)
                 )
-        os.remove(path)
-
-    # remaining aug_paths are useless
 
 
 def get_hash_percentage(hash_name):
@@ -149,9 +154,14 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
         for extension in extensions:
             file_glob = os.path.join(image_dir, dir_name, '*.' + extension)
             file_list.extend(tf.gfile.Glob(file_glob))
+
+        # use only training images that we augmented
+        file_list = list(filter(lambda path: 'testing' in path or path in training_image_paths, file_list))
+
         if not file_list:
             tf.logging.warning('No files found')
             continue
+
         if len(file_list) < 20:
             tf.logging.warning(
                 'WARNING: Folder has less than 20 images, which may cause issues.')
@@ -824,8 +834,6 @@ def run_final_eval(train_session, module_spec, class_count, image_lists,
         })
     tf.logging.set_verbosity(tf.logging.INFO)
 
-    tf.logging.info('Percentages: {}'.format(str(percentages)))
-
     tf.logging.info('Final test accuracy = %.1f%% (N=%d)' %
                     (test_accuracy * 100, len(test_bottlenecks)))
 
@@ -1009,6 +1017,11 @@ def main(_):
 
     # Prepare necessary directories that can be used during training
     prepare_file_system()
+    
+    # Check if results dir exists
+    model_dir = os.path.join(FLAGS.result_dir, 'model')
+    if (os.path.exists(model_dir)):
+        print('{} directory already exists'.format(model_dir))
 
     # Look at the folder structure, and create lists of all the images.
     image_lists = create_image_lists(FLAGS.image_dir, None,

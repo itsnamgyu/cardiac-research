@@ -42,6 +42,11 @@ Images inside `images` directory, ready for use with the `cr_learn.py` module.
 
 ### results['predictions']
 {
-	'image_basename': [answer, truth]
+	'image_basename': {
+		'prediction': 'oap', 
+		'truth': 'oap', 
+		'percentages': {'oap': float (0-1)...}
+	}
 	...
+	# from tuple of prediction and truth
 }

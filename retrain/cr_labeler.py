@@ -23,6 +23,11 @@ DISPLAY_NAME = {
 
 axes = []
 predictions = None
+percentages = None # { 'oap': '0.009' ... } Note: it's a string number
+
+show_chart = False
+
+all_bars = []
 
 current_label = None
 fig = plt.figure()
@@ -31,7 +36,7 @@ last_index = None
 
 
 def get_window_title():
-    global metadata, results, predictions, image_collection, index, current_label
+    global metadata, results, predictions, percentages, image_collection, index, current_label
     patient = image_collection[index]
 
     if current_label:
@@ -47,10 +52,12 @@ def get_window_title():
 
 
 def update_plot():
-    global metadata, results, predictions, image_collection, index, last_index, current_label
+    global metadata, results, predictions, percentages, image_collection
+    global index, last_index, current_label, show_chart, all_bars
     patient = image_collection[index]
 
     if last_index != index:
+        all_bars = []
         del axes[:]
         fig.clf()
 
@@ -60,7 +67,29 @@ def update_plot():
             axes.append(fig.add_subplot(4, 6, i + 1))
 
             image = scipy.ndimage.imread(path)
-            axes[i].imshow(image, cmap=plt.cm.gray)
+            extent = (0, 10, 0, 10)
+            axes[i].imshow(image, cmap=plt.cm.gray, extent=extent)
+
+            if percentages:
+                patient_percentages = []
+                for label in LABELS[1:]:
+                    patient_percentages.append(float(percentages[cr_code][label]))
+
+                answer = metadata[cr_code].get('label', None)
+                if not answer or predictions[cr_code] == answer:
+                    wrong_color = (0.75, 0.75, 0.75)
+                    right_color = (0.75, 0.75, 0.75)
+                else:
+                    wrong_color = (1, 0, 0)
+                    right_color = (0, 1, 0)
+
+                bars = axes[i].bar(np.arange(1, 10, 2), np.array(patient_percentages) * 10,
+                                   color=wrong_color)
+                all_bars.extend(bars)
+
+                if answer:
+                    bars[LABELS[1:].index(answer)].set_color(right_color)
+
             axes[i].set_axis_off()
     
     for i, cr_code in enumerate(patient[1]):
@@ -80,6 +109,12 @@ def update_plot():
             color = (0, 0, 0)
         axes[i].set_title(label, fontsize='small', snap=True, color=color)
 
+    for bar in all_bars:
+        if show_chart:
+            bar.set_alpha(0.5)
+        else:
+            bar.set_alpha(0)
+
     fig.canvas.set_window_title(get_window_title())
     fig.canvas.draw()
 
@@ -89,7 +124,7 @@ def update():
 
 
 def on_key_press(event):
-    global metadata, results, predictions, image_collection, index, last_index, current_label
+    global metadata, results, predictions, image_collection, index, last_index, current_label, show_chart
     last_index = index
 
     if event.key == 'left':
@@ -101,6 +136,9 @@ def on_key_press(event):
         index -= 10
     if event.key == 'l':
         index += 10
+
+    if event.key == 'c':
+        show_chart = not show_chart
 
     if event.key == ' ':
         patient = image_collection[index]
@@ -118,7 +156,7 @@ def on_key_press(event):
 
 
 def on_button_press(event):
-    global metadata, results, predictions, image_collection, index, last_index
+    global metadata, results, image_collection, index, last_index
     patient = image_collection[index]
 
     for i, ax in enumerate(axes):
@@ -134,7 +172,7 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, image_collection
+    global metadata, results, predictions, percentages ,image_collection
     # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
 
     metadata = cri.load_metadata()
@@ -173,9 +211,11 @@ def main():
                 continue
 
         predictions = {}
+        percentages = {}
         for basename, result in p.items():
             cr_code = cri.extract_cr_code(basename)
-            predictions[cr_code] = result[0]
+            predictions[cr_code] = result['prediction']
+            percentages[cr_code] = result['percentages']
 
         image_collection = {}
         for basename, result in predictions.items():

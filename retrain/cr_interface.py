@@ -45,6 +45,8 @@ def save_metadata(metadata: Dict[str, Dict[str, str]]) -> None:
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f)
 
+    print('Metadata file {} has been updated (including labels etc.)'.format(METADATA_FILE))
+
 
 def get_cr_code(dataset_index, patient_index, phase_index, slice_index):
     cr_code = 'D%02d_P%08d_P%02d_S%02d' % (dataset_index, patient_index,
@@ -152,6 +154,33 @@ def load_results(results_dir='results'):
         json.dump(result, open(path, 'w'))
 
     return results
+
+
+def select_result(results):
+    print()
+    print('{:-^80}'.format(' Predictions List '))
+    for i, result in enumerate(results):
+        print('%d.\tModule: %s' % (i, result['tfhub_module']))
+        print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' % (
+            result['training_steps'],
+            result['learning_rate'],
+            result['test_accuracy'])
+        )
+        print()
+
+    while True:
+        try:
+            index = int(input('Which of the predictions would you like to use? '))
+            return results[index]
+        except (IndexError, ValueError):
+            print('Invalid index')
+            continue
+
+
+def load_result(results_dir='results'):
+    results = load_results(results_dir)
+    result = select_result(results)
+    return result
 
 
 def main():

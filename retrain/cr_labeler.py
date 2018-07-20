@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import cr_interface as cri
 import scipy.misc
 import scipy.ndimage
+import regression
 
 
 LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
@@ -23,7 +24,7 @@ DISPLAY_NAME = {
 
 axes = []
 predictions = None
-percentages = None # { 'oap': '0.009' ... } Note: it's a string number
+percentages = None  # { 'oap': '0.009' ... } Note: it's a string number
 
 show_chart = False
 
@@ -44,20 +45,21 @@ def get_window_title():
     else:
         label = 'NO_LABEL'
 
-
     title = 'DB#{:02d} PATIENT{:08d} ({:03d}/{:03d}) [ {:^10s} ]'
-    title = title.format(patient[0][0], patient[0][1], index + 1, len(image_collection), label)
+    title = title.format(patient[0][0], patient[0]
+                         [1], index + 1, len(image_collection), label)
 
     return title
 
 
 def update_plot():
     global metadata, results, predictions, percentages, image_collection
-    global index, last_index, current_label, show_chart, all_bars
+    global index, last_index, current_label, show_chart, all_bars, all_texts
     patient = image_collection[index]
 
     if last_index != index:
         all_bars = []
+        all_texts = []
         del axes[:]
         fig.clf()
 
@@ -73,7 +75,8 @@ def update_plot():
             if percentages:
                 patient_percentages = []
                 for label in LABELS[1:]:
-                    patient_percentages.append(float(percentages[cr_code][label]))
+                    patient_percentages.append(
+                        float(percentages[cr_code][label]))
 
                 answer = metadata[cr_code].get('label', None)
                 if not answer or predictions[cr_code] == answer:
@@ -86,22 +89,38 @@ def update_plot():
                 bars = axes[i].bar(np.arange(1, 10, 2), np.array(patient_percentages) * 10,
                                    color=wrong_color)
                 all_bars.extend(bars)
+                for j, p in enumerate(patient_percentages):
+                    text = axes[i].text(j * 2 + 1, p * 10 + 0.5, '%d' % (p * 100),
+                                        color=(1, 1, 0), horizontalalignment='center',
+                                        bbox=dict(facecolor='black', alpha=0.5))
+                    text.set_fontsize(8)
+                    all_texts.append(text)
 
                 if answer:
                     bars[LABELS[1:].index(answer)].set_color(right_color)
 
             axes[i].set_axis_off()
-    
+
+    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
+    weighted_averages = []
+    for cr_code in patient[1]:
+        avg = 0
+        for i, label in enumerate(LABELS[1:]):
+            avg += float(percentages[cr_code][label]) * (i + 1)
+        weighted_averages.append(avg)
+    regressed_averages = regression.regress(weighted_averages)
+
     for i, cr_code in enumerate(patient[1]):
-        l = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
-        label = '{}'.format(DISPLAY_NAME[metadata[cr_code].get('label', 'nan')])
+        truth = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
         if predictions:
-            p = DISPLAY_NAME[predictions[cr_code]]
-            label += ' / {} (P)'.format(DISPLAY_NAME[predictions[cr_code]])
-            if l == '-':
+            prediction = DISPLAY_NAME[predictions[cr_code]]
+
+            label = '{} / {} (P)'.format(truth, prediction)
+            label += ' [{:.2f}]'.format(regressed_averages[i])
+            if truth == '-':
                 color = (0.2, 0.2, 0.2)
             else:
-                if l == p:
+                if truth == prediction:
                     color = (0, 0.6, 0)
                 else:
                     color = (0.75, 0, 0)
@@ -114,6 +133,13 @@ def update_plot():
             bar.set_alpha(0.5)
         else:
             bar.set_alpha(0)
+    for text in all_texts:
+        if show_chart:
+            text.set_alpha(1)
+            text.get_bbox_patch().set_alpha(0.5)
+        else:
+            text.set_alpha(0)
+            text.get_bbox_patch().set_alpha(0)
 
     fig.canvas.set_window_title(get_window_title())
     fig.canvas.draw()
@@ -161,7 +187,7 @@ def on_button_press(event):
 
     for i, ax in enumerate(axes):
         if event.inaxes == ax:
-            cr_code = patient[i]
+            cr_code = patient[1][i]
             if current_label:
                 metadata[cr_code]['label'] = current_label
             else:
@@ -172,7 +198,7 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, percentages ,image_collection
+    global metadata, results, predictions, percentages, image_collection
     # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
 
     metadata = cri.load_metadata()
@@ -183,7 +209,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     description = \
-        '''Start in prediction mode. Note that in predicitons mode, 
+        '''Start in prediction mode. Note that in predicitons mode,
     you can press the spacebar to use the predictions to label the images'''
     parser.add_argument('-P', '--predictions', help=description,
                         action='store_true')
@@ -203,7 +229,8 @@ def main():
 
         while True:
             try:
-                index = int(input('Which of the predictions would you like to use? '))
+                index = int(
+                    input('Which of the predictions would you like to use? '))
                 p = results[index]['predictions']
                 break
             except (IndexError, ValueError):
@@ -242,6 +269,8 @@ def main():
                         hspace=0.2, wspace=0)
     update()
     plt.show()
+
+    cri.save_metadata(metadata)
 
 
 if __name__ == "__main__":

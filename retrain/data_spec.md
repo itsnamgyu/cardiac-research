@@ -10,13 +10,6 @@
 
 Note that the slice index must be maintained in-order. (oap-obs, obs-oap optional)
 
-## Training Images
-Images inside `images` directory, ready for use with the `cr_learn.py` module.
-
-`<cr_code>_CP20_R180<.aug>.jpg`
-
-- Cropped 20% on all four sides (10x10 to 6x6)
-- Rotated by 180 degress
 
 ## Labels
 - `oap`: Out of apical
@@ -25,11 +18,37 @@ Images inside `images` directory, ready for use with the `cr_learn.py` module.
 - `bs`: Basal
 - `obs`: Out of basal
 
-## Image Metadata [`cr_metadata.json`]
+## Image Metadata
+`cr_metadata.json`
+```
+{
+	'D00_P00000101_P00_S00':
+	{
+		'original_filepath': 'cap_challenge/DET0000101/DET0000101_SA12_ph0.dcm', 
+		'original_name': 'DET0000101_SA12_ph0', 
+		'label': 'obs'
+	}
+	...
+}
+```
 
+## Image Database
+Original images inside `cr_database` directory.
+
+Filename format: `<cr_code>.jpg`
+
+## Training Images
+Images inside `images` directory, ready for use with the `cr_learn.py` module.
+
+`<cr_code>_CP20_R180<.aug>.jpg`
+
+- Cropped 20% on all four sides (10x10 to 6x6)
+- Rotated by 180 degress
 
 ## Train Results [`results.json`]
-[{
+```
+[
+	{
 	'tfhub_module': url of tfhub module
 	'training_steps': int
 	'learning_rate': float
@@ -38,14 +57,19 @@ Images inside `images` directory, ready for use with the `cr_learn.py` module.
 	'test_accuracy': float
 	'training_images': [paths]
 	'predictions': explained below
-}...]
+	}
+	...
+]
+```
 
 ### results['predictions']
+```
 {
-	'image_basename': {
+	'image_basename'
+	{
 		'prediction': 'oap', 
 		'truth': 'oap', 
 		'percentages': {'oap': float (0-1)...}
-		// from tuple of prediction and truth
 	}
 }
+```

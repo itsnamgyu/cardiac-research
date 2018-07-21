@@ -10,14 +10,15 @@ METADATA_FILE = 'cr_metadata.json'
 IMAGES_DIR = 'images'
 
 '''
-Metadata Dict
+cr_metadata.json
 {
-    cr_code: {
-        database_index: int
-        phase_index: int
-        slice_index: int
-        original_filepath: int
+    'D00_P00000101_P00_S00':
+    {
+            'original_filepath': 'cap_challenge/DET0000101/DET0000101_SA12_ph0.dcm',
+            'original_name': 'DET0000101_SA12_ph0',
+            'label': 'obs'
     }
+    ...
 }
 '''
 

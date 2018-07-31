@@ -4,6 +4,7 @@ import shutil
 from typing import Dict
 import re
 import glob
+import argparse
 
 DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'
@@ -101,7 +102,7 @@ def save_training_data():
 
 
 # Temp Function: save only images w/ labels (CAP training set)
-def prepare_images():
+def prepare_images(three_label=False):
     print('Saving test data.')
     metadata = load_metadata()
 
@@ -126,7 +127,11 @@ def prepare_images():
                 dest = 'training_{}.jpg'.format(cr_code)
             else:
                 dest = 'testing_{}.jpg'.format(cr_code)
-            dest = os.path.join(info['label'], dest)
+            label = info['label']
+            if three_label:
+                if label != 'obs' and label != 'oap':
+                    label = 'in'
+            dest = os.path.join(label, dest)
             dest = os.path.join(IMAGES_DIR, dest)
             src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
             os.makedirs(os.path.dirname(dest), exist_ok=True)
@@ -188,7 +193,12 @@ def main():
     # visualize_metadata()
     # save_training_data()
     # save_training_data()
-    prepare_images()
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-T', '--three_label', action='store_true')
+    args = parser.parse_args()
+
+    print(args.three_label)
+    prepare_images(three_label=args.three_label)
 
 
 if __name__ == "__main__":

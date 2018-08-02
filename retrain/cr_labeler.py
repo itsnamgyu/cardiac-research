@@ -101,15 +101,16 @@ def update_plot():
 
             axes[i].set_axis_off()
 
-    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
-    weighted_averages = []
-    for cr_code in patient[1]:
-        avg = 0
-        for i, label in enumerate(LABELS[1:]):
-            avg += float(percentages[cr_code][label]) * (i + 1)
-        weighted_averages.append(avg)
-    regressed_averages = regression.regress(weighted_averages)
+    if percentages:
+        weighted_averages = []
+        for cr_code in patient[1]:
+            avg = 0
+            for i, label in enumerate(LABELS[1:]):
+                avg += float(percentages[cr_code][label]) * (i + 1)
+            weighted_averages.append(avg)
+        regressed_averages = regression.regress(weighted_averages)
 
+    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
     for i, cr_code in enumerate(patient[1]):
         truth = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
         if predictions:
@@ -126,6 +127,7 @@ def update_plot():
                     color = (0.75, 0, 0)
         else:
             color = (0, 0, 0)
+            label = truth
         axes[i].set_title(label, fontsize='small', snap=True, color=color)
 
     for bar in all_bars:

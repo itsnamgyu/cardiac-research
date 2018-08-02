@@ -48,6 +48,7 @@ def generate_dataset_collections():
 
     IMAGES_DIR = 'images'
     image_paths = glob.glob(op.join(IMAGES_DIR, '**/*.aug.jpg'))
+    image_paths.extend(glob.glob(op.join(IMAGES_DIR, '**/testing*.jpg')))
     # 'images/obs/training_D00_P00026901_P00_S10_CP20_R005.aug.jpg
 
     for path in image_paths:
@@ -98,7 +99,6 @@ def summarize_collection(collection):
 
         total_image_count += image_count
         summary[label]['image_count'] = image_count
-        summary[label]['image_per_patient'] = image_count / patient_count
 
     summary['all']['patient_count'] = patient_count
     summary['all']['image_count'] = total_image_count
@@ -106,6 +106,7 @@ def summarize_collection(collection):
     for label, label_dict in summary.items():
         if label != 'all':
             label_dict['ratio'] = label_dict['image_count'] / total_image_count
+            label_dict['image_per_patient'] = label_dict['image_count'] / patient_count
 
     return summary
 
@@ -157,6 +158,8 @@ def load_modded_results(tri_label=True):
 
     if tri_label:
         results = [r for r in results if is_tri_label_result(r)]
+    else:
+        results = [r for r in results if not is_tri_label_result(r)]
 
     for result in results:
         modded_result = copy.deepcopy(result)
@@ -194,14 +197,39 @@ def main():
     # Get images by label
     training_set, testing_set = generate_dataset_collections()
 
+
     # Get summaries
     training_set_summary = summarize_collection(training_set)
     testing_set_summary = summarize_collection(testing_set)
 
-    # Load Results w/ Bilabel Predictions
-    results = load_modded_results(tri_label = False)
+    print('{:-^80}'.format('Training Set'))
+    print(json.dumps(training_set_summary, indent=4))
+
+    print('{:-^80}'.format('Test Set'))
+    print(json.dumps(testing_set_summary, indent=4))
+
+    # Load Results w/ Bilabel Predictions (Tri-label learning)
+    results = load_modded_results(tri_label=True)
     results.sort(key=lambda r: r['test_accuracy'], reverse=True)
 
+    print('{:-^80}'.format('Learning Results (Tri-Label)'))
+    for i, result in enumerate(results):
+        print()
+        print('%-5dModule: %-20sSteps: %-10sRate: %-10sAccuracy: %-10.4fBi-Accuracy: %-10.4f' % (
+            i,
+            result['module_name'],
+            result['training_steps'],
+            result['learning_rate'],
+            float(result['test_accuracy']),
+            result['bilabel_test_accuracy'],
+        ))
+
+    # Load Results w/ Bilabel Predictions (5-label learning)
+    results = load_modded_results(tri_label=False)
+    results.sort(key=lambda r: r['test_accuracy'], reverse=True)
+
+    print()
+    print('{:-^80}'.format('Learning Results (5-Label)'))
     for i, result in enumerate(results):
         print()
         print('%-5dModule: %-20sSteps: %-10sRate: %-10sAccuracy: %-10.4fBi-Accuracy: %-10.4f' % (

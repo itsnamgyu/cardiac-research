@@ -47,7 +47,8 @@ def save_metadata(metadata: Dict[str, Dict[str, str]]) -> None:
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f)
 
-    print('Metadata file {} has been updated (including labels etc.)'.format(METADATA_FILE))
+    print('Metadata file {} has been updated (including labels etc.)'.format(
+        METADATA_FILE))
 
 
 def get_cr_code(dataset_index, patient_index, phase_index, slice_index):
@@ -62,6 +63,8 @@ re_cr_code = re.compile('D([0-9]{2})_P([0-9]{8})_P([0-9]{2})_S([0-9]{2})')
 '''
 Return cr_code from string that contains one
 '''
+
+
 def extract_cr_code(string):
     return re_cr_code.search(string).group(0)
 
@@ -69,6 +72,8 @@ def extract_cr_code(string):
 '''
 Return: (dataset_index, patient_index, phase_index, slice_index)
 '''
+
+
 def parse_cr_code(cr_code, match=True):
     if match:
         match = re_cr_code.match(cr_code)
@@ -144,6 +149,27 @@ def visualize_metadata():
 
 
 def load_results(results_dir='results'):
+    '''
+    Returns
+    [
+        {
+            'tfhub_module': url of tfhub module
+            'training_steps': int
+            'learning_rate': float
+            'validation_percentage': float
+            'batch_size': int
+            'test_accuracy': float
+            'training_images': [paths]
+            'predictions': {
+                'image_basename': {
+                        'prediction': 'oap',
+                        'truth': 'oap',
+                        'percentages': {'oap': float (0-1)...}
+                }, ...
+            }
+        }, ...
+    ]
+    '''
     result_paths = glob.glob(os.path.join(results_dir, '**/results.json'))
     results = []
 
@@ -176,7 +202,8 @@ def select_result(results):
 
     while True:
         try:
-            index = int(input('Which of the predictions would you like to use? '))
+            index = int(
+                input('Which of the predictions would you like to use? '))
             return results[index]
         except (IndexError, ValueError):
             print('Invalid index')

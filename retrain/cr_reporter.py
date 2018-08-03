@@ -92,7 +92,7 @@ def summarize_collection(collection):
     patient_count = 0
     total_image_count = 0
     for label, patient_dict in collection.items():
-        patient_count += len(patient_dict)
+        patient_count = max(len(patient_dict), patient_count)
         image_count = 0
         for patient_index, images in patient_dict.items():
             image_count += len(images)

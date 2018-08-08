@@ -63,13 +63,18 @@ def main():
     predictions = []
     truths = []
     for result in p.values():
-        predictions.append(result[0])
-        truths.append(result[1])
+        predictions.append(result['prediction'])
+        truths.append(result['truth'])
 
     y_test = truths
     y_pred = predictions
 
-    class_names = LABELS[1:]
+    class_names = sorted(LABELS[1:])
+    ############################
+    ############################
+    ############################
+    ############################
+    class_names = sorted(['oap', 'oba', 'in'])
 
     import itertools
     import numpy as np
@@ -118,7 +123,6 @@ def main():
     np.set_printoptions(precision=2)
 
     # Plot non-normalized confusion matrix
-    plt.figure()
     plot_confusion_matrix(cnf_matrix, classes=class_names,
                           title='Confusion matrix, without normalization')
 

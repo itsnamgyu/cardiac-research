@@ -3,3 +3,6 @@ tensorflow_hub
 matplotlib
 pydicom
 scikit-image
+sklearn
+jupyter
+pandas

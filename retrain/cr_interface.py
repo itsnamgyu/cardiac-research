@@ -10,6 +10,7 @@ DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'
 IMAGES_DIR = 'images'
 
+
 '''
 cr_metadata.json
 {
@@ -107,7 +108,7 @@ def save_training_data():
 
 
 # Temp Function: save only images w/ labels (CAP training set)
-def prepare_images(three_label=False):
+def prepare_images(tri_label=False, oversample=False):
     print('Saving test data.')
     metadata = load_metadata()
 
@@ -125,22 +126,33 @@ def prepare_images(three_label=False):
     print('Training data: %d patients.' % train_count)
     print('Test data: %d patients.' % test_count)
 
-    for cr_code, info in metadata.items():
-        cr = parse_cr_code(cr_code)
+    for original_cr_code, info in metadata.items():
+        cr = parse_cr_code(original_cr_code)
+
         if cr[0] == 0 and 'label' in info:
-            if cr[1] in train_patients:
-                dest = 'training_{}.jpg'.format(cr_code)
-            else:
-                dest = 'testing_{}.jpg'.format(cr_code)
             label = info['label']
-            if three_label:
+            if tri_label:
                 if label != 'obs' and label != 'oap':
                     label = 'in'
-            dest = os.path.join(label, dest)
-            dest = os.path.join(IMAGES_DIR, dest)
-            src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
-            os.makedirs(os.path.dirname(dest), exist_ok=True)
-            shutil.copy(src, dest)
+
+            cr_codes = [original_cr_code]
+            if oversample:
+                if label != 'in':
+                    cr_codes.append('D99' + original_cr_code[3:])
+                    cr_codes.append('D98' + original_cr_code[3:])
+                    cr_codes.append('D97' + original_cr_code[3:])
+                    cr_codes.append('D96' + original_cr_code[3:])
+
+            for cr_code in cr_codes:
+                    if cr[1] in train_patients:
+                        dest = 'training_{}.jpg'.format(cr_code)
+                    else:
+                        dest = 'testing_{}.jpg'.format(cr_code)
+                    dest = os.path.join(label, dest)
+                    dest = os.path.join(IMAGES_DIR, dest)
+                    src = os.path.join(DATABASE_DIR, original_cr_code + '.jpg')
+                    os.makedirs(os.path.dirname(dest), exist_ok=True)
+                    shutil.copy(src, dest)
 
 
 def visualize_metadata():
@@ -221,11 +233,12 @@ def main():
     # save_training_data()
     # save_training_data()
     parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--three_label', action='store_true')
+    parser.add_argument('-T', '--tri_label', action='store_true')
+    parser.add_argument('-O', '--oversample', action='store_true')
     args = parser.parse_args()
 
-    print(args.three_label)
-    prepare_images(three_label=args.three_label)
+    print(args.tri_label)
+    prepare_images(tri_label=args.tri_label, oversample=args.oversample)
 
 
 if __name__ == "__main__":

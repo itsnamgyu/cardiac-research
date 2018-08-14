@@ -26,7 +26,10 @@ cr_metadata.json
 
 
 def load_metadata() -> Dict[str, Dict[str, str]]:
-    # load or initialize metadata
+    '''
+    Load or initialize metadata file
+    '''
+
     if os.path.isfile(METADATA_FILE):
         try:
             with open(METADATA_FILE) as f:

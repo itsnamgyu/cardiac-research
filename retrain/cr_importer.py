@@ -5,6 +5,8 @@ from typing import List
 from abc import ABC, abstractmethod
 
 import pydicom
+from skimage import exposure
+import scipy.misc
 
 
 class DataReference(ABC):

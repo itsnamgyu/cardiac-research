@@ -4,10 +4,8 @@ from typing import List, Dict, Tuple
 import os
 import numpy as np
 import glob
-import scipy.misc
 import pydicom
 import re
-from skimage import exposure
 
 
 # Loader interface for CAP challenge images

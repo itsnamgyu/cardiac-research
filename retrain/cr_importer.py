@@ -7,6 +7,7 @@ from abc import ABC, abstractmethod
 import pydicom
 from skimage import exposure
 import scipy.misc
+import numpy as np
 
 
 class DataReference(ABC):
@@ -52,7 +53,7 @@ class DataImporter(ABC):
     def load_data_references(self) -> List[DataReference]:
         pass
 
-    def import_data(self, dataset_index: int):
+    def import_data(self, dataset_index: int, test=False):
         metadata = cri.load_metadata()
 
         # load using loader
@@ -62,15 +63,18 @@ class DataImporter(ABC):
             cr_code = cri.get_cr_code(dataset_index, r.patient_index,
                                       r.phase_index, r.slice_index)
             print('processing {}'.format(cr_code))
+
             if cr_code in metadata:
                 print('{} already exists in database'.format(cr_code))
                 continue
 
-            metadata[cr_code] = {}
-            metadata[cr_code]['original_filepath'] = r.original_filepath
-            metadata[cr_code]['original_name'] = r.original_name
-
             path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
-            r.save_image_as_jpg(path)
+            if test:
+                print(cr_code, r.original_name, r.original_filepath, path)
+            else:
+                metadata[cr_code] = {}
+                metadata[cr_code]['original_filepath'] = r.original_filepath
+                metadata[cr_code]['original_name'] = r.original_name
+                r.save_image_as_jpg(path)
 
         cri.save_metadata(metadata)

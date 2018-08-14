@@ -61,21 +61,17 @@ def get_cr_code(dataset_index, patient_index, phase_index, slice_index):
 re_cr_code = re.compile('D([0-9]{2})_P([0-9]{8})_P([0-9]{2})_S([0-9]{2})')
 
 
-'''
-Return cr_code from string that contains one
-'''
-
-
 def extract_cr_code(string):
-    return re_cr_code.search(string).group(0)
-
-
-'''
-Return: (dataset_index, patient_index, phase_index, slice_index)
-'''
+    '''
+    Return cr_code from string that contains one
+    '''
+    return 'D00' + re_cr_code.search(string).group(0)[3:]
 
 
 def parse_cr_code(cr_code, match=True):
+    '''
+    Return: (dataset_index, patient_index, phase_index, slice_index)
+    '''
     if match:
         match = re_cr_code.match(cr_code)
     else:

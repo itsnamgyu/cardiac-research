@@ -13,24 +13,6 @@ from skimage import exposure
 # Loader interface for CAP challenge images
 
 
-class DcmDataReference(cr_importer.DataReference):
-    def __init__(self, patient_index: int, slice_index: int, phase_index: int, original_filepath: str,
-                 dcm: pydicom.dataset.Dataset):
-        super().__init__(patient_index, slice_index, phase_index, original_filepath)
-        self.dcm = dcm
-
-    @staticmethod
-    def scale_color(pixel_array):
-        p2, p98 = np.percentile(pixel_array, (2, 98))
-        return exposure.rescale_intensity(pixel_array, in_range=(p2, p98))
-
-    def save_image_as_jpg(self, path: str) -> None:
-        img = self.dcm.pixel_array
-        img = DcmDataReference.scale_color(img)
-        scipy.misc.imsave(path, img)
-        pass
-
-
 class DataImporter(cr_importer.DataImporter):
     def __init__(self, import_path='cap_challenge_validation'):
         self.import_path = import_path
@@ -61,7 +43,7 @@ class DataImporter(cr_importer.DataImporter):
 
         patient_dict: Dict[int, pydicom.dataset.Dataset] = {}
         filtered_paths = DataImporter.get_filtered_dcm_paths(self.import_path)
-        
+
         for dcm_path in filtered_paths:
             match = re_dcm.search(dcm_path)
             patient_index = match.group(1)
@@ -77,17 +59,19 @@ class DataImporter(cr_importer.DataImporter):
             patient_dict[patient_index].append([pydicom.dcmread(dcm_path), slice_index,
                                                 phase_index, dcm_path])
 
-        dcm_references: List[DcmDataReference] = []
+        dcm_references: List[cr_importer.DcmDataReference] = []
         for patient_index, patient in patient_dict.items():
             try:
-                patient = sorted(patient, key=lambda image_data: image_data[0].SliceLocation)
+                patient = sorted(
+                    patient, key=lambda image_data: image_data[0].SliceLocation)
                 for index, image_data in enumerate(patient):
                     image_data[1] = index
             except AttributeError:
                 pass
 
             for d in patient:
-                dcm_references.append(DcmDataReference(patient_index, d[1], d[2], d[3], d[0]))
+                dcm_references.append(cr_importer.DcmDataReference(
+                    patient_index, d[1], d[2], d[3], d[0]))
 
         return dcm_references
 

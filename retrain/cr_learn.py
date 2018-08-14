@@ -155,9 +155,6 @@ def create_image_lists(image_dir, testing_percentage, validation_percentage):
             file_glob = os.path.join(image_dir, dir_name, '*.' + extension)
             file_list.extend(tf.gfile.Glob(file_glob))
 
-        # use only training images that we augmented
-        file_list = list(filter(lambda path: 'testing' in path or path in training_image_paths, file_list))
-
         if not file_list:
             tf.logging.warning('No files found')
             continue

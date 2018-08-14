@@ -106,52 +106,59 @@ def save_training_data():
         shutil.copy(src, dest)
 
 
-# Temp Function: save only images w/ labels (CAP training set)
-def prepare_images(tri_label=False, oversample=False):
+def cut_list(sorted_list, ratio):
+    '''
+    Get a tuple of two lists that each contain ratio, 1 - ratio of
+    the original list
+    '''
+    n1 = int(len(sorted_list) * ratio)
+    n2 = len(sorted_list) - n1
+    first = sorted_list[:n1]
+    second = sorted_list[n1:]
+
+    return first, second
+
+
+def prepare_images(tri_label=False, datasets=[0]):
     print('Saving test data.')
     metadata = load_metadata()
 
-    pairs: Dict[str] = {}  # { patient_index: cr_code }
+    # split patients
+    pids = []
+    for cr_code in metadata:
+        cr = parse_cr_code(cr_code)
+        if cr[0] in datasets:
+            pids.append(cr[1])
+    pids = sorted(list(set(pids)))
+    train_pids, test_pids= cut_list(pids, 0.8)
 
+    print('Training Patients: {} / Testing Patients: {}'.format(len(train_pids), len(test_pids)))
+
+    # copy
     for cr_code, info in metadata.items():
         cr = parse_cr_code(cr_code)
-        if cr[0] == 0:
-            pairs[cr[1]] = cr_code, info
+        if cr[0] not in datasets:
+            continue
 
-    patient_indices = list(sorted(pairs.keys()))
-    train_count = int(len(patient_indices) * 0.8)
-    test_count = len(patient_indices) - train_count
-    train_patients = patient_indices[:train_count]
-    print('Training data: %d patients.' % train_count)
-    print('Test data: %d patients.' % test_count)
-
-    for original_cr_code, info in metadata.items():
-        cr = parse_cr_code(original_cr_code)
-
-        if cr[0] == 0 and 'label' in info:
+        try:
             label = info['label']
-            if tri_label:
-                if label != 'obs' and label != 'oap':
-                    label = 'in'
+        except KeyError:
+            print('unlabeled:', cr_code)
+            continue
 
-            cr_codes = [original_cr_code]
-            if oversample:
-                if label != 'in':
-                    cr_codes.append('D99' + original_cr_code[3:])
-                    cr_codes.append('D98' + original_cr_code[3:])
-                    cr_codes.append('D97' + original_cr_code[3:])
-                    cr_codes.append('D96' + original_cr_code[3:])
+        if tri_label and label != 'obs' and label != 'oap':
+            label = 'in'
 
-            for cr_code in cr_codes:
-                    if cr[1] in train_patients:
-                        dest = 'training_{}.jpg'.format(cr_code)
-                    else:
-                        dest = 'testing_{}.jpg'.format(cr_code)
-                    dest = os.path.join(label, dest)
-                    dest = os.path.join(IMAGES_DIR, dest)
-                    src = os.path.join(DATABASE_DIR, original_cr_code + '.jpg')
-                    os.makedirs(os.path.dirname(dest), exist_ok=True)
-                    shutil.copy(src, dest)
+        if cr[1] in train_pids:
+            dest = 'training_{}.jpg'.format(cr_code)
+        else:
+            dest = 'testing_{}.jpg'.format(cr_code)
+
+        dest = os.path.join(label, dest)
+        dest = os.path.join(IMAGES_DIR, dest)
+        src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
+        os.makedirs(os.path.dirname(dest), exist_ok=True)
+        shutil.copy(src, dest)
 
 
 def visualize_metadata():
@@ -236,8 +243,7 @@ def main():
     parser.add_argument('-O', '--oversample', action='store_true')
     args = parser.parse_args()
 
-    print(args.tri_label)
-    prepare_images(tri_label=args.tri_label, oversample=args.oversample)
+    prepare_images(tri_label=args.tri_label)
 
 
 if __name__ == "__main__":

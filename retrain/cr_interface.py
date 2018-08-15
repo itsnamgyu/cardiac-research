@@ -6,6 +6,9 @@ import re
 import glob
 import argparse
 
+import numpy as np
+import scipy.ndimage
+
 DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'
 IMAGES_DIR = 'images'
@@ -106,6 +109,36 @@ def save_training_data():
         shutil.copy(src, dest)
 
 
+def append_to_basename(jpg_path, append_string):
+    if jpg_path[-4:] != '.jpg':
+        raise ValueError("jpg_path does not conform to format '*.jpg'")
+
+    return jpg_path[:-4] + append_string + '.jpg'
+
+
+def save_augmented_images(src_path, dest_path, n_rotation, crop_ratio=0.2):
+    angles = np.linspace(0, 90, n_rotation, dtype=int)
+
+    if len(np.unique(angles)) != len(angles):
+        raise Exception('Too many augmentations')
+
+    loaded_image = scipy.ndimage.imread(src_path)
+
+    for angle in angles:
+        augmented_path = append_to_basename(
+            dest_path, '_CP{:02d}_R{:03d}.aug'.format(int(crop_ratio * 100), angle))
+
+
+        lx, ly = loaded_image.shape
+        cropped_image = loaded_image[int(lx * crop_ratio): int(- lx * crop_ratio), 
+                int(ly * crop_ratio): int(- ly * crop_ratio)]
+
+        rotated_image = scipy.ndimage.interpolation.rotate(
+            cropped_image, angle)
+
+        scipy.misc.imsave(augmented_path, rotated_image)
+
+
 def cut_list(sorted_list, ratio):
     '''
     Get a tuple of two lists that each contain ratio, 1 - ratio of
@@ -119,7 +152,7 @@ def cut_list(sorted_list, ratio):
     return first, second
 
 
-def prepare_images(tri_label=False, datasets=[0]):
+def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1, datasets=[0]):
     print('Saving test data.')
     metadata = load_metadata()
 
@@ -139,6 +172,7 @@ def prepare_images(tri_label=False, datasets=[0]):
         cr = parse_cr_code(cr_code)
         if cr[0] not in datasets:
             continue
+        print(cr_code)
 
         try:
             label = info['label']
@@ -158,7 +192,14 @@ def prepare_images(tri_label=False, datasets=[0]):
         dest = os.path.join(IMAGES_DIR, dest)
         src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
         os.makedirs(os.path.dirname(dest), exist_ok=True)
-        shutil.copy(src, dest)
+
+        if cr[1] in train_pids:
+            if label == 'in':
+                save_augmented_images(src, dest, n_rotation)
+            else:
+                save_augmented_images(src, dest, n_rotation * n_oversample)
+        else:
+            shutil.copy(src, dest)
 
 
 def visualize_metadata():
@@ -243,7 +284,10 @@ def main():
     parser.add_argument('-O', '--oversample', action='store_true')
     args = parser.parse_args()
 
-    prepare_images(tri_label=args.tri_label)
+    if args.oversample:
+        prepare_images(tri_label=args.tri_label, n_oversample = 5)
+    else:
+        prepare_images(tri_label=args.tri_label)
 
 
 if __name__ == "__main__":

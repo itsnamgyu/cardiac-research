@@ -304,6 +304,12 @@ def select_result(results, sort_by=['test_accuracy']):
             continue
 
 
+def load_best_result(results_dir='results'):
+    results = load_results(results_dir)
+    results.sort(key=lambda r: r['test_accuracy'])
+    return results[-1]
+
+
 def prompt_and_load_result(results_dir='results'):
     results = load_results(results_dir)
     result = select_result(results)

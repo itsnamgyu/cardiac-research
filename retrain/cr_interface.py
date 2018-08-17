@@ -321,6 +321,13 @@ def load_result(results_dir='results'):
     return prompt_and_load_result(results_dir)
 
 
+def is_tri_label_result(result):
+    for image_dict in result['predictions'].values():
+        if image_dict['truth'] == 'ap':
+            return False
+    return True
+
+
 def main():
     # visualize_metadata()
     # save_training_data()

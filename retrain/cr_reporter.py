@@ -111,14 +111,6 @@ def summarize_collection(collection):
     return summary
 
 
-def is_tri_label_result(result_dict):
-    for image_dict in result_dict['predictions'].values():
-        if image_dict['truth'] == 'ap':
-            return False
-
-    return True
-
-
 def get_module_name(module_url, allow_exception=True):
     module_dict = {
         'nasnet': 'https://tfhub.dev/google/imagenet/nasnet_large/feature_vector/1',
@@ -157,9 +149,9 @@ def load_modded_results(tri_label=True):
     modded_results = []
 
     if tri_label:
-        results = [r for r in results if is_tri_label_result(r)]
+        results = [r for r in results if cr.is_tri_label_result(r)]
     else:
-        results = [r for r in results if not is_tri_label_result(r)]
+        results = [r for r in results if not cr.is_tri_label_result(r)]
 
     for result in results:
         modded_result = copy.deepcopy(result)

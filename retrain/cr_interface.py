@@ -8,6 +8,7 @@ import argparse
 
 import numpy as np
 import scipy.ndimage
+import progress.bar
 
 DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'
@@ -152,35 +153,74 @@ def cut_list(sorted_list, ratio):
     return first, second
 
 
-def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1, datasets=[0]):
-    print('Saving test data.')
+def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1, 
+                   datasets=[0], train_split=0.8, 
+                   train_datasets=None, test_datasets=None):
+    '''
+    Arguments
+    n_rotation: augmentation using rotation, linearly spaced from 0 deg to 90 deg inclusive
+    n_oversample: augmentation multiplier for oap, obs (balancing tri-label data)
+    datasets: list of dataset indices to use for train + eval
+    train_split: ratio of training images
+    train_datasets: list of dataset indices to use for training
+    test_datasets: list of dataset indices to use for testing
+
+    Note that train/test_datasets overrides datasets, train_split
+    '''
+    print('Saving images...')
     metadata = load_metadata()
 
-    # split patients
+    # train_split patients
+    if train_datasets == None and test_datasets == None:
+        used_datasets = datasets
+        pids = []
+        for cr_code in metadata:
+            cr = parse_cr_code(cr_code)
+            if cr[0] in datasets:
+                pids.append(cr[1])
+        pids = sorted(list(set(pids)))
+        train_pids, test_pids= cut_list(pids, train_split)
+    elif train_datasets == None or test_datasets == None:
+        raise Exception('train_datasets and test_datasets must be passed in conjuction')
+    else:
+        used_datasets = train_datasets + test_datasets
+        train_pids = []
+        test_pids = []
+        for cr_code in metadata:
+            cr = parse_cr_code(cr_code)
+            if cr[0] in train_datasets:
+                train_pids.append(cr[1])
+            if cr[0] in test_datasets:
+                test_pids.append(cr[1])
+    
     pids = []
     for cr_code in metadata:
         cr = parse_cr_code(cr_code)
         if cr[0] in datasets:
             pids.append(cr[1])
-    pids = sorted(list(set(pids)))
-    train_pids, test_pids= cut_list(pids, 0.8)
 
     print('Training Patients: {} / Testing Patients: {}'.format(len(train_pids), len(test_pids)))
 
+    count = len([None for cr_code in metadata if parse_cr_code(cr_code)[0] in used_datasets])
+    bar = progress.bar.IncrementalBar('Copying Images...', max=count)
+
+    unlabeled = []
+    done = []
     # copy
     for cr_code, info in metadata.items():
         cr = parse_cr_code(cr_code)
-        if cr[0] not in datasets:
+        if cr[0] not in used_datasets:
             continue
-        print(cr_code)
+        bar.next()
+        done.append(cr_code)
 
         try:
             label = info['label']
         except KeyError:
-            print('unlabeled:', cr_code)
-            continue
+            unlabeled.append(cr_code)
+            label = 'in'  #hotfix: TODO fix cr_learn to accept non-labeled test data
 
-        if tri_label and label != 'obs' and label != 'oap':
+        if tri_label and label in ['ap', 'md', 'bs']:
             label = 'in'
 
         if cr[1] in train_pids:
@@ -200,6 +240,12 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1, datasets=[
                 save_augmented_images(src, dest, n_rotation * n_oversample)
         else:
             shutil.copy(src, dest)
+    bar.finish()
+
+    print('Copied')
+    print(done)
+    print('Unlabeled')
+    print(unlabeled)
 
 
 def visualize_metadata():
@@ -279,15 +325,9 @@ def main():
     # visualize_metadata()
     # save_training_data()
     # save_training_data()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-T', '--tri_label', action='store_true')
-    parser.add_argument('-O', '--oversample', action='store_true')
-    args = parser.parse_args()
 
-    if args.oversample:
-        prepare_images(tri_label=args.tri_label, n_oversample = 5)
-    else:
-        prepare_images(tri_label=args.tri_label)
+    prepare_images(tri_label=True, n_rotation = 6, n_oversample = 1, 
+                   train_datasets=[0], test_datasets=[3])
 
 
 if __name__ == "__main__":

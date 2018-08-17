@@ -90,71 +90,8 @@ def parse_cr_code(cr_code, match=True):
     return tuple(map(lambda index: int(index), match.groups()))
 
 
-# Temp Function
-def save_training_data():
-    metadata = load_metadata()
-
-    for cr_code, info in metadata.items():
-        cr = parse_cr_code(cr_code)
-        if cr[0] == 0:
-            if 'label' in info:
-                dest = 'training_{}.jpg'.format(cr_code)
-                dest = os.path.join(info['label'], dest)
-                dest = os.path.join(IMAGES_DIR, dest)
-        if cr[0] == 1:
-            dest = 'testing_{}.jpg'.format(cr_code)
-            dest = os.path.join('oap', dest)
-            dest = os.path.join(IMAGES_DIR, dest)
-        src = os.path.join(DATABASE_DIR, cr_code + '.jpg')
-        os.makedirs(os.path.dirname(dest), exist_ok=True)
-        shutil.copy(src, dest)
-
-
-def append_to_basename(jpg_path, append_string):
-    if jpg_path[-4:] != '.jpg':
-        raise ValueError("jpg_path does not conform to format '*.jpg'")
-
-    return jpg_path[:-4] + append_string + '.jpg'
-
-
-def save_augmented_images(src_path, dest_path, n_rotation, crop_ratio=0.2):
-    angles = np.linspace(0, 90, n_rotation, dtype=int)
-
-    if len(np.unique(angles)) != len(angles):
-        raise Exception('Too many augmentations')
-
-    loaded_image = scipy.ndimage.imread(src_path)
-
-    for angle in angles:
-        augmented_path = append_to_basename(
-            dest_path, '_CP{:02d}_R{:03d}.aug'.format(int(crop_ratio * 100), angle))
-
-
-        lx, ly = loaded_image.shape
-        cropped_image = loaded_image[int(lx * crop_ratio): int(- lx * crop_ratio), 
-                int(ly * crop_ratio): int(- ly * crop_ratio)]
-
-        rotated_image = scipy.ndimage.interpolation.rotate(
-            cropped_image, angle)
-
-        scipy.misc.imsave(augmented_path, rotated_image)
-
-
-def cut_list(sorted_list, ratio):
-    '''
-    Get a tuple of two lists that each contain ratio, 1 - ratio of
-    the original list
-    '''
-    n1 = int(len(sorted_list) * ratio)
-    n2 = len(sorted_list) - n1
-    first = sorted_list[:n1]
-    second = sorted_list[n1:]
-
-    return first, second
-
-
-def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1, 
-                   datasets=[0], train_split=0.8, 
+def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
+                   datasets=[0], train_split=0.8,
                    train_datasets=None, test_datasets=None):
     '''
     Arguments
@@ -167,6 +104,46 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1,
 
     Note that train/test_datasets overrides datasets, train_split
     '''
+
+    def cut_list(sorted_list, ratio):
+        '''
+        Get a tuple of two lists that each contain ratio, 1 - ratio of
+        the original list
+        '''
+        n1 = int(len(sorted_list) * ratio)
+        n2 = len(sorted_list) - n1
+        first = sorted_list[:n1]
+        second = sorted_list[n1:]
+
+        return first, second
+
+    def save_augmented_images(src_path, dest_path, n_rotation, crop_ratio=0.2):
+        def append_to_basename(jpg_path, append_string):
+            if jpg_path[-4:] != '.jpg':
+                raise ValueError("jpg_path does not conform to format '*.jpg'")
+
+            return jpg_path[:-4] + append_string + '.jpg'
+
+        angles = np.linspace(0, 90, n_rotation, dtype=int)
+
+        if len(np.unique(angles)) != len(angles):
+            raise Exception('Too many augmentations')
+
+        loaded_image = scipy.ndimage.imread(src_path)
+
+        for angle in angles:
+            augmented_path = append_to_basename(
+                dest_path, '_CP{:02d}_R{:03d}.aug'.format(int(crop_ratio * 100), angle))
+
+            lx, ly = loaded_image.shape
+            cropped_image = loaded_image[int(lx * crop_ratio): int(- lx * crop_ratio),
+                                         int(ly * crop_ratio): int(- ly * crop_ratio)]
+
+            rotated_image = scipy.ndimage.interpolation.rotate(
+                cropped_image, angle)
+
+            scipy.misc.imsave(augmented_path, rotated_image)
+
     print('Saving images...')
     metadata = load_metadata()
 
@@ -179,9 +156,10 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1,
             if cr[0] in datasets:
                 pids.append(cr[1])
         pids = sorted(list(set(pids)))
-        train_pids, test_pids= cut_list(pids, train_split)
+        train_pids, test_pids = cut_list(pids, train_split)
     elif train_datasets == None or test_datasets == None:
-        raise Exception('train_datasets and test_datasets must be passed in conjuction')
+        raise Exception(
+            'train_datasets and test_datasets must be passed in conjuction')
     else:
         used_datasets = train_datasets + test_datasets
         train_pids = []
@@ -192,7 +170,7 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1,
                 train_pids.append(cr[1])
             if cr[0] in test_datasets:
                 test_pids.append(cr[1])
-    
+
     pids = []
     for cr_code in metadata:
         cr = parse_cr_code(cr_code)
@@ -201,7 +179,8 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1,
 
     print('Training Patients: {} / Testing Patients: {}'.format(len(train_pids), len(test_pids)))
 
-    count = len([None for cr_code in metadata if parse_cr_code(cr_code)[0] in used_datasets])
+    count = len([None for cr_code in metadata if parse_cr_code(
+        cr_code)[0] in used_datasets])
     bar = progress.bar.IncrementalBar('Copying Images...', max=count)
 
     unlabeled = []
@@ -218,7 +197,7 @@ def prepare_images(tri_label=False, n_rotation = 6, n_oversample = 1,
             label = info['label']
         except KeyError:
             unlabeled.append(cr_code)
-            label = 'in'  #hotfix: TODO fix cr_learn to accept non-labeled test data
+            label = 'in'  # hotfix: TODO fix cr_learn to accept non-labeled test data
 
         if tri_label and label in ['ap', 'md', 'bs']:
             label = 'in'
@@ -326,7 +305,7 @@ def main():
     # save_training_data()
     # save_training_data()
 
-    prepare_images(tri_label=True, n_rotation = 6, n_oversample = 1, 
+    prepare_images(tri_label=True, n_rotation=6, n_oversample=1,
                    train_datasets=[0], test_datasets=[3])
 
 

@@ -231,7 +231,7 @@ def main():
     args = parser.parse_args()
 
     if args.predictions:
-        result_dict = cri.prompt_and_load_result('results.0817')
+        result_dict = cri.prompt_and_load_result()
         p = result_dict['predictions']
 
         # hotfix

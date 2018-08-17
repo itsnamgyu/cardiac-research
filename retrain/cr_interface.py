@@ -276,8 +276,14 @@ def load_results(results_dir='results'):
     return results
 
 
-def select_result(results):
-    print()
+def select_result(results, sort_by=['test_accuracy']):
+    def sort_key(result):
+        values = []
+        for key in sort_by:
+            values.append(result[key])
+        return values
+    results.sort(key=sort_key, reverse=True)
+
     print('{:-^80}'.format(' Predictions List '))
     for i, result in enumerate(results):
         print('%d.\tModule: %s' % (i, result['tfhub_module']))
@@ -298,10 +304,15 @@ def select_result(results):
             continue
 
 
-def load_result(results_dir='results'):
+def prompt_and_load_result(results_dir='results'):
     results = load_results(results_dir)
     result = select_result(results)
     return result
+
+
+def load_result(results_dir='results'):
+    # deprecated
+    return prompt_and_load_result(results_dir)
 
 
 def main():

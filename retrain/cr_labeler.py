@@ -19,7 +19,8 @@ DISPLAY_NAME = {
     'md': 'MID',
     'bs': 'BS',
     'obs': 'OUT_BS',
-    'nan': '-'
+    'nan': '-',
+    'in': 'IN',
 }
 
 axes = []
@@ -78,26 +79,33 @@ def update_plot():
                     patient_percentages.append(
                         float(percentages[cr_code][label]))
 
-                answer = metadata[cr_code].get('label', None)
-                if not answer or predictions[cr_code] == answer:
+                # hotfix: convert to tri-label
+                truth = metadata[cr_code].get('label', None)
+                if 'in' in LABELS:
+                    if truth in 'apmdbs':
+                        truth = 'in'
+
+                if not truth or predictions[cr_code] == truth:
                     wrong_color = (0.75, 0.75, 0.75)
                     right_color = (0.75, 0.75, 0.75)
                 else:
                     wrong_color = (1, 0, 0)
                     right_color = (0, 1, 0)
 
-                bars = axes[i].bar(np.arange(1, 10, 2), np.array(patient_percentages) * 10,
+                x_locations = np.linspace(1, 9, len(patient_percentages))
+                bars = axes[i].bar(x_locations,
+                                   np.array(patient_percentages) * 10,
                                    color=wrong_color)
                 all_bars.extend(bars)
                 for j, p in enumerate(patient_percentages):
-                    text = axes[i].text(j * 2 + 1, p * 10 + 0.5, '%d' % (p * 100),
+                    text = axes[i].text(x_locations[j], p * 10 + 0.5, '%d' % (p * 100),
                                         color=(1, 1, 0), horizontalalignment='center',
                                         bbox=dict(facecolor='black', alpha=0.5))
                     text.set_fontsize(8)
                     all_texts.append(text)
 
-                if answer:
-                    bars[LABELS[1:].index(answer)].set_color(right_color)
+                if truth:
+                    bars[LABELS[1:].index(truth)].set_color(right_color)
 
             axes[i].set_axis_off()
 
@@ -112,12 +120,18 @@ def update_plot():
 
     # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
     for i, cr_code in enumerate(patient[1]):
-        truth = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
+        # hotfix: convert to tri-label
+        truth = metadata[cr_code].get('label', 'nan')
+        if 'in' in LABELS:
+            if truth in 'apmdbs':
+                truth = 'in'
+        truth = DISPLAY_NAME[truth]
+        origin = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
         if predictions:
             prediction = DISPLAY_NAME[predictions[cr_code]]
 
-            label = '{} / {} (P)'.format(truth, prediction)
-            label += ' [{:.2f}]'.format(regressed_averages[i])
+            label = '{} / {} (P)'.format(origin, prediction)
+            #label += ' [{:.2f}]'.format(regressed_averages[i])
             if truth == '-':
                 color = (0.2, 0.2, 0.2)
             else:
@@ -200,14 +214,13 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, percentages, image_collection
+    global metadata, results, predictions, percentages, image_collection, LABELS
     # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
 
     metadata = cri.load_metadata()
     for p in metadata:
         if 'label' in p:
             print(p['label'])
-    results = cri.load_results()
 
     parser = argparse.ArgumentParser()
     description = \
@@ -218,26 +231,12 @@ def main():
     args = parser.parse_args()
 
     if args.predictions:
-        print()
-        print('{:-^80}'.format(' Predictions List '))
-        for i, result in enumerate(results):
-            print('%d.\tModule: %s' % (i, result['tfhub_module']))
-            print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' % (
-                result['training_steps'],
-                result['learning_rate'],
-                result['test_accuracy'])
-            )
-            print()
+        result_dict = cri.prompt_and_load_result('results.0817')
+        p = result_dict['predictions']
 
-        while True:
-            try:
-                index = int(
-                    input('Which of the predictions would you like to use? '))
-                p = results[index]['predictions']
-                break
-            except (IndexError, ValueError):
-                print('Invalid index')
-                continue
+        # hotfix
+        if cri.is_tri_label_result(result_dict):
+            LABELS = [None, 'oap', 'in', 'obs']
 
         predictions = {}
         percentages = {}

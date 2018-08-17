@@ -94,11 +94,11 @@ def update_plot():
 
                 x_locations = np.linspace(1, 9, len(patient_percentages))
                 bars = axes[i].bar(x_locations,
-                                   np.array(patient_percentages) * 10,
+                                   np.array(patient_percentages) * 8,
                                    color=wrong_color)
                 all_bars.extend(bars)
                 for j, p in enumerate(patient_percentages):
-                    text = axes[i].text(x_locations[j], p * 10 + 0.5, '%d' % (p * 100),
+                    text = axes[i].text(x_locations[j], p * 8 + 0.5, '%d' % (p * 100),
                                         color=(1, 1, 0), horizontalalignment='center',
                                         bbox=dict(facecolor='black', alpha=0.5))
                     text.set_fontsize(8)

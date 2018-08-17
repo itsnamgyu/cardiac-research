@@ -59,6 +59,9 @@ class DataImporter(ABC):
         # load using loader
         references = self.load_data_references()
         os.makedirs(cri.DATABASE_DIR, exist_ok=True)
+
+        print('Processing {} images...'.format(len(references)))
+
         for i, r in enumerate(references):
             cr_code = cri.get_cr_code(dataset_index, r.patient_index,
                                       r.phase_index, r.slice_index)
@@ -70,7 +73,7 @@ class DataImporter(ABC):
 
             path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
             if test:
-                print(cr_code, r.original_name, r.original_filepath, path)
+                print('\t'.join((cr_code, r.original_name, r.original_filepath, path)))
             else:
                 metadata[cr_code] = {}
                 metadata[cr_code]['original_filepath'] = r.original_filepath

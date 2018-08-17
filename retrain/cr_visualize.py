@@ -10,7 +10,8 @@ import scipy.misc
 import scipy.ndimage
 
 
-LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
+#LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
+LABELS = [None, 'oap', 'in', 'obs']
 
 DISPLAY_NAME = {
     'oap': 'OUT_AP',
@@ -38,27 +39,8 @@ def main():
     for p in metadata:
         if 'label' in p:
             print(p['label'])
-    results = cri.load_results()
-
-    print()
-    print('{:-^80}'.format(' Predictions List '))
-    for i, result in enumerate(results):
-        print('%d.\tModule: %s' % (i, result['tfhub_module']))
-        print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' % (
-            result['training_steps'],
-            result['learning_rate'],
-            result['test_accuracy'])
-        )
-        print()
-
-    while True:
-        try:
-            index = int(input('Which of the predictions would you like to use? '))
-            p = results[index]['predictions']
-            break
-        except (IndexError, ValueError):
-            print('Invalid index')
-            continue
+    result = cri.prompt_and_load_result()
+    p = result['predictions']
 
     predictions = []
     truths = []

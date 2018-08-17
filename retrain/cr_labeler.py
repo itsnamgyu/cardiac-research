@@ -82,7 +82,7 @@ def update_plot():
                 # hotfix: convert to tri-label
                 truth = metadata[cr_code].get('label', None)
                 if 'in' in LABELS:
-                    if truth in 'apmdbs':
+                    if truth and truth in 'apmdbs':
                         truth = 'in'
 
                 if not truth or predictions[cr_code] == truth:
@@ -123,7 +123,7 @@ def update_plot():
         # hotfix: convert to tri-label
         truth = metadata[cr_code].get('label', 'nan')
         if 'in' in LABELS:
-            if truth in 'apmdbs':
+            if truth and truth in 'apmdbs':
                 truth = 'in'
         truth = DISPLAY_NAME[truth]
         origin = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]

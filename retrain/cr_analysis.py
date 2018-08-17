@@ -43,9 +43,6 @@ def get_result_df(result, training=False):
         cr_codes = map(cri.extract_cr_code, result['predictions'].keys())
         
     cr_codes = list(set(cr_codes))
-    
-    for i, cr_code in enumerate(cr_codes):
-        cr_codes[i] = 'D00' + cr_code[3:]
 
     extract_dataset = lambda cr_code: cri.parse_cr_code(cr_code)[0]
     extract_pid = lambda cr_code: cri.parse_cr_code(cr_code)[1]
@@ -57,7 +54,7 @@ def get_result_df(result, training=False):
     phases = list(map(extract_phase, cr_codes))
     slices = list(map(extract_slice, cr_codes))
 
-    extract_label = lambda cr_code: metadata[cr_code]['label']
+    extract_label = lambda cr_code: metadata[cr_code].get('label', 'nan')
     labels = list(map(extract_label, cr_codes))
     
     # make tri labels

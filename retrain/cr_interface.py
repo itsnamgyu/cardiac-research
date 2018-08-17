@@ -72,7 +72,7 @@ def extract_cr_code(string):
     '''
     Return cr_code from string that contains one
     '''
-    return 'D00' + re_cr_code.search(string).group(0)[3:]
+    return re_cr_code.search(string).group(0)
 
 
 def parse_cr_code(cr_code, match=True):

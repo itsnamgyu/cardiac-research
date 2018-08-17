@@ -259,7 +259,11 @@ def load_results(results_dir='results'):
 
     for path in result_paths:
         with open(path) as f:
-            result = json.load(f)
+            try:
+                result = json.load(f)
+            except json.decoder.JSONDecodeError as e:
+                print('invalid results file: {}'.format(path))
+                pass
 
         # typo fix
         if 'test_accuaracy' in result:

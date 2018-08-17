@@ -36,7 +36,7 @@ class DataImporter(cr_importer.DataImporter):
         for pid, paths in dcm_by_patient.items():
             for i, path in enumerate(paths):
                 dcm_references.append(cr_importer.DcmDataReference(
-                    pid, 1, i, path, pydicom.dcmread(path)))
+                    pid, i, 1, path, pydicom.dcmread(path)))
 
         return dcm_references
 

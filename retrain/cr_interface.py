@@ -9,6 +9,9 @@ import argparse
 import numpy as np
 import scipy.ndimage
 import progress.bar
+import imageio
+import matplotlib.pyplot as plt
+
 
 DATABASE_DIR = 'cr_database'
 METADATA_FILE = 'cr_metadata.json'
@@ -92,7 +95,8 @@ def parse_cr_code(cr_code, match=True):
 
 def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
                    datasets=[0], train_split=0.8,
-                   train_datasets=None, test_datasets=None):
+                   train_datasets=None, test_datasets=None,
+                   spec_csv='images_spec.csv'):
     '''
     Arguments
     n_rotation: augmentation using rotation, linearly spaced from 0 deg to 90 deg inclusive
@@ -129,7 +133,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
         if len(np.unique(angles)) != len(angles):
             raise Exception('Too many augmentations')
 
-        loaded_image = scipy.ndimage.imread(src_path)
+        loaded_image = plt.imread(src_path)
 
         for angle in angles:
             augmented_path = append_to_basename(
@@ -142,7 +146,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
             rotated_image = scipy.ndimage.interpolation.rotate(
                 cropped_image, angle)
 
-            scipy.misc.imsave(augmented_path, rotated_image)
+            imageio.imsave(augmented_path, rotated_image)
 
     print('Saving images...')
     metadata = load_metadata()

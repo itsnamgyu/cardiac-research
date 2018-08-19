@@ -7,3 +7,5 @@ sklearn
 jupyter
 pandas
 natsort
+progress
+imageio

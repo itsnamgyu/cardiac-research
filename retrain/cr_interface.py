@@ -174,12 +174,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
                 train_pids.append(cr[1])
             if cr[0] in test_datasets:
                 test_pids.append(cr[1])
-
-    pids = []
-    for cr_code in metadata:
-        cr = parse_cr_code(cr_code)
-        if cr[0] in datasets:
-            pids.append(cr[1])
+        pids = sorted(train_pids + test_pids)
 
     print('Training Patients: {} / Testing Patients: {}'.format(len(train_pids), len(test_pids)))
 

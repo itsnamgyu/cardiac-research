@@ -11,6 +11,7 @@ import scipy.ndimage
 import progress.bar
 import imageio
 import matplotlib.pyplot as plt
+import pandas as pd
 
 
 DATABASE_DIR = 'cr_database'
@@ -115,7 +116,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
         the original list
         '''
         n1 = int(len(sorted_list) * ratio)
-        n2 = len(sorted_list) - n1
+        # n2 = len(sorted_list) - n1  # unused
         first = sorted_list[:n1]
         second = sorted_list[n1:]
 
@@ -152,7 +153,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
     metadata = load_metadata()
 
     # train_split patients
-    if train_datasets == None and test_datasets == None:
+    if train_datasets is None and test_datasets is None:
         used_datasets = datasets
         pids = []
         for cr_code in metadata:
@@ -161,7 +162,7 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
                 pids.append(cr[1])
         pids = sorted(list(set(pids)))
         train_pids, test_pids = cut_list(pids, train_split)
-    elif train_datasets == None or test_datasets == None:
+    elif train_datasets is None or test_datasets is None:
         raise Exception(
             'train_datasets and test_datasets must be passed in conjuction')
     else:
@@ -174,17 +175,38 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
                 train_pids.append(cr[1])
             if cr[0] in test_datasets:
                 test_pids.append(cr[1])
-        pids = sorted(train_pids + test_pids)
+        train_pids = sorted(list(set(train_pids)))
+        test_pids = sorted(list(set(test_pids)))
+        pids = train_pids + test_pids
 
     print('Training Patients: {} / Testing Patients: {}'.format(len(train_pids), len(test_pids)))
 
+    # init dataset info DataFrame
+    if tri_label:
+        semi_columns = ['OAP', 'IN', 'OBS', 'TOTAL']
+    else:
+        semi_columns = ['OAP', 'AP', 'MD', 'BS', 'OBS', 'TOTAL']
+    columns = pd.MultiIndex.from_product([['Original', 'Augmented'], semi_columns])
+    train_df = pd.DataFrame(np.zeros((3, 8)),
+                      columns=columns,
+                      index=('Image Count', 'Percentages', 'Images Per Patient'))
+    test_columns = pd.Index(semi_columns)
+    test_df = pd.DataFrame(np.zeros((3, 4)),
+                      columns=test_columns,
+                      index=('Image Count', 'Percentages', 'Images Per Patient'))
+
+    # count total # of cr_codes to consider (for loading bar)
     count = len([None for cr_code in metadata if parse_cr_code(
         cr_code)[0] in used_datasets])
     bar = progress.bar.IncrementalBar('Copying Images...', max=count)
 
+    # check IMAGES_DIR
+    if glob.glob(os.path.join(IMAGES_DIR, '**/*.jpg'), recursive=True):
+        print('WARNING: there are existing images in "{}"'.format(IMAGES_DIR))
+
+    # copy images
     unlabeled = []
     done = []
-    # copy
     for cr_code, info in metadata.items():
         cr = parse_cr_code(cr_code)
         if cr[0] not in used_datasets:
@@ -213,13 +235,40 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
 
         if cr[1] in train_pids:
             if label == 'in':
-                save_augmented_images(src, dest, n_rotation)
+                count = n_rotation
             else:
-                save_augmented_images(src, dest, n_rotation * n_oversample)
+                count = n_rotation * n_oversample
+            save_augmented_images(src, dest, count)
+            train_df[('Original', label.upper())] += 1
+            train_df[('Augmented', label.upper())] += count
         else:
             shutil.copy(src, dest)
+            test_df[label.upper()] += 1
     bar.finish()
 
+    # dataset summary overview
+    total = train_df.loc['Image Count', 'Original'].sum()
+    for i in range(3):
+        train_df.loc['Percentages',columns[i]] = train_df.loc['Image Count', columns[i]] / total * 100
+    total = train_df.loc['Image Count', 'Augmented'].sum()
+    for i in range(4, 7):
+        train_df.loc['Percentages',columns[i]] = train_df.loc['Image Count', columns[i]] / total * 100
+    train_df.loc['Images Per Patient'] = train_df.loc['Image Count'] / len(train_pids)
+    for label in ['Original', 'Augmented']:
+        train_df.loc[:,(label, 'TOTAL')] = train_df.loc[:, label].sum(axis=1)
+
+    total = test_df.loc['Image Count'].sum()
+    test_df.loc['Percentages'] = test_df.loc['Image Count'] / total * 100
+    test_df.loc['Images Per Patient'] = test_df.loc['Image Count'] / len(test_pids)
+    test_df['TOTAL'] = test_df.sum(axis=1)
+
+    # save dataset info to csvs
+    train_df.to_csv('train_' + spec_csv)
+    test_df.to_csv('test_' + spec_csv)
+    print('saved train dataset info to train_' + spec_csv)
+    print('saved test dataset info to test_' + spec_csv)
+
+    # print copied images
     print('Copied')
     print(done)
     print('Unlabeled')
@@ -332,8 +381,10 @@ def main():
     # save_training_data()
     # save_training_data()
 
-    prepare_images(tri_label=True, n_rotation=6, n_oversample=1,
-                   train_datasets=[0], test_datasets=[3])
+    #prepare_images(tri_label=True, n_rotation=6, n_oversample=1,
+    #               train_datasets=[0], test_datasets=[3])
+    prepare_images(tri_label=True, n_rotation=6, n_oversample=5,
+                   datasets=[0])
 
 
 if __name__ == "__main__":

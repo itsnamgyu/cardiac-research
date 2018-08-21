@@ -17,7 +17,7 @@ module_dir = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(module_dir, 'data/database')
 METADATA_FILE = os.path.join(module_dir, 'data/metadata.json')
-IMAGES_DIR = os.path.join(module_dir, 'data/data')
+IMAGES_DIR = os.path.join(module_dir, 'images')
 RESULTS_DIR = os.path.join(module_dir, 'results')
 SPEC_CSV = os.path.join(module_dir, 'analysis/images_spec.csv')
 

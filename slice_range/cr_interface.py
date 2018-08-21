@@ -266,10 +266,12 @@ def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
     test_df['TOTAL'] = test_df.sum(axis=1)
 
     # save dataset info to csvs
-    train_df.to_csv('train_' + spec_csv)
-    test_df.to_csv('test_' + spec_csv)
-    print('saved train dataset info to train_' + spec_csv)
-    print('saved test dataset info to test_' + spec_csv)
+    train_csv = os.path.join(os.path.dirname(spec_csv), 'train_' + os.path.basename(spec_csv))
+    test_csv = os.path.join(os.path.dirname(spec_csv), 'test_' + os.path.basename(spec_csv))
+    train_df.to_csv(train_csv)
+    test_df.to_csv(test_csv)
+    print('saved train dataset info to' + train_csv)
+    print('saved test dataset info to' + test_csv)
 
     # print copied images
     print('Copied')

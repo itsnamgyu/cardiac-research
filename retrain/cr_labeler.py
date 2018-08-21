@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import cr_interface as cri
 import scipy.misc
 import scipy.ndimage
-import regression
+from sklearn import linear_model
 
 
 LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
@@ -56,6 +56,17 @@ def get_window_title():
 def update_plot():
     global metadata, results, predictions, percentages, image_collection
     global index, last_index, current_label, show_chart, all_bars, all_texts
+
+
+    def regress(values):
+        # values: [ 0, 2, 1, 3 ]
+        # output: [ 0, 1, 2, 3 ]
+        regr = linear_model.LinearRegression()
+        regr.fit(np.arange(len(values)).reshape(-1 ,1), values)
+    
+    return regr.predict(np.arange(len(values)).reshape(-1, 1))
+
+
     patient = image_collection[index]
 
     if last_index != index:
@@ -116,7 +127,7 @@ def update_plot():
             for i, label in enumerate(LABELS[1:]):
                 avg += float(percentages[cr_code][label]) * (i + 1)
             weighted_averages.append(avg)
-        regressed_averages = regression.regress(weighted_averages)
+        regressed_averages = regress(weighted_averages)
 
     # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
     for i, cr_code in enumerate(patient[1]):

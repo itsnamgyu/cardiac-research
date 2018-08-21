@@ -13,10 +13,13 @@ import imageio
 import matplotlib.pyplot as plt
 import pandas as pd
 
+module_dir = os.path.dirname(os.path.abspath(__file__))
 
-DATABASE_DIR = 'cr_database'
-METADATA_FILE = 'cr_metadata.json'
-IMAGES_DIR = 'images'
+DATABASE_DIR = os.path.join(module_dir, 'data/database')
+METADATA_FILE = os.path.join(module_dir, 'data/metadata.json')
+IMAGES_DIR = os.path.join(module_dir, 'data/data')
+RESULTS_DIR = os.path.join(module_dir, 'results')
+SPEC_CSV = os.path.join(module_dir, 'analysis/images_spec.csv')
 
 
 '''
@@ -97,7 +100,7 @@ def parse_cr_code(cr_code, match=True):
 def prepare_images(tri_label=False, n_rotation=6, n_oversample=1,
                    datasets=[0], train_split=0.8,
                    train_datasets=None, test_datasets=None,
-                   spec_csv='images_spec.csv'):
+                   spec_csv=SPEC_CSV):
     '''
     Arguments
     n_rotation: augmentation using rotation, linearly spaced from 0 deg to 90 deg inclusive
@@ -280,7 +283,7 @@ def visualize_metadata():
     print(json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
 
 
-def load_results(results_dir='results'):
+def load_results(results_dir=RESULTS_DIR):
     '''
     Returns
     [
@@ -352,19 +355,19 @@ def select_result(results, sort_by=['test_accuracy']):
             continue
 
 
-def load_best_result(results_dir='results'):
+def load_best_result(results_dir=RESULTS_DIR):
     results = load_results(results_dir)
     results.sort(key=lambda r: r['test_accuracy'])
     return results[-1]
 
 
-def prompt_and_load_result(results_dir='results'):
+def prompt_and_load_result(results_dir=RESULTS_DIR):
     results = load_results(results_dir)
     result = select_result(results)
     return result
 
 
-def load_result(results_dir='results'):
+def load_result(results_dir=RESULTS_DIR):
     # deprecated
     return prompt_and_load_result(results_dir)
 

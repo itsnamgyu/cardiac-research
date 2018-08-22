@@ -57,7 +57,7 @@ def load_metadata() -> Dict[str, Dict[str, str]]:
 
 def save_metadata(metadata: Dict[str, Dict[str, str]]) -> None:
     if os.path.isfile(METADATA_FILE):
-        shutil.copyfile(METADATA_FILE, '.' + METADATA_FILE + '.bak')
+        shutil.copyfile(METADATA_FILE, METADATA_FILE + '.bak')
 
     with open(METADATA_FILE, 'w') as f:
         json.dump(metadata, f)

@@ -63,9 +63,7 @@ def update_plot():
         # output: [ 0, 1, 2, 3 ]
         regr = linear_model.LinearRegression()
         regr.fit(np.arange(len(values)).reshape(-1 ,1), values)
-    
-    return regr.predict(np.arange(len(values)).reshape(-1, 1))
-
+        return regr.predict(np.arange(len(values)).reshape(-1, 1))
 
     patient = image_collection[index]
 

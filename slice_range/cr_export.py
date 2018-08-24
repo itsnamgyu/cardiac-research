@@ -18,9 +18,7 @@ import cr_interface as cri
 
 
 DATA_DIR = os.path.join(cri.PROJECT_DIR, 'data/data')
-TRAIN_CSV = os.path.join(cri.PROJECT_DIR, 'analysis/data_spec_train.csv')
-VALIDATION_CSV = os.path.join(cri.PROJECT_DIR, 'analysis/data_spec_validation.csv')
-TEST_CSV = os.path.join(cri.PROJECT_DIR, 'analysis/data_spec_test.csv')
+SPEC_CSV = os.path.join(cri.PROJECT_DIR, 'analysis/data_spec.csv')
 
 
 def cut_list(values, ratio):
@@ -97,7 +95,8 @@ def export_images(tri_label=False,
                   test_datasets=None,
                   test_split=0.2,
                   validation_split=0.2,
-                  export_dir=DATA_DIR):
+                  export_dir=DATA_DIR,
+                  spec_csv=SPEC_CSV):
     '''
     Exports images for training and evaluation. Splits data by patient and
     places them in `export_dir` according to their cooresponding datasets
@@ -221,6 +220,9 @@ def export_images(tri_label=False,
     test_df.loc['Percentages'] = test_df.loc['Image Count'] / total * 100
     test_df.loc['Images Per Patient'] = test_df.loc['Image Count'] / len(pids['test'])
     test_df['TOTAL'] = test_df.sum(axis=1)
+
+    # create folders for csv
+    os.makedirs(os.path.dirname(spec_csv), exist_ok=True)
 
     # save dataset info to csvs
     train_csv = os.path.join(os.path.dirname(spec_csv), 'train_' + os.path.basename(spec_csv))

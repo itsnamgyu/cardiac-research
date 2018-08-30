@@ -1,3 +1,6 @@
+import sys
+sys.path.append("..")
+
 import cr_importer
 import cr_interface as cri
 

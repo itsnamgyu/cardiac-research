@@ -1,4 +1,5 @@
 import cr_importer
+import cr_interface as cri
 
 import os
 import re
@@ -22,7 +23,8 @@ class DataImporter(cr_importer.DataImporter):
         super().__init__()
 
     def load_data_references(self) -> List[cr_importer.DataReference]:
-        paths = glob.glob('cine/**/*img00001.dcm', recursive=True)
+        paths = glob.glob(os.path.join(cri.DATASET_DIR, 'cine/**/*img00001.dcm'),
+                          recursive=True)
         paths = natsorted(paths)
 
         re_dcm = re.compile('cine/([0-9]{3}).+')

@@ -16,6 +16,7 @@ import pandas as pd
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(PROJECT_DIR, 'data/database')
+DATASET_DIR = os.path.join(PROJECT_DIR, 'data/datasets')
 METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'images')
 RESULTS_DIR = os.path.join(PROJECT_DIR, 'results')

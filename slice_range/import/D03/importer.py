@@ -18,8 +18,7 @@ from natsort import natsorted
 
 
 class DataImporter(cr_importer.DataImporter):
-    def __init__(self, import_path='validate'):
-        self.import_path = import_path
+    def __init__(self):
         super().__init__()
 
     def load_data_references(self) -> List[cr_importer.DataReference]:

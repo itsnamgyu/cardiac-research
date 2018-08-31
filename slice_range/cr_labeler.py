@@ -37,6 +37,16 @@ index = 0
 last_index = None
 
 
+'''
+Global Variables
+
+- image_collection: [
+    (db_index: int, subject_index: int, phase_index: int), [cr_code: str, ...]),
+    ...
+]
+
+'''
+
 def get_window_title():
     global metadata, results, predictions, percentages, image_collection, index, current_label
     patient = image_collection[index]
@@ -74,6 +84,7 @@ def update_plot():
         fig.clf()
 
         for i, cr_code in enumerate(patient[1]):
+            print(cr_code)
             path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
 
             axes.append(fig.add_subplot(4, 6, i + 1))
@@ -127,7 +138,6 @@ def update_plot():
             weighted_averages.append(avg)
         regressed_averages = regress(weighted_averages)
 
-    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
     for i, cr_code in enumerate(patient[1]):
         # hotfix: convert to tri-label
         truth = metadata[cr_code].get('label', 'nan')
@@ -224,7 +234,6 @@ def on_button_press(event):
 
 def main():
     global metadata, results, predictions, percentages, image_collection, LABELS
-    # image_collection: [((db_index: int, subject_index: int), [ cr_code: str ])]
 
     metadata = cri.load_metadata()
     for p in metadata:
@@ -257,18 +266,18 @@ def main():
         image_collection = {}
         for basename, result in predictions.items():
             cr = cri.parse_cr_code(basename, match=False)
-            image_collection[(cr[0], cr[1])] = []
+            image_collection[tuple(cr[:3])] = []
 
         # get list of patients then add all of their images (not just from predictions)
         for cr_code in metadata.keys():
             cr = cri.parse_cr_code(cr_code)
-            if (cr[0], cr[1]) in image_collection:
-                image_collection[(cr[0], cr[1])].append(cr_code)
+            if tuple(cr[:3]) in image_collection:
+                image_collection[tuple(cr[:3])].append(cr_code)
     else:
         image_collection = collections.defaultdict(list)
         for cr_code in metadata.keys():
             cr = cri.parse_cr_code(cr_code)
-            image_collection[(cr[0], cr[1])].append(cr_code)
+            image_collection[tuple(cr[:3])].append(cr_code)
 
     image_collection = sorted(image_collection.items())
 

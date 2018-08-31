@@ -38,16 +38,16 @@ class DataImporter(cr_importer.DataImporter):
         for p in paths:
             match = re_dcm.search(p)
             patient_index = int(match.group(1))
-            phase_index = int(match.group(2))
-            slice_index = int(match.group(3))
+            slice_index = int(match.group(2))
+            phase_index = int(match.group(3))
             dcm_by_patient[patient_index].append(p)
 
         dcm_references: List[cr_importer.DcmDataReference] = []
         for pid, paths in dcm_by_patient.items():
             for path in paths:
                 match = re_dcm.search(path)
-                phase_index = int(match.group(2))
-                slice_index = int(match.group(3))
+                slice_index = int(match.group(2))
+                phase_index = int(match.group(3))
                 dcm_references.append(cr_importer.DcmDataReference(
                     patient_index=pid,
                     slice_index=slice_index,

@@ -84,7 +84,6 @@ def update_plot():
         fig.clf()
 
         for i, cr_code in enumerate(patient[1]):
-            print(cr_code)
             path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
 
             axes.append(fig.add_subplot(4, 6, i + 1))

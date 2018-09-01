@@ -22,6 +22,10 @@ IMAGES_DIR = os.path.join(PROJECT_DIR, 'images')
 RESULTS_DIR = os.path.join(PROJECT_DIR, 'results')
 SPEC_CSV = os.path.join(PROJECT_DIR, 'analysis/images_spec.csv')
 
+DATASET_DIRS = {}
+for dataset in ['test', 'validation', 'train']:
+    DATASET_DIRS[dataset] = os.path.join(DATASET_DIR, dataset)
+
 
 '''
 cr_metadata.json

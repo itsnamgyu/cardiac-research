@@ -17,6 +17,7 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(PROJECT_DIR, 'data/database')
 DATASET_DIR = os.path.join(PROJECT_DIR, 'data/datasets')
+DATA_DIR = os.path.join(PROJECT_DIR, 'data/data')
 METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'images')
 RESULTS_DIR = os.path.join(PROJECT_DIR, 'results')
@@ -24,7 +25,7 @@ SPEC_CSV = os.path.join(PROJECT_DIR, 'analysis/images_spec.csv')
 
 DATA_DIRS = {}
 for split in ['test', 'validation', 'train']:
-    DATA_DIRS[split] = os.path.join('data/data', split)
+    DATA_DIRS[split] = os.path.join(DATA_DIR, split)
 
 
 '''

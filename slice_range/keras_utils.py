@@ -1,4 +1,5 @@
 from keras_applications import vgg16, vgg19, inception_v3, resnet50, mobilenet, mobilenet_v2, inception_resnet_v2, xception, densenet, nasnet
+import keras
 
 class Application:
     @staticmethod
@@ -15,24 +16,24 @@ class Application:
         else:
             return image_shape + (3,)
         
-    def __init__(self, application_func, image_shape, name, codename):
-        self.application_func = application_func
+    def __init__(self, model_func, image_shape, name, codename):
+        self.model_func = model_func
         self.image_shape = image_shape
         self.name = name
         self.codename = codename
-        self.application = None
+        self.model = None
 
-    def get_application(self):
-        if self.application == None:
-            print('loading {} application'.format(self.name))
-            self.application = self.application_func(
+    def get_model(self):
+        if self.model == None:
+            print('loading {} model'.format(self.name))
+            self.model = self.model_func(
                 weights='imagenet',
                 include_top=False,
                 input_shape=Application.get_input_shape(self.image_shape))
-        return self.application
+        return self.model
     
-    def free_application(self):
-        self.application = None
+    def free_model(self):
+        self.model = None
 
 
 applications = [

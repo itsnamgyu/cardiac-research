@@ -3,7 +3,7 @@ import keras
 
 class Application:
     @staticmethod
-    def get_input_shape(image_shape):
+    def get_input_shape(image_size):
         '''
         Get input shape of conv-nets based on keras backend settings
 
@@ -12,13 +12,13 @@ class Application:
         '''
 
         if keras.backend.image_data_format() == 'channels_first':
-            return (3,) + image_shape 
+            return (3,) + image_size 
         else:
-            return image_shape + (3,)
+            return image_size + (3,)
         
-    def __init__(self, model_func, image_shape, name, codename):
+    def __init__(self, model_func, image_size, name, codename):
         self.model_func = model_func
-        self.image_shape = image_shape
+        self.image_size= image_size
         self.name = name
         self.codename = codename
         self.model = None
@@ -29,7 +29,7 @@ class Application:
             self.model = self.model_func(
                 weights='imagenet',
                 include_top=False,
-                input_shape=Application.get_input_shape(self.image_shape))
+                input_shape=Application.get_input_shape(self.image_size))
         return self.model
     
     def free_model(self):

@@ -130,7 +130,7 @@ def load_results(results_dir=RESULTS_DIR):
         }, ...
     ]
     '''
-    result_paths = glob.glob(os.path.join(results_dir, '**/results.json'))
+    result_paths = glob.glob(os.path.join(results_dir, '**/cr_result.json'))
     results = []
 
     for path in result_paths:

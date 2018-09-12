@@ -12,6 +12,8 @@ import cr_interface as cri
 
 metadata = cri.load_metadata()
 
+DEFAULT_CLASSES = ['in', 'oap', 'obs']
+
 
 class Result():
     def __init__(self, data: dict):
@@ -34,7 +36,7 @@ class Result():
     @classmethod
     def from_predictions(
             cls, predictions, cr_codes, params, short_name,
-            description='', classes=['in', 'oap', 'obs']):
+            description='', classes=DEFAULT_CLASSES):
         '''
         Generate a Result class from cr_codes and their respective predictions
         Note that you must use the `save_as_json` method to save the results as
@@ -237,8 +239,12 @@ class Result():
         return string
 
 
-
-def evaluate_model(model: keras.models.Model):
+def evaluate_model(model: keras.models.Model, input_data, cr_codes, classes=DEFAULT_CLASSES):
     '''
-    Convinience function to quickly evaluate model performance
+    Convenience function to quickly evaluate model performance
     '''
+    predictions = model.predict(input_data)
+    params = dict(epochs=0, lr=0)
+    
+    result = Result.from_predictions(predictions, cr_codes, params, 'AUTO_EVAL', '')
+    print(result.describe())

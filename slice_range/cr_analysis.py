@@ -138,7 +138,11 @@ class Result():
     def get_accuracy(self) -> float:
         tp = self.df[['truth', 'prediction']]
         correct = tp[lambda e: (e.truth == e.prediction)]
-        accuracy = len(correct) / len(tp)
+        try:
+            accuracy = len(correct) / len(tp)
+        except ZeroDivisionError:
+            warning.warn('there are no predictions in result {}'.format(self.data['short_name']))
+            accuracy = float('nan')
 
         return accuracy
 
@@ -156,7 +160,41 @@ class Result():
         Prescribed labels: O O O A A A A M M M M B B B B B B O O O
         With gray areas:   O O G G A A G G M M G G B B B B G G O O
         '''
-        raise NotImplementedError()
+        df = self.df.copy().sort_values(['pid', 'phase', 'slice']).reset_index(drop=True)
+
+        answers = 0
+        for i, row in df.iterrows():
+            if df.loc[i, 'prediction'] == df.loc[i, 'truth']:
+                answers += 1
+                continue
+
+            if i != 0:
+                j = i - 1
+                row_i = df.loc[i]
+                row_j = df.loc[j]
+                if row_i['pid'] == row_j['pid'] and\
+                    row_i['phase'] == row_j['phase'] and\
+                    row_i['prediction'] == row_j['truth']:
+                    answers += 1
+                    continue
+
+            if i + 1 != len(df):
+                j = i + 1
+                row_i = df.loc[i]
+                row_j = df.loc[j]
+                if row_i['pid'] == row_j['pid'] and\
+                    row_i['phase'] == row_j['phase'] and\
+                    row_i['prediction'] == row_j['truth']:
+                    answers += 1
+                    continue
+
+        try:
+            soft_accuracy = answers / len(df)
+        except ZeroDivisionError:
+            warning.warn('there are no predictions in result {}'.format(self.data['short_name']))
+            soft_accuracy = float('nan')
+
+        return soft_accuracy
 
     def get_confusion_matrix(self):
         return pd.crosstab(self.df['truth'], self.df['prediction'])
@@ -174,8 +212,14 @@ class Result():
             truths = tp[lambda e: e.truth == truth]
             positives = tp[lambda e: e.prediction == truth]
 
-            precision[truth] = len(true_positives) / len(positives)
-            recall[truth] = len(true_positives) / len(truths)
+            try:
+                precision[truth] = len(true_positives) / len(positives)
+            except ZeroDivisionError:
+                precision[truth] = float('nan')
+            try:
+                recall[truth] = len(true_positives) / len(truths)
+            except ZeroDivisionError:
+                recall[truth] = float('nan')
 
         return pd.DataFrame(dict(precision=precision, recall=recall))
 
@@ -186,8 +230,7 @@ class Result():
         string = ''
         string += '{:<18s}: {}\n'.format('Model', self.data['short_name'])
         string += '{:<18s}: {}\n'.format('Accuracy', self.get_accuracy())
-        #string += '{:<18s}: {}\n\n'.format('Soft Accuracy', self.get_soft_accuracy())
-        string += '{:<18s}: {}\n\n'.format('Soft Accuracy', 0)
+        string += '{:<18s}: {}\n\n'.format('Soft Accuracy', self.get_soft_accuracy())
         string += str(self.get_confusion_matrix()) + '\n\n'
         string += str(self.get_precision_and_recall()) + '\n\n'
 

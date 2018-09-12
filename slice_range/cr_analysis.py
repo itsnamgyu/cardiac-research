@@ -1,6 +1,7 @@
 import json
 import os
 import warnings
+import errno
 
 import numpy as np
 import pandas as pd
@@ -12,17 +13,30 @@ import cr_interface as cri
 metadata = cri.load_metadata()
 
 
-class CrResult():
+class Result():
     def __init__(self, data: dict):
         self.data = data
-        self.df = CrResult._generate_dataframe(data)
+        self.df = Result._generate_dataframe(data)
+
+    @classmethod
+    def from_json(cls, dirname, basename='cr_result.json', full_path=False):
+        if full_path:
+            path = os.path.join(dirname, basename)
+        else:
+            path = os.path.join(cri.RESULTS_DIR, dirname)
+            path = os.path.join(path, basename)
+
+        with open(path) as f:
+            data = json.load(f)
+
+        return cls(data)
 
     @classmethod
     def from_predictions(
             cls, predictions, cr_codes, params, short_name,
             description='', classes=['in', 'oap', 'obs']):
         '''
-        Generate a CrResult class from cr_codes and their respective predictions
+        Generate a Result class from cr_codes and their respective predictions
         Note that you must use the `save_as_json` method to save the results as
         `cr_results.json`.
 
@@ -39,7 +53,7 @@ class CrResult():
           method, date etc.
 
         # Returns
-        CrResult instance
+        Result instance
         '''
         global metadata
 
@@ -102,9 +116,47 @@ class CrResult():
 
         return pd.DataFrame(result_dict)
 
-    def save_as_json(self, dirname, basename='cr_results.json'):
-        with open(os.path.join(dirname, basename)) as f:
+    def to_json(self, dirname, basename='cr_result.json', full_path=None) -> None:
+        if full_path:
+            path = os.path.join(dirname, basename)
+        else:
+            path = os.path.join(cri.RESULTS_DIR, dirname)
+            path = os.path.join(path, basename)
+
+        try:
+            os.makedirs(os.path.dirname(path))
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                warnings.warn('results directory already exists')
+                print(e)
+            else:
+                raise
+
+        with open(path, 'w') as f:
             json.dump(self.data, f)
+
+    def get_accuracy(self) -> float:
+        tp = self.df[['truth', 'prediction']]
+        correct = tp[lambda e: (e.truth == e.prediction)]
+        accuracy = len(correct) / len(tp)
+
+        return accuracy
+
+    def get_soft_accuracy(self) -> float:
+        '''
+        The standards for labeling cardiac short-axis MRI images leave
+        room for some ambiguity. One practitioner may determine a given slice
+        as apical while another may see it as middle. To cope for this
+        interobserver variability, we use another metric called soft accuracy.
+        In this metric, we consider slices that border two different sections to be
+        in a gray area. Thus predicting it to be on either side of the border is
+        considered to be a correct assessment. Here is an example that illustrates the
+        gray-area-slices.
+
+        Prescribed labels: O O O A A A A M M M M B B B B B B O O O
+        With gray areas:   O O G G A A G G M M G G B B B B G G O O
+        '''
+        raise NotImplementedError()
 
     def get_confusion_matrix(self):
         return pd.crosstab(self.df['truth'], self.df['prediction'])
@@ -126,3 +178,24 @@ class CrResult():
             recall[truth] = len(true_positives) / len(truths)
 
         return pd.DataFrame(dict(precision=precision, recall=recall))
+
+    def describe(self) -> None:
+        '''
+        Convinience function that prints core metrics
+        '''
+        string = ''
+        string += '{:<18s}: {}\n'.format('Model', self.data['short_name'])
+        string += '{:<18s}: {}\n'.format('Accuracy', self.get_accuracy())
+        #string += '{:<18s}: {}\n\n'.format('Soft Accuracy', self.get_soft_accuracy())
+        string += '{:<18s}: {}\n\n'.format('Soft Accuracy', 0)
+        string += str(self.get_confusion_matrix()) + '\n\n'
+        string += str(self.get_precision_and_recall()) + '\n\n'
+
+        return string
+
+
+
+def evaluate_model(model: keras.models.Model):
+    '''
+    Convinience function to quickly evaluate model performance
+    '''

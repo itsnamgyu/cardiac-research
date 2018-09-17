@@ -1,36 +1,44 @@
-import cr_importer
-from typing import List, Dict, Tuple
+# Loader interface for CAP challenge images
+
+import sys
+sys.path.append('../..');
 
 import os
-import numpy as np
 import glob
-import pydicom
 import re
+from typing import List, Dict, Tuple
+
+import pydicom
+import numpy as np
+from natsort import natsorted
+
+import cr_interface as cri
+import cr_importer
 
 
-# Loader interface for CAP challenge images
+LOAD_PHASE = 14
+IMPORT_DIR = 'CAP_challenge_training_set'
+DATASET_INDEX = 0
+IMPORT_DIR = 'Validation'
+DATASET_INDEX = 1
 
 
 class DataImporter(cr_importer.DataImporter):
-    def __init__(self, import_path='cap_challenge_validation'):
-        self.import_path = import_path
+    def __init__(self, import_path=IMPORT_DIR):
+        self.import_path = os.path.join(cri.DATASET_DIR, import_path);
         super().__init__()
 
-    DEFAULT_DCM_PATH_FORMAT = '**/DET*SA*ph0.dcm'
+    DEFAULT_DCM_PATH_FORMAT = '**/DET*SA*ph*.dcm'
 
     @staticmethod
     def get_filtered_dcm_paths(directory, path_format=DEFAULT_DCM_PATH_FORMAT) -> List[str]:
-        def natural_key(string_):
-            # From http://www.codinghorror.com/blog/archives/001018.html
-            return [int(s) if s.isdigit() else s for s in re.split(r'(\d+)', string_)]
-
         if not os.path.isdir(directory):
             print('Dicom dataset directory {} does not exist'.format(directory))
             return []
 
         dcms: List[str] = []
         dcms += glob.glob(os.path.join(directory, path_format), recursive=True)
-        dcms.sort(key=natural_key)
+        dcms = natsorted(dcms)
         return dcms
 
     def load_data_references(self) -> List[cr_importer.DataReference]:
@@ -52,10 +60,11 @@ class DataImporter(cr_importer.DataImporter):
             slice_index = int(slice_index)
             phase_index = int(phase_index)
 
-            if patient_index not in patient_dict:
-                patient_dict[patient_index] = []
-            patient_dict[patient_index].append([pydicom.dcmread(dcm_path), slice_index,
-                                                phase_index, dcm_path])
+            if phase_index == LOAD_PHASE:
+                if patient_index not in patient_dict:
+                    patient_dict[patient_index] = []
+                patient_dict[patient_index].append([pydicom.dcmread(dcm_path), slice_index,
+                                                    phase_index, dcm_path])
 
         dcm_references: List[cr_importer.DcmDataReference] = []
         for patient_index, patient in patient_dict.items():
@@ -76,7 +85,7 @@ class DataImporter(cr_importer.DataImporter):
 
 def main():
     importer = DataImporter()
-    importer.import_data(dataset_index=1)
+    importer.import_data(dataset_index=DATASET_INDEX)
 
 
 if __name__ == "__main__":

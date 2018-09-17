@@ -127,7 +127,7 @@ def export_images(tri_label=False,
     else:
         all_datasets = train_datasets + test_datasets
         
-    print('Number of Patients')
+    print('Number of patients')
     for key in pids:
         print('{:<10s}: {}'.format(key, len(pids[key])))
 
@@ -151,7 +151,7 @@ def export_images(tri_label=False,
 
     # count total # of cr_codes to consider (for loading bar)
     count = len([1 for cr_code in metadata if cri.parse_cr_code(cr_code)[0] in all_datasets])
-    bar = progress.bar.IncrementalBar('Copying Images...', max=count)
+    bar = progress.bar.IncrementalBar('Copying images...', max=count)
 
     # check IMAGES_DIR
     if glob.glob(os.path.join(export_dir, '**/*.jpg'), recursive=True):

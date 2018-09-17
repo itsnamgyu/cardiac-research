@@ -88,6 +88,13 @@ def extract_cr_code(string):
     return re_cr_code.search(string).group(0)
 
 
+def extract_cr_codes(strings, generator=False):
+    if generator:
+        return map(lambda s: extract_cr_code(s), strings)
+    else:
+        return list(map(lambda s: extract_cr_code(s), strings))
+
+
 def parse_cr_code(cr_code, match=True):
     '''
     Return: (dataset_index, patient_index, phase_index, slice_index)
@@ -130,7 +137,7 @@ def load_results(results_dir=RESULTS_DIR):
         }, ...
     ]
     '''
-    result_paths = glob.glob(os.path.join(results_dir, '**/results.json'))
+    result_paths = glob.glob(os.path.join(results_dir, '**/cr_result.json'))
     results = []
 
     for path in result_paths:

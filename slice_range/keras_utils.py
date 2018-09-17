@@ -35,6 +35,15 @@ class Application:
     def free_model(self):
         self.model = None
 
+def get_cr_codes_from_iterator(iterator, multiplier=1):
+    '''
+    Get cr_code of images generated from image. Does not consider shuffling.
+    '''
+    filenames = np.tile(np.array(iterator.filenames), multiplier)
+    cr_codes = map(lambda f: cri.extract_cr_code(f), filenames)
+
+    return cr_codes
+
 
 applications = [
     Application(mobilenet.MobileNet, (224, 224), 'mobilenet', 'MOB'),

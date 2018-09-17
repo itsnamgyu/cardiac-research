@@ -77,7 +77,10 @@ def split_patients(datasets=[0],
     else:
         # Use `test_datasets`, split `train_datasets`
         train_pids = []
-        for cr_code in metadata:
+        test_pids = []
+        for cr_code, info in metadata.items():
+            if 'label' not in info:
+                continue
             cr = cri.parse_cr_code(cr_code)
             if cr[0] in train_datasets:
                 train_pids.append((cr[0], cr[1]))
@@ -117,10 +120,12 @@ def export_images(tri_label=False,
     pids = split_patients(datasets, train_datasets, test_datasets,
                           test_split, validation_split)
 
-    if datasets == None:
-        all_datasets = train_datasets + test_dataset
-    else:
+    if train_datasets is None and test_datasets is None:
         all_datasets = datasets
+    elif train_datasets is None or test_datasets is None:
+        raise Exception('train_datasets and test_datasets must be passed in conjuction')
+    else:
+        all_datasets = train_datasets + test_datasets
         
     print('Number of Patients')
     for key in pids:
@@ -139,7 +144,10 @@ def export_images(tri_label=False,
     train_df = pd.DataFrame(np.zeros((3, 8)), columns=train_columns, index=index)
 
     test_columns = pd.Index(subcolumns)
-    test_df = pd.DataFrame(np.zeros((3, 4)), columns=test_columns, index = index)
+    test_df = pd.DataFrame(np.zeros((3, 4)), columns=test_columns, index=index)
+
+    validation_columns = pd.Index(subcolumns)
+    validation_df = pd.DataFrame(np.zeros((3, 4)), columns=validation_columns, index=index)
 
     # count total # of cr_codes to consider (for loading bar)
     count = len([1 for cr_code in metadata if cri.parse_cr_code(cr_code)[0] in all_datasets])
@@ -157,13 +165,13 @@ def export_images(tri_label=False,
         if cr[0] not in all_datasets:
             continue
         bar.next()
-        done.append(cr_code)
 
         try:
             label = info['label']
+            done.append(cr_code)
         except KeyError:
             unlabeled.append(cr_code)
-            label = 'nan'
+            continue
 
         if tri_label and label in ['ap', 'md', 'bs']:
             label = 'in'
@@ -175,9 +183,6 @@ def export_images(tri_label=False,
                 break
         else:
             raise Exception('invalid implementation')
-
-        if key != 'test' and label == 'nan':
-            raise Exception('Non testset image {} unlabeled'.format(cr_code))
 
         dirname = export_dir
         dirname = os.path.join(dirname, dataset)
@@ -195,15 +200,20 @@ def export_images(tri_label=False,
             dests.append(os.path.join(dirname, '{}.jpg'.format(cr_code)))
         src = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
 
-        train_df[('Original', label.upper())] += 1
-        train_df[('Augmented', label.upper())] += len(dests)
+        if dataset == 'train':
+            train_df[('Original', label.upper())] += 1
+            train_df[('Augmented', label.upper())] += len(dests)
+        elif dataset == 'test':
+            test_df[label.upper()] += 1
+        elif dataset == 'validation':
+            validation_df[label.upper()] += 1
 
         for dest in dests:
             shutil.copy(src, dest)
 
     bar.finish()
 
-    # dataset summary overview
+    # train dataset
     total = train_df.loc['Image Count', 'Original'].sum()
     for i in range(3):
         train_df.loc['Percentages', train_columns[i]] = \
@@ -216,10 +226,18 @@ def export_images(tri_label=False,
     for label in ['Original', 'Augmented']:
         train_df.loc[:,(label, 'TOTAL')] = train_df.loc[:, label].sum(axis=1)
 
+    # test dataset
     total = test_df.loc['Image Count'].sum()
     test_df.loc['Percentages'] = test_df.loc['Image Count'] / total * 100
     test_df.loc['Images Per Patient'] = test_df.loc['Image Count'] / len(pids['test'])
     test_df['TOTAL'] = test_df.sum(axis=1)
+
+    # validation dataset
+    total = validation_df.loc['Image Count'].sum()
+    validation_df.loc['Percentages'] = validation_df.loc['Image Count'] / total * 100
+    validation_df.loc['Images Per Patient'] = \
+            validation_df.loc['Image Count'] / len(pids['validation'])
+    validation_df['TOTAL'] = validation_df.sum(axis=1)
 
     # create folders for csv
     os.makedirs(os.path.dirname(spec_csv), exist_ok=True)
@@ -227,10 +245,14 @@ def export_images(tri_label=False,
     # save dataset info to csvs
     train_csv = os.path.join(os.path.dirname(spec_csv), 'train_' + os.path.basename(spec_csv))
     test_csv = os.path.join(os.path.dirname(spec_csv), 'test_' + os.path.basename(spec_csv))
+    validation_csv = os.path.join(os.path.dirname(spec_csv),
+                                  'validation_' + os.path.basename(spec_csv))
     train_df.to_csv(train_csv)
     test_df.to_csv(test_csv)
+    validation_df.to_csv(validation_csv)
     print('saved train dataset info to' + train_csv)
     print('saved test dataset info to' + test_csv)
+    print('saved validation dataset info to' + validation_csv)
 
     # print copied images
     print('Copied')
@@ -240,7 +262,8 @@ def export_images(tri_label=False,
 
 
 def main():
-    export_images(tri_label=True)
+    export_images(tri_label=True, train_datasets=[0], test_datasets=[1],
+                  validation_split=0.2)
 
 
 if __name__ == "__main__":

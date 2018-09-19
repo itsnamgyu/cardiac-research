@@ -16,8 +16,9 @@ class Application:
         else:
             return image_size + (3,)
         
-    def __init__(self, model_func, image_size, name, codename):
+    def __init__(self, model_func, preprocess_input_func, image_size, name, codename):
         self.model_func = model_func
+        self.preprocess_input = preprocess_input_func
         self.image_size= image_size
         self.name = name
         self.codename = codename
@@ -46,15 +47,24 @@ def get_cr_codes_from_iterator(iterator, multiplier=1):
 
 
 applications = [
-    Application(mobilenet.MobileNet, (224, 224), 'mobilenet', 'MOB'),
-    Application(mobilenet_v2.MobileNetV2, (224, 224), 'mobilenetv2', 'MOB2'),
-    Application(inception_resnet_v2.InceptionResNetV2, (299, 299), 'inceptionresnetv2', 'INCRES2'),
-    Application(inception_v3.InceptionV3, (299, 299), 'inceptionv3', 'INC3'),
-    Application(nasnet.NASNet, (224, 224), 'nasnet', 'NAS'),
-    Application(resnet50.ResNet50, (224, 224), 'resnet50', 'RES'),
-    Application(vgg16.VGG16, (224, 224), 'vgg16', 'VGG16'),
-    Application(vgg19.VGG19, (224, 244), 'vgg19', 'VGG19'),
-    Application(xception.Xception, (299, 299), 'xception',' XC'),
+    Application(mobilenet.MobileNet, mobilenet.preprocess_input,
+        (224, 224), 'mobilenet', 'MOB'),
+    Application(mobilenet_v2.MobileNetV2, mobilenet_v2.preprocess_input,
+        (224, 224), 'mobilenetv2', 'MOB2'),
+    Application(inception_resnet_v2.InceptionResNetV2, inception_resnet_v2.preprocess_input,
+        (299, 299), 'inceptionresnetv2', 'INCRES2'),
+    Application(inception_v3.InceptionV3, inception_v3.preprocess_input,
+        (299, 299), 'inceptionv3', 'INC3'),
+    Application(nasnet.NASNet, nasnet.preprocess_input,
+        (224, 224), 'nasnet', 'NAS'),
+    Application(resnet50.ResNet50, resnet50.preprocess_input,
+        (224, 224), 'resnet50', 'RES'),
+    Application(vgg16.VGG16, vgg16.preprocess_input,
+        (224, 224), 'vgg16', 'VGG16'),
+    Application(vgg19.VGG19, vgg19.preprocess_input,
+        (224, 244), 'vgg19', 'VGG19'),
+    Application(xception.Xception, xception.preprocess_input,
+        (299, 299), 'xception','XC'),
 ]
 
 application_dict = {}

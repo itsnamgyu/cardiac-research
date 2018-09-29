@@ -10,3 +10,4 @@ progress
 imageio
 keras
 livelossplot
+tqdm

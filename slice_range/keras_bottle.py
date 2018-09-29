@@ -3,7 +3,8 @@ import keras
 import keras_utils
 
 
-BOTTLENECK_DIR = 'bottlenecks'
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BOTTLENECK_DIR = os.path.join(BASE_DIR, 'bottlenecks')
 
 
 def get_bottleneck_dir(model_codename: str,

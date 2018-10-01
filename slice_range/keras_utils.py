@@ -1,15 +1,19 @@
 from keras_applications import vgg16, vgg19, inception_v3, resnet50, mobilenet, mobilenet_v2, inception_resnet_v2, xception, densenet, nasnet
 import keras
+import warnings
 
 class Application:
     @staticmethod
     def get_input_shape(image_size):
         '''
+        Deprecated: saved as member variable
+
         Get input shape of conv-nets based on keras backend settings
 
         Returns
         tuple(n1, n2, n3)
         '''
+        warnings.warn("deprecated", DeprecationWarning)
 
         if keras.backend.image_data_format() == 'channels_first':
             return (3,) + image_size 
@@ -23,6 +27,10 @@ class Application:
         self.name = name
         self.codename = codename
         self.model = None
+        if keras.backend.image_data_format() == 'channels_first':
+            self.input_shape = (3,) + image_size 
+        else:
+            self.input_shape = image_size + (3,)
 
     def get_model(self):
         if self.model == None:

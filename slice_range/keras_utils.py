@@ -1,15 +1,19 @@
 from keras_applications import vgg16, vgg19, inception_v3, resnet50, mobilenet, mobilenet_v2, inception_resnet_v2, xception, densenet, nasnet
 import keras
+import warnings
 
 class Application:
     @staticmethod
     def get_input_shape(image_size):
         '''
+        Deprecated: saved as member variable
+
         Get input shape of conv-nets based on keras backend settings
 
         Returns
         tuple(n1, n2, n3)
         '''
+        warnings.warn("deprecated", DeprecationWarning)
 
         if keras.backend.image_data_format() == 'channels_first':
             return (3,) + image_size 
@@ -23,6 +27,10 @@ class Application:
         self.name = name
         self.codename = codename
         self.model = None
+        if keras.backend.image_data_format() == 'channels_first':
+            self.input_shape = (3,) + image_size 
+        else:
+            self.input_shape = image_size + (3,)
 
     def get_model(self):
         if self.model == None:
@@ -35,6 +43,26 @@ class Application:
     
     def free_model(self):
         self.model = None
+
+    def get_image_data_generator(self, augment=True):
+        transform_parameters = {
+            'zx': 0.6,
+            'zy': 0.6,
+        }
+        zoom_gen = ImageDataGenerator()
+        zoom = lambda x: self.preprocess_input(zoom_gen.apply_transform(x, transform_parameters))
+
+        if augment:
+            augment_kwargs = dict(
+                rotation_range=45,
+                fill_mode='nearest'
+            )
+        else:
+            augment_kwargs = dict()
+
+        return ImageDataGenerator(
+            **augment_kwargs,
+            preprocessing_function=zoom)
 
 def get_cr_codes_from_iterator(iterator, multiplier=1):
     '''

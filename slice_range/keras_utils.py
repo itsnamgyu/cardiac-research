@@ -62,7 +62,7 @@ applications = [
     Application(vgg16.VGG16, vgg16.preprocess_input,
         (224, 224), 'vgg16', 'VGG16'),
     Application(vgg19.VGG19, vgg19.preprocess_input,
-        (224, 244), 'vgg19', 'VGG19'),
+        (224, 224), 'vgg19', 'VGG19'),
     Application(xception.Xception, xception.preprocess_input,
         (299, 299), 'xception','XC'),
 ]

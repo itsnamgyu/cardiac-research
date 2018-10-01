@@ -44,7 +44,7 @@ class Application:
     def free_model(self):
         self.model = None
 
-    def get_generator(self, augment=True):
+    def get_image_data_generator(self, augment=True):
         transform_parameters = {
             'zx': 0.6,
             'zy': 0.6,

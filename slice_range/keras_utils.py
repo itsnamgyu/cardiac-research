@@ -44,6 +44,26 @@ class Application:
     def free_model(self):
         self.model = None
 
+    def get_generator(self, augment=True):
+        transform_parameters = {
+            'zx': 0.6,
+            'zy': 0.6,
+        }
+        zoom_gen = ImageDataGenerator()
+        zoom = lambda x: self.preprocess_input(zoom_gen.apply_transform(x, transform_parameters))
+
+        if augment:
+            augment_kwargs = dict(
+                rotation_range=45,
+                fill_mode='nearest'
+            )
+        else:
+            augment_kwargs = dict()
+
+        return ImageDataGenerator(
+            **augment_kwargs,
+            preprocessing_function=zoom)
+
 def get_cr_codes_from_iterator(iterator, multiplier=1):
     '''
     Get cr_code of images generated from image. Does not consider shuffling.

@@ -132,8 +132,8 @@ def generate_bottlenecks(app, augment=False, multiplier=1):
         batch()
 
 
-for app in ku.applications.values():
-    generate_bottlenecks(app, augment=False, multiplier=1)
+#for app in ku.applications.values():
+#    generate_bottlenecks(app, augment=False, multiplier=1)
 
 for app in ku.applications.values():
-    generate_bottlenecks(app, augment=True, multiplier=5)
+    generate_bottlenecks(app, augment=True, multiplier=6)

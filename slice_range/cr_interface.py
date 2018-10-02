@@ -5,6 +5,8 @@ from typing import Dict
 import re
 import glob
 import argparse
+from collections import defaultdict
+import warnings
 
 import numpy as np
 import scipy.ndimage
@@ -12,6 +14,7 @@ import progress.bar
 import imageio
 import matplotlib.pyplot as plt
 import pandas as pd
+
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
@@ -40,6 +43,140 @@ cr_metadata.json
     ...
 }
 '''
+
+class CrCollection:
+    def __init__(self, df, copy=False):
+        if copy:
+            self.df = df.copy()
+        else:
+            self.df = df
+
+    @classmethod
+    def from_dict(cls, d):
+        dict_of_series = defaultdict(list)
+        dict_of_series['cr_code'] = list(d.keys())
+
+        keys = ['label', 'original_name', 'original_filepath']
+        for info in d.values():
+            for key in keys:
+                dict_of_series[key].append(info.get(key, ''))
+
+        cr_keys = ['dataset_index', 'pid', 'phase_index', 'slice_index']
+        for i, key in enumerate(cr_keys):
+            for cr_code in dict_of_series['cr_code']:
+                dict_of_series[key].append(parse_cr_code(cr_code)[i])
+
+        index = ['cr_code'] + cr_keys + keys
+        df = pd.DataFrame.from_dict(dict_of_series)[index]
+        df.sort_values('cr_code')
+        return cls(df)
+    
+    @classmethod
+    def load(cls):
+        '''
+        Load all data from cr_metadata.json
+        '''
+        return cls.from_dict(load_metadata())
+    
+    def split_by(self, columns, ratios, copy=False):
+        cr_keys = ['dataset_index', 'pid', 'phase_index', 'slice_index']
+        ratios = pd.Series(ratios)
+        
+        if ratios.sum() != 1:
+            raise ValueError('sum of ratio values are not 1')
+        
+        for column in columns:
+            if column not in cr_keys:
+                raise ValueError('invalid column {}'.format(column))
+                
+        key_df = self.df.loc[:, columns].drop_duplicates()
+        key_df = key_df.reindex(np.random.permutation(key_df.index), copy=False)
+        key_df = key_df.sort_index()
+        
+        lower_bounds = pd.Series([0] + list(ratios)[:-1]).cumsum()
+        upper_bounds = ratios.cumsum()
+        splits = []
+        for lower, upper in zip(lower_bounds, upper_bounds):
+            split = key_df.iloc[int(lower * len(key_df)):int(upper * len(key_df))]
+            df = self.df
+            for column in columns:
+                df = df.loc[df[column].isin(split[column])]
+            splits.append(CrCollection(df, copy))
+        
+        return splits
+    
+    def filter_by(self, in_place=False, **kwargs):
+        '''
+        kwargs
+        column_name: list_of_possible_values
+        '''
+        if in_place:
+            df = self.df
+        else:
+            df = self.df.copy()
+            
+        for key, vals in kwargs.items():
+            df = df.loc[df[key].isin(vals)]
+            
+        df = df.sort_values('cr_code').reset_index(drop=True)
+        
+        if not in_place:
+            return CrCollection(df)
+        else:
+            self.df = df
+    
+    def labeled(self, in_place=False):
+        if in_place:
+            df = self.df
+        else:
+            df = self.df.copy()
+            
+        df = df.loc[df['label'] != '']
+            
+        df = df.sort_values('cr_code').reset_index(drop=True)
+        
+        if not in_place:
+            return CrCollection(df)
+        else:
+            self.df = df
+            
+    def tri_label(self, in_place=False):
+        def to_tri_label(label):
+            if label in ['ap', 'md', 'bs']:
+                return 'in'
+            else:
+                return label
+            
+        if in_place:
+            df = self.df
+        else:
+            df = self.df.copy()
+            
+        df.loc[:, 'label'] = df.loc[:, 'label'].apply(to_tri_label)
+        
+        if not in_place:
+            return CrCollection(df)
+        else:
+            self.df = df
+    
+    def get_cr_codes(self):
+        return list(self.df['cr_code'])
+    
+    def get_cr_codes_by_label(self):
+        df = self.labeled(in_place=False).df
+        labels = list(df.loc[:, 'label'].drop_duplicates())
+        cr_codes = dict()
+        
+        for label in labels:
+            cr_codes[label] = list(df.loc[df.loc[:, 'label']==label]['cr_code'])
+        
+        return cr_codes
+    
+    def __add__(self, other):
+        if isinstance(other, CrCollection):
+            return CrCollection(pd.concat(self.df, other.df, copy=False))
+        else:
+            raise TypeError('cannot add CrCollection with {}'.format(type(other)))
 
 
 def load_metadata() -> Dict[str, Dict[str, str]]:

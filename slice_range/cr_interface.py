@@ -161,7 +161,10 @@ class CrCollection:
     
     def get_cr_codes(self):
         return list(self.df['cr_code'])
-    
+
+    def get_image_paths(self, generator=False):
+        return get_image_paths(self.df['cr_code'], generator)
+
     def get_cr_codes_by_label(self):
         df = self.labeled(in_place=False).df
         labels = list(df.loc[:, 'label'].drop_duplicates())
@@ -177,7 +180,6 @@ class CrCollection:
             return CrCollection(pd.concat(self.df, other.df, copy=False))
         else:
             raise TypeError('cannot add CrCollection with {}'.format(type(other)))
-
 
 def load_metadata() -> Dict[str, Dict[str, str]]:
     '''
@@ -246,6 +248,14 @@ def parse_cr_code(cr_code, match=True):
 
     return tuple(map(lambda index: int(index), match.groups()))
 
+def get_image_path(cr_code):
+    return os.path.join(DATABASE_DIR, '{}.jpg'.format(cr_code))
+
+def get_image_paths(cr_codes, generator=False):
+    if generator:
+        return map(get_image_path, cr_codes)
+    else:
+        return list(map(get_image_path, cr_codes))
 
 def visualize_metadata():
     metadata = load_metadata()

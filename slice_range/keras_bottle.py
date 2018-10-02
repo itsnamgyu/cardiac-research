@@ -25,7 +25,8 @@ def get_bottleneck_dir(model_codename: str,
     return os.path.abspath(path)
 
 def load_bottlenecks(cr_codes, model_codename, model,
-                     augmented=False, multiplier=5, generate=False):
+                     augmented=False, multiplier=5, generate=False,
+                     verbose=1):
     bottle_dir = get_bottleneck_dir(model_codename, model)
     bottle_paths = []
 
@@ -46,9 +47,13 @@ def load_bottlenecks(cr_codes, model_codename, model,
 
     bottles = []
     if loaded == len(bottle_paths):
-        print('loading bottlenecks...')
-        for path in tqdm.tqdm(bottle_paths):
-            bottles.append(np.load(path))
+        if verbose >= 1:
+            print('loading bottlenecks...')
+            for path in tqdm.tqdm(bottle_paths):
+                bottles.append(np.load(path))
+        else:
+            for path in bottle_paths:
+                bottles.append(np.load(path))
         return np.stack(bottles)
     else:
         if generate:

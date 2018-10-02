@@ -115,8 +115,11 @@ class CrCollection:
         else:
             df = self.df.copy()
             
-        for key, vals in kwargs.items():
-            df = df.loc[df[key].isin(vals)]
+        for key, val in kwargs.items():
+            try:
+                df = df.loc[df[key].isin(val)]
+            except TypeError: # element
+                df = df.loc[df[key]==val]
             
         df = df.sort_values('cr_code').reset_index(drop=True)
         

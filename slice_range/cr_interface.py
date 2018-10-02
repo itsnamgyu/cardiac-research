@@ -105,12 +105,12 @@ class CrCollection:
         
         return splits
     
-    def filter_by(self, in_place=False, **kwargs):
+    def filter_by(self, inplace=False, **kwargs):
         '''
         kwargs
-        column_name: list_of_possible_values
+        column_name: value or list_of_possible_values
         '''
-        if in_place:
+        if inplace:
             df = self.df
         else:
             df = self.df.copy()
@@ -123,13 +123,13 @@ class CrCollection:
             
         df = df.sort_values('cr_code').reset_index(drop=True)
         
-        if not in_place:
+        if not inplace:
             return CrCollection(df)
         else:
             self.df = df
     
-    def labeled(self, in_place=False):
-        if in_place:
+    def labeled(self, inplace=False):
+        if inplace:
             df = self.df
         else:
             df = self.df.copy()
@@ -138,26 +138,26 @@ class CrCollection:
             
         df = df.sort_values('cr_code').reset_index(drop=True)
         
-        if not in_place:
+        if not inplace:
             return CrCollection(df)
         else:
             self.df = df
             
-    def tri_label(self, in_place=False):
+    def tri_label(self, inplace=False):
         def to_tri_label(label):
             if label in ['ap', 'md', 'bs']:
                 return 'in'
             else:
                 return label
             
-        if in_place:
+        if inplace:
             df = self.df
         else:
             df = self.df.copy()
             
         df.loc[:, 'label'] = df.loc[:, 'label'].apply(to_tri_label)
         
-        if not in_place:
+        if not inplace:
             return CrCollection(df)
         else:
             self.df = df
@@ -169,7 +169,7 @@ class CrCollection:
         return get_image_paths(self.df['cr_code'], generator)
 
     def get_cr_codes_by_label(self):
-        df = self.labeled(in_place=False).df
+        df = self.labeled(inplace=False).df
         labels = list(df.loc[:, 'label'].drop_duplicates())
         cr_codes = dict()
         

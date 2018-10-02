@@ -144,12 +144,6 @@ class CrCollection:
             self.df = df
             
     def tri_label(self, inplace=False):
-        def to_tri_label(label):
-            if label in ['ap', 'md', 'bs']:
-                return 'in'
-            else:
-                return label
-            
         if inplace:
             df = self.df
         else:
@@ -167,6 +161,9 @@ class CrCollection:
 
     def get_image_paths(self, generator=False):
         return get_image_paths(self.df['cr_code'], generator)
+
+    def get_labels(self, generator=False):
+        return self.df.loc[:, 'label']
 
     def get_cr_codes_by_label(self):
         df = self.labeled(inplace=False).df
@@ -264,6 +261,27 @@ def visualize_metadata():
     metadata = load_metadata()
     print(json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
 
+def to_tri_label(label):
+    if label in ['ap', 'md', 'bs']:
+        return 'in'
+    else:
+        return label
+
+def get_label(cr_code, tri_label=True):
+    metadata = load_metadata()
+    try:
+        label = metadata[cr_code]['label']
+    except KeyError:
+        label = None
+    if tri_label:
+        label = to_tri_label(label)
+    return label
+
+def get_labels(cr_codes, tri_label=True, generator=False):
+    labels = map(lambda c: get_label(c, tri_label=tri_label), cr_codes)
+    if not generator:
+        labels = list(labels)
+    return labels
 
 def load_results(results_dir=RESULTS_DIR):
     '''

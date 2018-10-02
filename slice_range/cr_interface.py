@@ -101,6 +101,7 @@ class CrCollection:
             df = self.df
             for column in columns:
                 df = df.loc[df[column].isin(split[column])]
+            df = df.reset_index(drop=True)
             splits.append(CrCollection(df, copy))
         
         return splits
@@ -163,7 +164,7 @@ class CrCollection:
         return get_image_paths(self.df['cr_code'], generator)
 
     def get_labels(self, generator=False):
-        return self.df.loc[:, 'label']
+        return list(self.df.loc[:, 'label'])
 
     def get_cr_codes_by_label(self):
         df = self.labeled(inplace=False).df

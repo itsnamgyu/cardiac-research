@@ -177,7 +177,7 @@ class CrCollection:
     
     def __add__(self, other):
         if isinstance(other, CrCollection):
-            return CrCollection(pd.concat(self.df, other.df, copy=False))
+            return CrCollection(pd.concat([self.df, other.df], copy=True))
         else:
             raise TypeError('cannot add CrCollection with {}'.format(type(other)))
 

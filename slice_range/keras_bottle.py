@@ -1,4 +1,6 @@
 import os
+import argparse
+import tempfile
 
 import keras
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
@@ -6,7 +8,8 @@ import numpy as np
 import keras
 import tqdm
 
-import keras_utils
+import keras_utils as ku
+import cr_interface as cri
 
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -16,7 +19,7 @@ BOTTLENECK_DIR = os.path.join(BASE_DIR, 'bottlenecks')
 def get_bottleneck_dir(model_codename: str,
                        model: keras.models.Model,
                        mkdir=True):
-    subdir = '{}_{}'.format(model_codename, model.layers[-1].name)
+    subdir = '{}_{}'.format(model_codename, len(model.layers))
     path = os.path.join(BOTTLENECK_DIR, subdir)
     
     if mkdir:
@@ -86,24 +89,27 @@ def generate_bottleneck(img_path, app, gen, model):
 
     return bottlenecks[0]
 
-def generate_bottlenecks(app, model, augment=False, multiplier=1):
+def generate_bottlenecks(app, model, augment=False, out=False, multiplier=1):
     '''
     Need to fix abstraction
     '''
-    bottleneck_dir = kb.get_bottleneck_dir(app.codename, model)
-    images = glob.glob('{}/**/*.jpg'.format(cri.DATABASE_DIR), recursive=True)
-    gen = get_generator(app, augment)
+    bottleneck_dir = get_bottleneck_dir(app.codename, model)
+    gen = app.get_image_data_generator(augment)
 
+    collection = cri.CrCollection.load().tri_label()
+    if out:
+        collection = collection.filter_by(label=['obs', 'oap'])
+    
     def batch(suffix=''):
-        for image in tqdm.tqdm(images):
-            cr = cri.extract_cr_code(image)
-            path = os.path.join(bottleneck_dir, '{}{}.npy'.format(cr, suffix))
-            if not os.path.exists(path):
-                bottle = generate_bottleneck(path, app, gen, model)
+        for cr_code in tqdm.tqdm(collection.get_cr_codes()):
+            image_path = cri.get_image_path(cr_code)
+            np_path = os.path.join(bottleneck_dir, '{}{}.npy'.format(cr_code, suffix))
+            if not os.path.exists(np_path):
+                bottle = generate_bottleneck(image_path, app, gen, model)
                 with tempfile.NamedTemporaryFile(delete=False) as f:
                     temp = f.name
                     np.save(f, bottle)
-                os.rename(temp, path)
+                os.rename(temp, np_path)
 
     if augment:
         for i in range(multiplier):
@@ -113,3 +119,27 @@ def generate_bottlenecks(app, model, augment=False, multiplier=1):
     else:
         print('generating origin bottlenecks for {}'.format(app.codename))
         batch()
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-M', '--multiplier', type=int, default=1)
+    parser.add_argument('-O', '--out-multiplier', type=int, default=1)
+    args = parser.parse_args()
+
+    print('(1/3) Original Images')
+    for app in ku.applications.values():
+        generate_bottlenecks(app, app.get_model(), augment=False,
+                             multiplier=args.multiplier)
+
+    print('(2/3) Augmented')
+    for app in ku.applications.values():
+        generate_bottlenecks(app, app.get_model(), augment=True,
+                             multiplier=args.multiplier)
+
+    print('(3/3) Out Augmented')
+    for app in ku.applications.values():
+        generate_bottlenecks(app, app.get_model(), augment=True, out=True,
+                             multiplier=args.multiplier * args.out_multiplier)
+
+if __name__ == '__main__':
+    main()

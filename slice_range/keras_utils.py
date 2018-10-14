@@ -1,4 +1,4 @@
-from keras_applications import vgg16, vgg19, inception_v3, resnet50, mobilenet, mobilenet_v2, inception_resnet_v2, xception, densenet, nasnet
+from keras.applications import vgg16, vgg19, inception_v3, resnet50, mobilenet, mobilenet_v2, inception_resnet_v2, xception, densenet, nasnet
 import keras
 from keras.preprocessing.image import ImageDataGenerator
 import warnings
@@ -84,7 +84,7 @@ applications = [
         (299, 299), 'inceptionresnetv2', 'INCRES2'),
     Application(inception_v3.InceptionV3, inception_v3.preprocess_input,
         (299, 299), 'inceptionv3', 'INC3'),
-    Application(nasnet.NASNet, nasnet.preprocess_input,
+    Application(nasnet.NASNetLarge, nasnet.preprocess_input,
         (224, 224), 'nasnet', 'NAS'),
     Application(resnet50.ResNet50, resnet50.preprocess_input,
         (224, 224), 'resnet50', 'RES'),

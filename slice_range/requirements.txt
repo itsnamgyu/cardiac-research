@@ -8,6 +8,6 @@ pandas
 natsort
 progress
 imageio
-keras
+Keras>=2.2.4
 livelossplot
 tqdm

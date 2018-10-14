@@ -225,7 +225,7 @@ class Result():
 
         return pd.DataFrame(dict(precision=precision, recall=recall))
 
-    def describe(self) -> None:
+    def describe(self) -> str:
         '''
         Convinience function that prints core metrics
         '''

@@ -9,7 +9,7 @@ import itertools
 
 import numpy as np
 import scipy.ndimage
-import progress.bar
+from tqdm import tqdm
 import imageio
 import matplotlib.pyplot as plt
 import pandas as pd
@@ -151,7 +151,6 @@ def export_images(tri_label=False,
 
     # count total # of cr_codes to consider (for loading bar)
     count = len([1 for cr_code in metadata if cri.parse_cr_code(cr_code)[0] in all_datasets])
-    bar = progress.bar.IncrementalBar('Copying images...', max=count)
 
     # check IMAGES_DIR
     if glob.glob(os.path.join(export_dir, '**/*.jpg'), recursive=True):
@@ -160,58 +159,57 @@ def export_images(tri_label=False,
     # copy images
     unlabeled = []
     done = []
-    for cr_code, info in metadata.items():
-        cr = cri.parse_cr_code(cr_code)
-        if cr[0] not in all_datasets:
-            continue
-        bar.next()
+    with tqdm(total=count) as bar:
+        for cr_code, info in metadata.items():
+            cr = cri.parse_cr_code(cr_code)
+            if cr[0] not in all_datasets:
+                continue
+            bar.update(1)
 
-        try:
-            label = info['label']
-            done.append(cr_code)
-        except KeyError:
-            unlabeled.append(cr_code)
-            continue
+            try:
+                label = info['label']
+                done.append(cr_code)
+            except KeyError:
+                unlabeled.append(cr_code)
+                continue
 
-        if tri_label and label in ['ap', 'md', 'bs']:
-            label = 'in'
+            if tri_label and label in ['ap', 'md', 'bs']:
+                label = 'in'
 
-        # get dataset
-        for key in pids:
-            if (cr[0], cr[1]) in pids[key]:
-                dataset = key
-                break
-        else:
-            raise Exception('invalid implementation')
+            # get dataset
+            for key in pids:
+                if (cr[0], cr[1]) in pids[key]:
+                    dataset = key
+                    break
+            else:
+                raise Exception('invalid implementation')
 
-        dirname = export_dir
-        dirname = os.path.join(dirname, dataset)
-        dirname = os.path.join(dirname, label)
-        os.makedirs(dirname, exist_ok=True)
+            dirname = export_dir
+            dirname = os.path.join(dirname, dataset)
+            dirname = os.path.join(dirname, label)
+            os.makedirs(dirname, exist_ok=True)
 
-        # hotfix - oversample oap, obs
-        n_oversample = 5
+            # hotfix - oversample oap, obs
+            n_oversample = 5
 
-        dests = []
-        if tri_label and label in ['oap', 'obs'] and dataset != 'test':
-            for i in range(n_oversample):
-                dests.append(os.path.join(dirname, '{}_{:02d}.jpg'.format(cr_code, i)))
-        else:
-            dests.append(os.path.join(dirname, '{}.jpg'.format(cr_code)))
-        src = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
+            dests = []
+            if tri_label and label in ['oap', 'obs'] and dataset != 'test':
+                for i in range(n_oversample):
+                    dests.append(os.path.join(dirname, '{}_{:02d}.jpg'.format(cr_code, i)))
+            else:
+                dests.append(os.path.join(dirname, '{}.jpg'.format(cr_code)))
+            src = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
 
-        if dataset == 'train':
-            train_df[('Original', label.upper())] += 1
-            train_df[('Augmented', label.upper())] += len(dests)
-        elif dataset == 'test':
-            test_df[label.upper()] += 1
-        elif dataset == 'validation':
-            validation_df[label.upper()] += 1
+            if dataset == 'train':
+                train_df[('Original', label.upper())] += 1
+                train_df[('Augmented', label.upper())] += len(dests)
+            elif dataset == 'test':
+                test_df[label.upper()] += 1
+            elif dataset == 'validation':
+                validation_df[label.upper()] += 1
 
-        for dest in dests:
-            shutil.copy(src, dest)
-
-    bar.finish()
+            for dest in dests:
+                shutil.copy(src, dest)
 
     # train dataset
     total = train_df.loc['Image Count', 'Original'].sum()

@@ -10,7 +10,6 @@ import warnings
 
 import numpy as np
 import scipy.ndimage
-import progress.bar
 import imageio
 import matplotlib.pyplot as plt
 import pandas as pd

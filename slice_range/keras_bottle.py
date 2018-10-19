@@ -75,7 +75,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
                      model=None, verbose=1):
     if len(base_collection.df) == 0:
         warnings.warn('empty collection')
-        return
+        return None, None
     if count != 1 and not aug:
         warnings.warn('count ignored when aug is false')
         count = 1
@@ -172,9 +172,9 @@ def main():
         print('testing bottleneck generation on mobilnet and inception')
         fc = cri.CrCollection.load().sample(frac=0.02).labeled().tri_label()
         generate_all_bottlenecks(ku.apps['mobilenet'], collection=fc,
-                                 augmentation=5, balancing=5)
+                                 augmentation=5, balancing=6)
         generate_all_bottlenecks(ku.apps['inceptionresnetv2'], collection=fc,
-                                 augmentation=5, balancing=5)
+                                 augmentation=5, balancing=6)
         if string == 'yes':
             print('resetting..')
             reset_bottlenecks()

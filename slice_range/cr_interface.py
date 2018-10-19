@@ -8,6 +8,7 @@ import argparse
 from collections import defaultdict
 import warnings
 
+from tqdm import tqdm
 import numpy as np
 import scipy.ndimage
 import imageio
@@ -19,7 +20,7 @@ PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(PROJECT_DIR, 'data/database')
 DATASET_DIR = os.path.join(PROJECT_DIR, 'data/datasets')
-DATA_DIR = os.path.join(PROJECT_DIR, 'data/data')
+DATA_DIR = os.path.join(PROJECT_DIR, 'data/data')  # legacy
 METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'images')
 RESULTS_DIR = os.path.join(PROJECT_DIR, 'results')
@@ -42,6 +43,8 @@ cr_metadata.json
     ...
 }
 '''
+
+
 
 class CrCollection:
     def __init__(self, df, copy=False):
@@ -155,7 +158,7 @@ class CrCollection:
             return CrCollection(df)
         else:
             self.df = df
-    
+
     def get_cr_codes(self):
         return list(self.df['cr_code'])
 
@@ -174,7 +177,27 @@ class CrCollection:
             cr_codes[label] = list(df.loc[df.loc[:, 'label']==label]['cr_code'])
         
         return cr_codes
-    
+
+    def export(self, dest, by_label=True, verbose=0):
+        os.makedirs(dest, exist_ok=True)
+        if not os.path.isdir(dest):
+            raise OSError('export path already exists and is not a directory')
+
+        if by_label:
+            if (self.df['label'] == '').any():
+                warnings.warn('exporting by label ignores unlabeled images')
+            raise NotImplementedError()
+        else:
+            if verbose:
+                for path in tqdm(self.get_image_paths()):
+                    shutil.copy(path, dest)
+            else:
+                for path in self.get_image_paths():
+                    shutil.copy(path, dest)
+
+    def sample(self, n=None, frac=None):
+        return CrCollection(self.df.sample(n=n, frac=frac))
+
     def __add__(self, other):
         if isinstance(other, CrCollection):
             return CrCollection(pd.concat([self.df, other.df], copy=True))

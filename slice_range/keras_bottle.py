@@ -3,6 +3,7 @@ import argparse
 import tempfile
 import warnings
 import shutil
+import argparse
 
 import keras
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
@@ -24,12 +25,14 @@ def _get_temp_dir():
     os.makedirs(TEMP_DIR, exist_ok=True)
     return TEMP_DIR
 
+
 def get_bottleneck_dir(model, mkdir=True):
     subdir = '{}_{}'.format(model.name.replace('.', '_'), len(model.layers))
     path = os.path.join(BOTTLENECK_DIR, subdir)
     if mkdir:
         os.makedirs(path, exist_ok=True)
     return os.path.abspath(path)
+
 
 def get_bottleneck_path(model, cr_code, aug, index=0):
     dirname = get_bottleneck_dir(model)
@@ -41,9 +44,11 @@ def get_bottleneck_path(model, cr_code, aug, index=0):
         basename = '{}.npy'.format(cr_code)
     return os.path.join(dirname, basename)
 
+
 def bottleneck_exists(model, cr_code, aug: bool, index=0):
     # optimization considerations: currently takes 35s per 1,0000,000 calls
     return os.path.exists(get_bottleneck_path(model, cr_code, aug, index))
+
 
 def _get_nth_bottleneck_collection(app, collection, aug, index=0, model=None):
     '''
@@ -53,17 +58,18 @@ def _get_nth_bottleneck_collection(app, collection, aug, index=0, model=None):
     if len(collection.df) == 0:
         warnings.warn('empty collection')
         return collection
-    
+
     if not model:
         model = app.get_model()
-        
+
     def should_generate(cr_code):
         return not bottleneck_exists(model, cr_code, aug, index)
     df = collection.df
     df = df.loc[df.apply(lambda x: should_generate(x['cr_code']), axis=1)]
     df = df.sort_values('cr_code')
-    
+
     return cri.CrCollection(df)
+
 
 def load_bottlenecks(app, base_collection, aug, count=1,
                      model=None, verbose=1):
@@ -84,11 +90,12 @@ def load_bottlenecks(app, base_collection, aug, count=1,
         collections.append(c)
         total += len(c.df)
 
-    print('loading {} of {} * {} bottlenecks'.format(
+    print('generating {} of {} * {} bottlenecks'.format(
         total, len(base_collection.df), count))
 
     for index, collection in enumerate(collections):
-        if len(collection.df) == 0: continue
+        if len(collection.df) == 0:
+            continue
 
         temp = _get_temp_dir()
         image_dir = os.path.join(temp, 'images')
@@ -98,7 +105,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
         collection.export(default_class, by_label=False)
 
         gen = app.get_image_data_generator(augment=aug).flow_from_directory(
-            image_dir, target_size=app.image_size, batch_size=128)
+            image_dir, target_size=app.image_size, shuffle=False, batch_size=128)
 
         data = model.predict_generator(gen)
 
@@ -109,7 +116,6 @@ def load_bottlenecks(app, base_collection, aug, count=1,
             np.save(temp_bottle_path, data[i])
             os.rename(temp_bottle_path, path)
 
-    
     bottles = []
     labels = np.tile(base_collection.get_labels(), count)
     for i in range(count):
@@ -117,6 +123,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
             path = get_bottleneck_path(model, cr_code, aug, index=i)
             bottles.append(np.load(path))
     return np.stack(bottles), labels
+
 
 def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6):
     if collection:
@@ -126,36 +133,62 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6):
             return
     else:
         c = cri.CrCollection.load().labeled().tri_label()
-        
+
     c0 = c.filter_by(dataset_index=0)
     c1 = c.filter_by(dataset_index=1)
-    
+
     c0_out = c0.filter_by(label=['oap', 'obs'])
     c0_in = c0.filter_by(label='in')
     c1_out = c1.filter_by(label=['oap', 'obs'])
     c1_in = c1.filter_by(label='in')
-    
+
     print('(1/3) loading unaugmented bottlenecks'.center(100, '-'))
     load_bottlenecks(app, c, aug=False)
-    
+
     print('(2/3) loading train bottlenecks (in)'.center(100, '-'))
     load_bottlenecks(app, c0_in, aug=True, count=augmentation)
-    
+
     print('(3/3) loading train bottlenecks (out)'.center(100, '-'))
     load_bottlenecks(app, c0_out, aug=True, count=augmentation * balancing)
+
 
 def reset_bottlenecks():
     shutil.rmtree(BOTTLENECK_DIR, ignore_errors=True)
     os.makedirs(BOTTLENECK_DIR, exist_ok=True)
 
+
 def main():
-    print('testing bottleneck generation on mobilnet and inception')
-    fc = cri.CrCollection.load().sample(frac=0.02).labeled().tri_label()
-    generate_all_bottlenecks(ku.apps['mobilenet'], collection=fc,
-                             augmentation=5, balancing=5)
-    generate_all_bottlenecks(ku.apps['inceptionresnetv2'], collection=fc,
-                             augmentation=5, balancing=5)
-    reset_bottlenecks()
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument('-T', '--test', action='store_true')
+    group.add_argument('-R', '--reset', action='store_true')
+    args = parser.parse_args()
+
+    if args.test:
+        string = input('reset bottlenecks before test? (yes/no): ')
+        if string == 'yes':
+            print('resetting..')
+            reset_bottlenecks()
+        print('testing bottleneck generation on mobilnet and inception')
+        fc = cri.CrCollection.load().sample(frac=0.02).labeled().tri_label()
+        generate_all_bottlenecks(ku.apps['mobilenet'], collection=fc,
+                                 augmentation=5, balancing=5)
+        generate_all_bottlenecks(ku.apps['inceptionresnetv2'], collection=fc,
+                                 augmentation=5, balancing=5)
+        if string == 'yes':
+            print('resetting..')
+            reset_bottlenecks()
+        print('done')
+    elif args.reset:
+        string = input('reset all bottlenecks? (yes/no): ')
+        if string == 'yes':
+            reset_bottlenecks()
+            print('done')
+        else:
+            print('skip')
+    else:
+        parser.print_help()
+
 
 if __name__ == '__main__':
     main()

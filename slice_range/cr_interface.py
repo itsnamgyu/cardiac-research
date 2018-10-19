@@ -160,7 +160,7 @@ class CrCollection:
             self.df = df
 
     def get_cr_codes(self):
-        return list(self.df['cr_code'])
+        return list(self.df.loc[:, 'cr_code'])
 
     def get_image_paths(self, generator=False):
         return get_image_paths(self.df['cr_code'], generator)

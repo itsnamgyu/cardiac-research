@@ -100,4 +100,5 @@ application_dict = {}
 for application in applications:
     application_dict[application.name] = application
 
-applications = application_dict
+apps = application_dict
+applications = apps  # legacy

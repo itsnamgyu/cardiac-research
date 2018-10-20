@@ -181,7 +181,7 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, 
                      balancing, generate_only=True, verbose=verbose-1)
 
 
-def get_k_bottlenecks_and_labels(base_collection, app, k=5, n_aug=1, n_balance=5, verbose=1):
+def get_k_bottlenecks_and_labels(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1):
     '''
     Return
     k_train_sets, k_validation_sets

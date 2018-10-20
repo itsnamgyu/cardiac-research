@@ -1,5 +1,6 @@
 import time
 import requests
+from sklearn.preprocessing import LabelEncoder, OneHotEncoder
 
 class Timer(object):
     def __init__(self, name=None):
@@ -33,3 +34,9 @@ def notify(string='done'):
     }
     data = '{"text":"[CREB1] %s"}' % string
     response = requests.post('https://hooks.slack.com/services/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', headers=headers, data=data)
+
+def onehot(labels):
+    # generate onehot labels from list of string labels
+    labelize = LabelEncoder().fit_transform
+    onehot = OneHotEncoder(sparse=False).fit_transform
+    return onehot(labelize(list(labels)).reshape(-1, 1))

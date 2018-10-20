@@ -4,6 +4,7 @@ import tempfile
 import warnings
 import shutil
 import argparse
+from collections import defaultdict
 
 import keras
 from keras.preprocessing.image import ImageDataGenerator, array_to_img, img_to_array, load_img
@@ -11,6 +12,7 @@ import numpy as np
 import keras
 from tqdm import tqdm
 import requests
+import pandas as pd
 
 import keras_utils as ku
 import cr_interface as cri
@@ -76,7 +78,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
     '''
     generate and load bottlenecks/labels in this order
     X_AUG0 >> ...  >> X_AUGN >> Y_AUG0 >> ... >> Y_AUGN >> Z...
-    
+
     TODO
     change signature to generate=False, and create a separate
     generate_bottlenecks function
@@ -132,7 +134,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
         bottles = []
         labels = np.repeat(base_collection.get_labels(), count)
 
-        with tqdm(total=total, disable=(verbose<2)) as bar:
+        with tqdm(total=total, disable=(verbose < 2)) as bar:
             for cr_code in base_collection.get_cr_codes():
                 for i in range(count):
                     path = get_bottleneck_path(model, cr_code, aug, index=i)
@@ -168,14 +170,83 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, 
         print('(2/3) generating inner train bottlenecks'.center(100, '-'))
     elif verbose:
         print('(2/3) generating inner train bottlenecks')
-    load_bottlenecks(app, c0_in, aug=True, count=augmentation, generate_only=True, verbose=verbose-1)
+    load_bottlenecks(app, c0_in, aug=True, count=augmentation,
+                     generate_only=True, verbose=verbose-1)
 
     if verbose >= 2:
         print('(3/3) generating outer train bottlenecks'.center(100, '-'))
     elif verbose:
         print('(3/3) generating outer train bottlenecks')
-    load_bottlenecks(app, c0_out, aug=True,count=augmentation * balancing, generate_only=True, verbose=verbose-1)
+    load_bottlenecks(app, c0_out, aug=True, count=augmentation *
+                     balancing, generate_only=True, verbose=verbose-1)
 
+
+def get_k_bottlenecks_and_labels(base_collection, app, k=5, n_aug=1, n_balance=5, verbose=1):
+    '''
+    Return
+    k_train_sets, k_validation_sets
+    - sets: [ (bottles, labels), ... ]
+    '''
+    base_collection = base_collection.tri_label().labeled()
+    splits = base_collection.k_split(['dataset_index', 'pid'], k)
+
+    if verbose >= 0:
+        print('Number of images by split by label'.center(100, '-'))
+        d = defaultdict(list)
+        for split in splits:
+            d['total'].append(len(split.df))
+            for label in ['in', 'oap', 'obs']:
+                d[label] = len(split.filter_by(label=label).df)
+        print(pd.DataFrame(d))
+
+    split_labels = []
+    split_aug_labels = []
+    split_bottles = []
+    split_aug_bottles = []
+
+    if verbose:
+        print('Generating bottlenecks'.center(100, '-'))
+    generate_all_bottlenecks(app, base_collection, verbose=verbose)
+
+    if verbose:
+        print('Loading bottlenecks'.center(100, '-'))
+    for i, split in enumerate(splits):
+        print('Loading split {} of {}...'.format(i + 1, k))
+        # non-aug
+        bottles, labels = load_bottlenecks(
+            app, split, aug=False, verbose=verbose-1)
+        split_bottles.append(bottles)
+        split_labels.append(labels)
+
+        # aug
+        c = split.filter_by(label='in')
+        b_in, l_in = load_bottlenecks(
+            app, c, aug=True, count=n_aug, verbose=verbose-1)
+        c = split.filter_by(label=['oap', 'obs'])
+        b_out, l_out = load_bottlenecks(
+            app, c, aug=True, count=n_aug * n_balance, verbose=verbose-1)
+        split_aug_bottles.append(np.concatenate((b_in, b_out)))
+        split_aug_labels.append(np.concatenate((l_in, l_out)))
+
+    k_train_sets = []  # [ (bottles, labels) ... ]
+    k_validation_sets = []  # [ (bottles, labels) ... ]
+
+    for i in range(k):
+        labels = lib.onehot(split_labels[i])
+        bottles = split_bottles[i]
+        k_validation_sets.append((bottles, labels))
+
+        labels = []
+        bottles = []
+        for j in list(range(0, i)) + list(range(i + 1, k)):
+            labels.append(split_aug_labels[j])
+            bottles.append(split_aug_bottles[j])
+        bottles = np.concatenate(bottles)
+        labels = np.concatenate(labels)
+        labels = lib.onehot(labels)
+        k_train_sets.append((bottles, labels))
+
+    return k_train_sets, k_validation_sets
 
 
 def reset_bottlenecks():

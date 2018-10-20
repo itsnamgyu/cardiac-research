@@ -72,7 +72,7 @@ def _get_nth_bottleneck_collection(app, collection, aug, index=0, model=None):
 
 
 def load_bottlenecks(app, base_collection, aug, count=1,
-                     model=None, verbose=1):
+                     model=None, verbose=1, generate_only=False):
     if len(base_collection.df) == 0:
         warnings.warn('empty collection')
         return None, None
@@ -82,16 +82,18 @@ def load_bottlenecks(app, base_collection, aug, count=1,
     if not model:
         model = app.get_model()
 
-    total = 0
+    n_generate = 0
+    total = len(base_collection.df) * count
     collections = []
     for i in range(count):
         c = _get_nth_bottleneck_collection(app, base_collection, model=model,
                                            aug=aug, index=i)
         collections.append(c)
-        total += len(c.df)
+        n_generate += len(c.df)
 
-    print('generating {} of {} * {} bottlenecks'.format(
-        total, len(base_collection.df), count))
+    if verbose:
+        print('generating {} of {} ({} * {}) bottlenecks'.format(
+            n_generate, total, len(base_collection.df), count))
 
     for index, collection in enumerate(collections):
         if len(collection.df) == 0:
@@ -116,16 +118,22 @@ def load_bottlenecks(app, base_collection, aug, count=1,
             np.save(temp_bottle_path, data[i])
             os.rename(temp_bottle_path, path)
 
-    bottles = []
-    labels = np.tile(base_collection.get_labels(), count)
-    for i in range(count):
-        for cr_code in base_collection.get_cr_codes():
-            path = get_bottleneck_path(model, cr_code, aug, index=i)
-            bottles.append(np.load(path))
-    return np.stack(bottles), labels
+    if not generate_only:
+        if verbose:
+            print('loading {} bottlenecks'.format(total))
+        bottles = []
+        labels = np.repeat(base_collection.get_labels(), count)
+
+        with tqdm(total=total, disable=(verbose<2)) as bar:
+            for cr_code in base_collection.get_cr_codes():
+                for i in range(count):
+                    path = get_bottleneck_path(model, cr_code, aug, index=i)
+                    bottles.append(np.load(path))
+                    bar.update(1)
+        return np.stack(bottles), labels
 
 
-def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6):
+def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6, verbose=1):
     if collection:
         c = collection.tri_label()
         if len(c.df) == 0:
@@ -142,14 +150,18 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6):
     c1_out = c1.filter_by(label=['oap', 'obs'])
     c1_in = c1.filter_by(label='in')
 
-    print('(1/3) loading unaugmented bottlenecks'.center(100, '-'))
-    load_bottlenecks(app, c, aug=False)
+    if verbose:
+        print('(1/3) loading unaugmented bottlenecks'.center(100, '-'))
+    load_bottlenecks(app, c, aug=False, generate_only=True, verbose=verbose-1)
 
-    print('(2/3) loading train bottlenecks (in)'.center(100, '-'))
-    load_bottlenecks(app, c0_in, aug=True, count=augmentation)
+    if verbose:
+        print('(2/3) loading train bottlenecks (in)'.center(100, '-'))
+    load_bottlenecks(app, c0_in, aug=True, count=augmentation, generate_only=True, verbose=verbose-1)
 
-    print('(3/3) loading train bottlenecks (out)'.center(100, '-'))
-    load_bottlenecks(app, c0_out, aug=True, count=augmentation * balancing)
+    if verbose:
+        print('(3/3) loading train bottlenecks (out)'.center(100, '-'))
+    load_bottlenecks(app, c0_out, aug=True,count=augmentation * balancing, generate_only=True, verbose=verbose-1)
+
 
 
 def reset_bottlenecks():

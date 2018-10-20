@@ -158,16 +158,22 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, 
     c1_out = c1.filter_by(label=['oap', 'obs'])
     c1_in = c1.filter_by(label='in')
 
-    if verbose:
-        print('(1/3) loading unaugmented bottlenecks'.center(100, '-'))
+    if verbose >= 2:
+        print('(1/3) generating unaugmented bottlenecks'.center(100, '-'))
+    elif verbose:
+        print('(1/3) generating unaugmented bottlenecks')
     load_bottlenecks(app, c, aug=False, generate_only=True, verbose=verbose-1)
 
-    if verbose:
-        print('(2/3) loading train bottlenecks (in)'.center(100, '-'))
+    if verbose >= 2:
+        print('(2/3) generating inner train bottlenecks'.center(100, '-'))
+    elif verbose:
+        print('(2/3) generating inner train bottlenecks')
     load_bottlenecks(app, c0_in, aug=True, count=augmentation, generate_only=True, verbose=verbose-1)
 
-    if verbose:
-        print('(3/3) loading train bottlenecks (out)'.center(100, '-'))
+    if verbose >= 2:
+        print('(3/3) generating outer train bottlenecks'.center(100, '-'))
+    elif verbose:
+        print('(3/3) generating outer train bottlenecks')
     load_bottlenecks(app, c0_out, aug=True,count=augmentation * balancing, generate_only=True, verbose=verbose-1)
 
 

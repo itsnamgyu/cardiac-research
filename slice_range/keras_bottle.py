@@ -141,7 +141,7 @@ def load_bottlenecks(app, base_collection, aug, count=1,
         return np.stack(bottles), labels
 
 
-def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=6, verbose=1):
+def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, verbose=2):
     if collection:
         c = collection.tri_label()
         if len(c.df) == 0:
@@ -192,9 +192,9 @@ def main():
         print('testing bottleneck generation on mobilnet and inception')
         fc = cri.CrCollection.load().sample(frac=0.02).labeled().tri_label()
         generate_all_bottlenecks(ku.apps['mobilenet'], collection=fc,
-                                 augmentation=5, balancing=6)
+                                 augmentation=5, balancing=5)
         generate_all_bottlenecks(ku.apps['inceptionresnetv2'], collection=fc,
-                                 augmentation=5, balancing=6)
+                                 augmentation=5, balancing=5)
         if string == 'yes':
             print('resetting..')
             reset_bottlenecks()

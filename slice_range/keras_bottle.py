@@ -73,6 +73,14 @@ def _get_nth_bottleneck_collection(app, collection, aug, index=0, model=None):
 
 def load_bottlenecks(app, base_collection, aug, count=1,
                      model=None, verbose=1, generate_only=False):
+    '''
+    generate and load bottlenecks/labels in this order
+    X_AUG0 >> ...  >> X_AUGN >> Y_AUG0 >> ... >> Y_AUGN >> Z...
+    
+    TODO
+    change signature to generate=False, and create a separate
+    generate_bottlenecks function
+    '''
     if len(base_collection.df) == 0:
         warnings.warn('empty collection')
         return None, None

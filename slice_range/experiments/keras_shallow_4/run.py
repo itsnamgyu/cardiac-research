@@ -2,6 +2,7 @@ import sys
 sys.path.append('../..')
 
 import math
+import gc
 
 import keras
 from keras import optimizers

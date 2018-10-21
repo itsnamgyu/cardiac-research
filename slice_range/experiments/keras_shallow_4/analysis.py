@@ -10,7 +10,7 @@ import keras_history as kh
 
 
 K = 5
-EPOCHS = 5
+EPOCHS = 100
 LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
 
 

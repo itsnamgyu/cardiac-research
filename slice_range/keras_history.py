@@ -53,7 +53,7 @@ def get_history_dir(model, mkdir=True):
 
 def get_history_path(model, lr_index, epochs, split_index=None):
     dirname = get_history_dir(model)
-    if split_index:
+    if split_index is not None:
         basename = 'L{:02d}_E{:04d}_S{:02d}.json'.format(lr_index, epochs, split_index)
     else:
         basename = 'L{:02d}_E{:04d}.json'.format(lr_index, epochs)

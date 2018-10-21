@@ -1,6 +1,8 @@
 import sys
 sys.path.append('../..')
 
+import os
+
 import pandas as pd
 
 import keras_utils as ku
@@ -33,17 +35,18 @@ def plot_single_metric_average_history_by_lr(app, metric='val_acc', epochs=EPOCH
     
 def generate_all_test_results():
     results = {}
+    os.makedirs('results', exist_ok=True)
     for app in ku.apps.values():
         try:
             results[app.codename] = kh.load_test_result(app.get_model())
             plot_single_metric_average_history_by_lr(app, 'val_acc').get_figure().savefig(
-                '{}_val_acc_by_lr.png'.format(app.codename), dpi=160)
+                'results/{}_val_acc_by_lr.png'.format(app.codename), dpi=160)
             plot_single_metric_average_history_by_lr(app, 'val_loss').get_figure().savefig(
-                '{}_val_loss_by_lr.png'.format(app.codename), dpi=160)
+                'results/{}_val_loss_by_lr.png'.format(app.codename), dpi=160)
         except Exception:
             pass
     results = pd.DataFrame(results)
-    results.to_csv('test_results.csv')
+    results.to_csv('results/test_results.csv')
     print(results)
 
 

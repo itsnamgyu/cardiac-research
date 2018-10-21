@@ -1,4 +1,5 @@
 tensorflow_hub
+requests
 matplotlib
 pydicom
 scikit-image
@@ -9,5 +10,4 @@ natsort
 progress
 imageio
 keras
-livelossplot
 tqdm

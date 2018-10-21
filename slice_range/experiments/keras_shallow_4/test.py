@@ -43,9 +43,9 @@ try:
                 yield batches_by_aug[index][i]
             index = (index + 1) % n_aug
 
-        TEST = True
-        VERBOSE = 1
-        LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
+    TEST = True
+    VERBOSE = 1
+    LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
 
 
     def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):

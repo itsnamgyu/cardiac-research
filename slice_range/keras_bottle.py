@@ -181,7 +181,7 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, 
                      balancing, generate_only=True, verbose=verbose-1)
 
 
-def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1):
+def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1, include_entire_set=False):
     '''
     Return
     k_train_sets, k_validation_sets
@@ -196,7 +196,7 @@ def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1
         for split in splits:
             d['total'].append(len(split.df))
             for label in ['in', 'oap', 'obs']:
-                d[label] = len(split.filter_by(label=label).df)
+                d[label].append(len(split.filter_by(label=label).df))
         print(pd.DataFrame(d))
 
     split_labels = []
@@ -246,7 +246,19 @@ def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1
         labels = lib.onehot(labels)
         k_train_sets.append((bottles, labels))
 
-    return k_train_sets, k_validation_sets
+    if include_entire_set:
+        labels = []
+        bottles = []
+        for i in range(k):
+            labels.append(split_aug_labels[i])
+            bottles.append(split_aug_bottles[i])
+        bottles = np.concatenate(bottles)
+        labels = np.concatenate(labels)
+        labels = lib.onehot(labels)
+        entire_set = (bottles, labels)
+        return k_train_sets, k_validation_sets, entire_set
+    else:
+        return k_train_sets, k_validation_sets
 
 
 def reset_bottlenecks():

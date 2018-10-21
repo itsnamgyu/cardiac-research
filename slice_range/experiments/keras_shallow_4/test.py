@@ -6,6 +6,7 @@ import math
 import lib
 
 try:
+    import keras
     from keras import optimizers
     from keras.models import Sequential
     from keras.layers import Dense, Flatten, Dropout
@@ -103,12 +104,15 @@ try:
                     kh.save_history(res.history, app.get_model(),
                                     lr_index, epochs, i)
                     histories.append(pd.DataFrame(res.history))
+                    del top_model
+                    gc.collect()
                     bar.update()
 
                 average_history = pd.concat(histories).groupby(level=0).mean()
                 average_histories.append(average_history)
                 min_loss_by_lr.append(average_history.val_loss.min())
                 min_loss_epoch_by_lr.append(average_history.val_loss.idxmin())
+
 
         min_loss = pd.Series(min_loss_by_lr).min()
         m_lr_index = pd.Series(min_loss_by_lr).idxmin()
@@ -143,10 +147,14 @@ try:
         if verbose >= 1:
             print('final accuracy: {}'.format(acc))
         kh.save_test_result(app.get_model(), loss, acc, m_lr, m_epochs)
+        del top_model
+        gc.collect()
 
         if verbose >= 1:
-            print('Freeing bottlenecks'.center(100, '-'))
+            print('Freeing bottlenecks and memory'.center(100, '-'))
         kb.reset_bottlenecks()
+        keras.backend.clear_session()
+        app.free_model()
 
         if verbose >= 1:
             print()

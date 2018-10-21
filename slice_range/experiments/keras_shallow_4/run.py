@@ -3,6 +3,7 @@ sys.path.append('../..')
 
 import math
 
+import keras
 from keras import optimizers
 from keras.models import Sequential
 from keras.layers import Dense, Flatten, Dropout
@@ -104,6 +105,8 @@ def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):
                                 lr_index, epochs, i)
                 histories.append(pd.DataFrame(res.history))
                 bar.update()
+                del top_model
+                gc.collect()
 
             average_history = pd.concat(histories).groupby(level=0).mean()
             average_histories.append(average_history)
@@ -140,13 +143,17 @@ def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):
                     m_lr_index, m_epochs, split_index=None)
 
     loss, acc = top_model.evaluate(test_bottles, test_labels, verbose=0)
+    del top_model
+    gc.collect()
     if verbose >= 1:
         print('final accuracy: {}'.format(acc))
     kh.save_test_result(app.get_model(), loss, acc, m_lr, m_epochs)
 
     if verbose >= 1:
-        print('Freeing bottlenecks'.center(100, '-'))
+        print('Freeing bottlenecks and memory'.center(100, '-'))
     kb.reset_bottlenecks()
+    app.free_model()
+    keras.backend.clear_session()
 
     if verbose >= 1:
         print()

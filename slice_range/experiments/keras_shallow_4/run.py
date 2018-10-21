@@ -105,9 +105,11 @@ def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):
                 kh.save_history(res.history, app.get_model(),
                                 lr_index, epochs, i)
                 histories.append(pd.DataFrame(res.history))
-                bar.update()
                 del top_model
                 gc.collect()
+                bar.update()
+            keras.backend.clear_session()
+            app.free_model()
 
             average_history = pd.concat(histories).groupby(level=0).mean()
             average_histories.append(average_history)

@@ -11,3 +11,4 @@ progress
 imageio
 keras
 tqdm
+requests

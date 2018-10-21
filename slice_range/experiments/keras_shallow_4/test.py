@@ -3,49 +3,49 @@ sys.path.append('../..')
 
 import math
 
-from keras import optimizers
-from keras.models import Sequential
-from keras.layers import Dense, Flatten, Dropout
-import sklearn
-import numpy as np
-import pandas as pd
-from tqdm import tqdm
-
-import cr_interface as cri
-import keras_utils as ku
-import keras_bottle as kb
-import keras_history as kh
-import keras_weights as kw
 import lib
 
-
-def bottleneck_generator(bottlenecks, labels, n_aug, batch_size=32, shuffle=True):
-    images_per_epoch = int(len(bottlenecks) / n_aug)
-    batches_per_epoch = math.ceil(images_per_epoch / batch_size)
-
-    batches_by_aug = list()
-
-    for index in range(n_aug):
-        bo, la = bottlenecks[index::n_aug], labels[index::n_aug]
-        if shuffle:
-            bo, la = sklearn.utils.shuffle(bo, la)
-        batches = list()
-        batches_by_aug.append(batches)
-        for i in range(batches_per_epoch):
-            i0 = i * batch_size
-            i1 = i0 + batch_size
-            batches.append((bo[i0:i1], la[i0:i1]))
-
-    index = 0
-    while True:
-        for i in range(batches_per_epoch):
-            yield batches_by_aug[index][i]
-        index = (index + 1) % n_aug
-
 try:
-    TEST = True
-    VERBOSE = 1
-    LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
+    from keras import optimizers
+    from keras.models import Sequential
+    from keras.layers import Dense, Flatten, Dropout
+    import sklearn
+    import numpy as np
+    import pandas as pd
+    from tqdm import tqdm
+
+    import cr_interface as cri
+    import keras_utils as ku
+    import keras_bottle as kb
+    import keras_history as kh
+    import keras_weights as kw
+
+    def bottleneck_generator(bottlenecks, labels, n_aug, batch_size=32, shuffle=True):
+        images_per_epoch = int(len(bottlenecks) / n_aug)
+        batches_per_epoch = math.ceil(images_per_epoch / batch_size)
+
+        batches_by_aug = list()
+
+        for index in range(n_aug):
+            bo, la = bottlenecks[index::n_aug], labels[index::n_aug]
+            if shuffle:
+                bo, la = sklearn.utils.shuffle(bo, la)
+            batches = list()
+            batches_by_aug.append(batches)
+            for i in range(batches_per_epoch):
+                i0 = i * batch_size
+                i1 = i0 + batch_size
+                batches.append((bo[i0:i1], la[i0:i1]))
+
+        index = 0
+        while True:
+            for i in range(batches_per_epoch):
+                yield batches_by_aug[index][i]
+            index = (index + 1) % n_aug
+
+        TEST = True
+        VERBOSE = 1
+        LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
 
 
     def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):

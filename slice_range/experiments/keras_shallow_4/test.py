@@ -2,6 +2,7 @@ import sys
 sys.path.append('../..')
 
 import math
+import gc
 
 import lib
 
@@ -107,6 +108,8 @@ try:
                     del top_model
                     gc.collect()
                     bar.update()
+                keras.backend.clear_session()
+                app.free_model()
 
                 average_history = pd.concat(histories).groupby(level=0).mean()
                 average_histories.append(average_history)

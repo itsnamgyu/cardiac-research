@@ -120,6 +120,7 @@ def run_for_all_apps(f, title='', verbose=1):
             print('Running {}on {}'.format(
                 title_part, app.name).center(100, '-'))
         results.append(f(app))
+        app.free_model()
     return results
 
 

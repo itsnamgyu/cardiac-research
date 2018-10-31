@@ -3,8 +3,11 @@ sys.path.append('../..')
 
 import math
 import gc
+import traceback
 
 import lib
+
+
 
 try:
     import keras
@@ -70,8 +73,7 @@ try:
             k = 5
             learning_rates = LEARNING_RATES
 
-        k_train_sets, k_validation_sets, entire_set = kb.get_k_bottlenecks(
-            app, train_collection, n_aug=n_aug, k=k, include_entire_set=True)
+        split_data = kb.get_k_bottleneck_splits(app, train_collection, n_aug=n_aug, k=k)
 
         min_loss_by_lr = []
         min_loss_epoch_by_lr = []
@@ -81,11 +83,11 @@ try:
             print('{}-fold, {}-learning-rate grid search'.format(
                 k, len(learning_rates)).center(100, '-'))
         with tqdm(total=len(learning_rates) * k, disable=(verbose < 1)) as bar:
+            history_sets = []  # hotfix
             for lr_index, lr in enumerate(learning_rates):
                 histories = []
                 for i in range(k):
-                    train_bottles, train_labels = k_train_sets[i]
-                    validation_bottles, validation_labels = k_validation_sets[i]
+                    train_bottles, train_labels, validation_bottles, validation_labels = kb.compile_kth_set(i, k, *split_data)
 
                     top_model = app.load_top_model(lr=lr)
                     total = len(train_bottles)
@@ -102,20 +104,22 @@ try:
                         epochs=epochs,
                         verbose=0)
 
-                    kh.save_history(res.history, app.get_model(),
-                                    lr_index, epochs, i)
+                    history_sets.append((res.history, lr_index, epochs, i))
+                    #kh.save_history(res.history, app.get_model(), lr_index, epochs, i)
                     histories.append(pd.DataFrame(res.history))
                     del top_model
                     gc.collect()
                     bar.update()
-                keras.backend.clear_session()
-                app.free_model()
+                    keras.backend.clear_session()
+                    app.free_model()
 
                 average_history = pd.concat(histories).groupby(level=0).mean()
                 average_histories.append(average_history)
                 min_loss_by_lr.append(average_history.val_loss.min())
                 min_loss_epoch_by_lr.append(average_history.val_loss.idxmin())
 
+        for s in history_sets: #  hotfix
+            kh.save_history(s[0], app.get_model(), s[1], s[2], s[3])
 
         min_loss = pd.Series(min_loss_by_lr).min()
         m_lr_index = pd.Series(min_loss_by_lr).idxmin()
@@ -130,10 +134,7 @@ try:
         if verbose >= 1:
             print('Training and testing final model'.center(100, '-'))
 
-        train_bottles, train_labels = entire_set
-        test_bottles, test_labels = kb.load_bottlenecks(
-            app, test_collection, aug=False)
-        test_labels = lib.onehot(test_labels)
+        train_bottles, train_labels, test_bottles, test_labels = kb.compile_kth_set(-1, k, *split_data)
 
         top_model = app.load_top_model(lr=m_lr)
         res = top_model.fit_generator(
@@ -147,24 +148,26 @@ try:
                         m_lr_index, m_epochs, split_index=None)
 
         loss, acc = top_model.evaluate(test_bottles, test_labels, verbose=0)
+        del top_model
+        gc.collect()
         if verbose >= 1:
             print('final accuracy: {}'.format(acc))
         kh.save_test_result(app.get_model(), loss, acc, m_lr, m_epochs)
-        del top_model
-        gc.collect()
 
         if verbose >= 1:
             print('Freeing bottlenecks and memory'.center(100, '-'))
         kb.reset_bottlenecks()
-        keras.backend.clear_session()
         app.free_model()
+        keras.backend.clear_session()
 
         if verbose >= 1:
             print()
             print()
+
     ku.run_for_all_apps(optimize, title="5-fold 5-lr grid search optimization")
     lib.notify('CR Experiment 4 Test Successful')
 
 except Exception as e:
-    lib.notify('Issue CR Experiment 4 Test:\n{}'.format(str(e)))
-    print(e)
+    message = ''.join(traceback.format_exception(etype=type(e), value=e, tb=e.__traceback__))
+    lib.notify('Issue CR Experiment 4 Test:\n{}'.format(message))
+    traceback.print_exc()

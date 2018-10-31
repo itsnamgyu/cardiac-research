@@ -183,6 +183,8 @@ def generate_all_bottlenecks(app, collection=None, augmentation=5, balancing=5, 
 
 def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1, include_entire_set=False):
     '''
+    MEMORY ISSUE
+
     Return
     k_train_sets, k_validation_sets
     - sets: [ (bottles, labels), ... ]
@@ -199,14 +201,14 @@ def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1
                 d[label].append(len(split.filter_by(label=label).df))
         print(pd.DataFrame(d))
 
+    if verbose:
+        print('Generating bottlenecks'.center(100, '-'))
+    generate_all_bottlenecks(app, base_collection, verbose=verbose)
+
     split_labels = []
     split_aug_labels = []
     split_bottles = []
     split_aug_bottles = []
-
-    if verbose:
-        print('Generating bottlenecks'.center(100, '-'))
-    generate_all_bottlenecks(app, base_collection, verbose=verbose)
 
     if verbose:
         print('Loading bottlenecks'.center(100, '-'))
@@ -259,6 +261,100 @@ def get_k_bottlenecks(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1
         return k_train_sets, k_validation_sets, entire_set
     else:
         return k_train_sets, k_validation_sets
+
+
+def get_k_bottleneck_splits(app, base_collection, k=5, n_aug=1, n_balance=5, verbose=1):
+    '''
+    HOTFIX
+    Return
+    aug_bottles, aug_labels, origin_bottles, origin_labels
+    - need to pick 4 aug bottle/labels and 1 non-aug for each validation run in k-split
+    '''
+    base_collection = base_collection.tri_label().labeled()
+    splits = base_collection.k_split(['dataset_index', 'pid'], k)
+
+    if verbose >= 0:
+        print('Number of images by split by label'.center(100, '-'))
+        d = defaultdict(list)
+        for split in splits:
+            d['total'].append(len(split.df))
+            for label in ['in', 'oap', 'obs']:
+                d[label].append(len(split.filter_by(label=label).df))
+        print(pd.DataFrame(d))
+
+    if verbose:
+        print('Generating bottlenecks'.center(100, '-'))
+    generate_all_bottlenecks(app, base_collection, verbose=verbose)
+
+    split_labels = []
+    split_aug_labels = []
+    split_bottles = []
+    split_aug_bottles = []
+
+    if verbose:
+        print('Loading bottlenecks'.center(100, '-'))
+    for i, split in enumerate(splits):
+        print('Loading split {} of {}...'.format(i + 1, k))
+        # non-aug
+        bottles, labels = load_bottlenecks(
+            app, split, aug=False, verbose=verbose-1)
+        split_bottles.append(bottles)
+        split_labels.append(labels)
+
+        # aug
+        c = split.filter_by(label='in')
+        b_in, l_in = load_bottlenecks(
+            app, c, aug=True, count=n_aug, verbose=verbose-1)
+        c = split.filter_by(label=['oap', 'obs'])
+        b_out, l_out = load_bottlenecks(
+            app, c, aug=True, count=n_aug * n_balance, verbose=verbose-1)
+        split_aug_bottles.append(np.concatenate((b_in, b_out)))
+        split_aug_labels.append(np.concatenate((l_in, l_out)))
+
+    return split_aug_bottles, split_aug_labels, split_bottles, split_labels
+
+
+def compile_kth_set(i, k, split_aug_bottles, split_aug_labels,
+                    split_bottles, split_labels):
+    '''
+    HOTFIX: use with get_k_bottleneck_splits
+    Concat training/test set for kth validation run
+    '''
+    if i == -1:
+        # return entire set
+        test_labels = []
+        test_bottles = []
+        for j in range(k):
+            test_labels.append(split_labels[j])
+            test_bottles.append(split_bottles[j])
+        test_bottles = np.concatenate(test_bottles)
+        test_labels = np.concatenate(test_labels)
+        test_labels = lib.onehot(test_labels)
+
+        train_labels = []
+        train_bottles = []
+        for j in range(k):
+            train_labels.append(split_aug_labels[j])
+            train_bottles.append(split_aug_bottles[j])
+        train_bottles = np.concatenate(train_bottles)
+        train_labels = np.concatenate(train_labels)
+        train_labels = lib.onehot(train_labels)
+        return train_bottles, train_labels, test_bottles, test_labels
+    else:
+        if i not in list(range(k)):
+            raise ValueError('invalid index')
+        val_labels = lib.onehot(split_labels[i])
+        val_bottles = split_bottles[i]
+
+        train_labels = []
+        train_bottles = []
+        for j in list(range(0, i)) + list(range(i + 1, k)):
+            train_labels.append(split_aug_labels[j])
+            train_bottles.append(split_aug_bottles[j])
+        train_bottles = np.concatenate(train_bottles)
+        train_labels = np.concatenate(train_labels)
+        train_labels = lib.onehot(train_labels)
+        return train_bottles, train_labels, val_bottles, val_labels
 
 
 def reset_bottlenecks():

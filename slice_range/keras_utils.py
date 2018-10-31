@@ -35,19 +35,36 @@ class Application:
         self.name = name
         self.codename = codename
         self.model = None
+        self.output_shape = None
+        self.model_name = None
         if keras.backend.image_data_format() == 'channels_first':
             self.input_shape = (3,) + image_size
         else:
             self.input_shape = image_size + (3,)
 
     def get_model(self):
+        '''
+        Caches output_shape, model_name
+        '''
         if self.model is None:
             print('loading {} model'.format(self.name))
             self.model = self.model_func(
                 weights='imagenet',
                 include_top=False,
                 input_shape=Application.get_input_shape(self.image_size))
+            self.output_shape = self.model.output_shape[1:]
+            self.model_name = self.model.name
         return self.model
+
+    def get_model_output_shape(self):
+        if self.output_shape is None:
+            self.get_model()
+        return self.output_shape
+
+    def get_model_name(self):
+        if self.model_name is None:
+            self.get_model()
+        return self.model_name
 
     def free_model(self):
         self.model = None
@@ -87,11 +104,11 @@ class Application:
                     optimizer=optimizer,
                     metrics=['accuracy'])
             model = Sequential()
-            model.add(Flatten(input_shape=self.get_model().output_shape[1:]))
+            model.add(Flatten(input_shape=self.get_model_output_shape()))
             model.add(Dense(256, activation='relu'))
             model.add(Dropout(0.5))
             model.add(Dense(3, activation='softmax'))
-            model.name = '{}_top'.format(self.get_model().name)
+            model.name = '{}_top'.format(self.get_model_name())
             compile_model(model, kwargs['lr'])
             return model
         else:
@@ -115,12 +132,13 @@ def run_for_all_apps(f, title='', verbose=1):
     '''
     results = []
     for app in apps.values():
-        if verbose:
-            title_part = '[{}] '.format(title) if title else ''
-            print('Running {}on {}'.format(
-                title_part, app.name).center(100, '-'))
-        results.append(f(app))
-        app.free_model()
+        if app != apps['xception']:
+            if verbose:
+                title_part = '[{}] '.format(title) if title else ''
+                print('Running {}on {}'.format(
+                    title_part, app.name).center(100, '-'))
+            results.append(f(app))
+            app.free_model()
     return results
 
 

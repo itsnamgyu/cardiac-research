@@ -47,7 +47,7 @@ def bottleneck_generator(bottlenecks, labels, n_aug, batch_size=32, shuffle=True
 
 TEST = False
 VERBOSE = 1
-LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
+LEARNING_RATES = [0.001, 0.0001, 0.00001]
 
 
 def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):
@@ -64,7 +64,7 @@ def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):
         k = 5
         learning_rates = LEARNING_RATES
     else:
-        epochs = 100
+        epochs = 50
         n_aug = 5
         train_index = 0
         k = 5

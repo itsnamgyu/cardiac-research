@@ -36,7 +36,7 @@ class Result():
     @classmethod
     def from_predictions(
             cls, predictions, cr_codes, params, short_name,
-            description='', classes=DEFAULT_CLASSES):
+            description='', classes=DEFAULT_CLASSES, tri_label=True):
         '''
         Generate a Result class from cr_codes and their respective predictions
         Note that you must use the `save_as_json` method to save the results as
@@ -76,7 +76,10 @@ class Result():
             cr_code = cr_codes[i]
             prediction_vector = predictions[i]
             d = dict()
-            d['truth'] = metadata[cr_codes[i]]['label']
+            if tri_label:
+                d['truth'] = cri.to_tri_label(metadata[cr_codes[i]]['label'])
+            else:
+                d['truth'] = metadata[cr_codes[i]]['label']
             d['prediction'] = classes[p]
             d['percentages'] = dict(zip(
                 classes, list(map(lambda f: str(f), prediction_vector))))

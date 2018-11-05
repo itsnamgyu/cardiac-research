@@ -48,6 +48,7 @@ try:
     TEST = True
     VERBOSE = 1
     LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001]
+    LEARNING_RATES = list(np.logspace(-2, -5, num=7, endpoint=True))
 
 
     def optimize(app, test=TEST, verbose=VERBOSE, batch_size=32):

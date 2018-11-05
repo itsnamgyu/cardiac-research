@@ -136,6 +136,7 @@ try:
             print('Training and testing final model'.center(100, '-'))
 
         train_bottles, train_labels, test_bottles, test_labels = kb.compile_kth_set(-1, k, *split_data)
+        test_bottles, test_labels = kb.load_bottlenecks(app, test_collection, aug=False)
 
         top_model = app.load_top_model(lr=m_lr)
         res = top_model.fit_generator(

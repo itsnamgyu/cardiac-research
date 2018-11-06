@@ -83,9 +83,12 @@ class CrCollection:
     def split_by(self, columns, ratios, copy=False):
         cr_keys = ['dataset_index', 'pid', 'phase_index', 'slice_index']
         ratios = pd.Series(ratios)
-        
+
         if ratios.sum() != 1:
             raise ValueError('sum of ratio values are not 1')
+
+        if type(column) == str:
+            column = [column]  # hotfix string iteration issue
         
         for column in columns:
             if column not in cr_keys:

@@ -87,8 +87,8 @@ class CrCollection:
         if ratios.sum() != 1:
             raise ValueError('sum of ratio values are not 1')
 
-        if type(column) == str:
-            column = [column]  # hotfix string iteration issue
+        if type(columns) == str:
+            columns = [columns]  # hotfix string iteration issue
         
         for column in columns:
             if column not in cr_keys:

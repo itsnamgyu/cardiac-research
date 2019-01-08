@@ -1,19 +1,18 @@
+# Data related files
+results*
+data
+.data.bak
+datasets
+analysis
+deploy_log
+bottlenecks
+history
+weights
+images
+
 .DS_Store
 
-# Local large datasets
-flower_jpg/
-flower_jpg_examples/
-flower_np_examples/
-cap_*/
-label_data*
-*_summary/
-train_summaries/
-train_models/
-train_misclassified/
-train_checkpoints/
-images/
-
-# Backup
+*.swp
 *.bak
 
 # Byte-compiled / optimized / DLL files

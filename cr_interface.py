@@ -196,7 +196,13 @@ class CrCollection:
         if by_label:
             if (self.df['label'] == '').any():
                 warnings.warn('exporting by label ignores unlabeled images')
-            raise NotImplementedError()
+            labels = list(self.df.label.unique())
+            for label in labels:
+                sub_dest = os.path.join(dest, label)
+                sub = self.filter_by(label=label)
+                # is this fine?
+                sub.export(sub_dest, by_label=False, verbose=verbose)
+
         else:
             if verbose:
                 for path in tqdm(self.get_image_paths()):

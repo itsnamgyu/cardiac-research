@@ -1,3 +1,4 @@
+setuptools
 tensorflow_hub
 requests
 matplotlib

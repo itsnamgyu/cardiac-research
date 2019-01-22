@@ -185,31 +185,50 @@ class CrCollection:
         
         for label in labels:
             cr_codes[label] = list(df.loc[df.loc[:, 'label']==label]['cr_code'])
-        
+
         return cr_codes
 
-    def export(self, dest, by_label=True, verbose=0):
+    def export_by_label(self, dest, balancing=5, verbose=0):
+        _inner_labels = [ 'in', 'ap', 'md', 'bs' ]
+
         os.makedirs(dest, exist_ok=True)
         if not os.path.isdir(dest):
             raise OSError('export path already exists and is not a directory')
 
-        if by_label:
-            if (self.df['label'] == '').any():
-                warnings.warn('exporting by label ignores unlabeled images')
-            labels = list(self.df.label.unique())
-            for label in labels:
-                sub_dest = os.path.join(dest, label)
-                sub = self.filter_by(label=label)
-                # is this fine?
-                sub.export(sub_dest, by_label=False, verbose=verbose)
-
-        else:
-            if verbose:
-                for path in tqdm(self.get_image_paths()):
-                    shutil.copy(path, dest)
+        if (self.df['label'] == '').any():
+            warnings.warn('exporting by label ignores unlabeled images')
+        labels = list(self.df.label.unique())
+        for label in labels:
+            sub_dest = os.path.join(dest, label)
+            sub = self.filter_by(label=label)
+            if label in _inner_labels:
+                sub.export(sub_dest, n=1, verbose=verbose)
             else:
-                for path in self.get_image_paths():
-                    shutil.copy(path, dest)
+                sub.export(sub_dest, n=balancing, verbose=verbose)
+
+    def export(self, dest, by_label=None, n=1, verbose=0):
+        os.makedirs(dest, exist_ok=True)
+        if not os.path.isdir(dest):
+            raise OSError('export path already exists and is not a directory')
+
+        if by_label is not None:
+            warnings.warn('The by_label argument in export is depreciated. Use export_by_label')
+
+        if by_label == True:
+            self.export_by_label(dest, verbose)
+        else:
+            pairs = []
+            for path in self.get_image_paths():
+                for i in range(n):
+                    base_path = os.path.basename(path)
+                    dest_path = os.path.join(dest, '{:02d}_{}'.format(i, base_path))
+                    pairs.append((path, dest_path))
+            if verbose:
+                for pair in tqdm(pairs):
+                    shutil.copy(pair[0], pair[1])
+            else:
+                for pair in pairs:
+                    shutil.copy(pair[0], pair[1])
 
     def sample(self, n=None, frac=None):
         return CrCollection(self.df.sample(n=n, frac=frac))

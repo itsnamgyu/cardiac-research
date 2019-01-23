@@ -5,7 +5,8 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras import optimizers
 from keras.models import Sequential, Model
-from keras.layers import Dense, Flatten, Dropout
+from keras.layers import Dense, Dropout
+import keras_apps as ka
 
 
 class FineModel(metaclass=abc.ABCMeta):
@@ -13,7 +14,7 @@ class FineModel(metaclass=abc.ABCMeta):
     name = 'FineModel'
     depths = []
     output_shape = (224, 224)
-    
+
     @abstractmethod
     def _load_base_model(self):
         raise NotImplementedError()
@@ -94,7 +95,8 @@ class FineModel(metaclass=abc.ABCMeta):
             top.add(Dropout(0.5))
             top.add(Dense(3, activation='softmax'))
             top.name = '{}_top'.format(self.__class__.name)
-            self.model = Model(inputs=self.model.input, outputs=top(self.model.output))
+            self.model = Model(inputs=self.model.input,
+                               outputs=top(self.model.output))
             print('complete!')
         return self.model
 
@@ -116,18 +118,24 @@ class FineModel(metaclass=abc.ABCMeta):
 
     @classmethod
     def get_list(cls):
-        return [
-            FineXception,
+        '''
+        # don't return
+            FineVGG19,
             FineMobileNet,
             FineMobileNetV2,
-            FineVGG16,
-            FineVGG19,
             FineResNet50,
+            FineNASNetLarge,
+        '''
+        return [
+            FineXception,
+            FineMobileNetA25,
+            FineMobileNetV2A35,
+            FineVGG16,
+            FineResNet50V2,
             FineInceptionV3,
             FineInceptionResNetV2,
             FineDenseNet121,
             FineNASNetMobile,
-            FineNASNetLarge,
         ]
 
     @classmethod
@@ -141,7 +149,8 @@ class FineModel(metaclass=abc.ABCMeta):
 class FineXception(FineModel):
     description = 'Custom fine model'
     name = 'xception'
-    output_shape  = (299, 299)
+    output_shape = (299, 299)
+    depths = [133, 116, 26, 16, 7, 1, 0]
 
     def _load_base_model(self):
         return keras.applications.xception.Xception(
@@ -156,8 +165,8 @@ class FineXception(FineModel):
 class FineMobileNet(FineModel):
     description = 'Custom fine model'
     name = 'mobilenet'
-    output_shape  = (224, 224)
-    depths = [ 88, 74, 37, 24, 11, 0 ]
+    output_shape = (224, 224)
+    depths = [88, 74, 37, 24, 11, 0]  # depreciated format
 
     def _load_base_model(self):
         return keras.applications.mobilenet.MobileNet(
@@ -172,7 +181,7 @@ class FineMobileNet(FineModel):
 class FineMobileNetV2(FineModel):
     description = 'Custom fine model'
     name = 'mobilenetv2'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
 
     def _load_base_model(self):
         return keras.applications.mobilenetv2.MobileNetV2(
@@ -187,7 +196,8 @@ class FineMobileNetV2(FineModel):
 class FineVGG16(FineModel):
     description = 'Custom fine model'
     name = 'vgg16'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
+    depths = [20, 15, 11, 7, 4, 0]
 
     def _load_base_model(self):
         return keras.applications.vgg16.VGG16(
@@ -202,7 +212,7 @@ class FineVGG16(FineModel):
 class FineVGG19(FineModel):
     description = 'Custom fine model'
     name = 'vgg19'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
 
     def _load_base_model(self):
         return keras.applications.vgg19.VGG19(
@@ -217,9 +227,8 @@ class FineVGG19(FineModel):
 class FineResNet50(FineModel):
     description = 'Custom fine model'
     name = 'resnet50'
-    output_shape  = (224, 224)
-    depths = [ 176, 143, 81, 39, 7, 0 ]
-
+    output_shape = (224, 224)
+    depths = [176, 143, 81, 39, 7, 0]  # depreciated format
 
     def _load_base_model(self):
         return keras.applications.resnet50.ResNet50(
@@ -234,7 +243,8 @@ class FineResNet50(FineModel):
 class FineInceptionV3(FineModel):
     description = 'Custom fine model'
     name = 'inception_v3'
-    output_shape  = (299, 299)
+    output_shape = (299, 299)
+    depths = [312, 229, 87, 18, 11, 1, 0]
 
     def _load_base_model(self):
         return keras.applications.inception_v3.InceptionV3(
@@ -249,7 +259,8 @@ class FineInceptionV3(FineModel):
 class FineInceptionResNetV2(FineModel):
     description = 'Custom fine model'
     name = 'inception_resnet_v2'
-    output_shape  = (299, 299)
+    output_shape = (299, 299)
+    depths = [781, 595, 267, 18, 11, 1, 0]
 
     def _load_base_model(self):
         return keras.applications.inception_resnet_v2.InceptionResNetV2(
@@ -264,7 +275,8 @@ class FineInceptionResNetV2(FineModel):
 class FineDenseNet121(FineModel):
     description = 'Custom fine model'
     name = 'densenet121'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
+    depths = [428, 309, 137, 49, 7, 1, 0]
 
     def _load_base_model(self):
         return keras.applications.densenet.DenseNet121(
@@ -279,7 +291,8 @@ class FineDenseNet121(FineModel):
 class FineNASNetMobile(FineModel):
     description = 'Custom fine model'
     name = 'nasnet_mobile'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
+    depths = [770, 533, 296, 53, 5, 1, 0]
 
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetMobile(
@@ -294,7 +307,7 @@ class FineNASNetMobile(FineModel):
 class FineNASNetLarge(FineModel):
     description = 'Custom fine model'
     name = 'nasnet_large'
-    output_shape  = (224, 224)
+    output_shape = (224, 224)
 
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetLarge(
@@ -304,3 +317,53 @@ class FineNASNetLarge(FineModel):
 
     def _get_preprocess_func(self):
         return keras.applications.nasnet.preprocess_input
+
+
+class FineResNet50V2(FineModel):
+    description = 'Custom fine model'
+    name = 'resnet50v2'
+    output_shape = (224, 224)
+    depths = [191, 142, 74, 28, 5, 1, 0]
+
+    def _load_base_model(self):
+        return ka.resnet_v2.ResNet50V2(
+            include_top=False, pooling='avg', weights='imagenet',
+            input_shape=FineModel.get_input_shape(self.__class__.output_shape)
+        )
+
+    def _get_preprocess_func(self):
+        return ka.resnet_v2.preprocess_input
+
+
+class FineMobileNetA25(FineModel):
+    description = 'Custom fine model'
+    name = 'mobileneta25'
+    output_shape = (224, 224)
+    depths = [88, 74, 37, 24, 11, 1, 0]
+
+    def _load_base_model(self):
+        return ka.mobilenet.MobileNet(
+            alpha=0.25,
+            include_top=False, pooling='avg', weights='imagenet',
+            input_shape=FineModel.get_input_shape(self.__class__.output_shape)
+        )
+
+    def _get_preprocess_func(self):
+        return ka.mobilenet.preprocess_input
+
+
+class FineMobileNetV2A35(FineModel):
+    description = 'Custom fine model'
+    name = 'mobilenetv2a35'
+    output_shape = (224, 224)
+    depths = [156, 117, 55, 28, 10, 1, 0]
+
+    def _load_base_model(self):
+        return ka.mobilenet_v2.MobileNetV2(
+            alpha=0.35,
+            include_top=False, pooling='avg', weights='imagenet',
+            input_shape=FineModel.get_input_shape(self.__class__.output_shape)
+        )
+
+    def _get_preprocess_func(self):
+        return ka.mobilenet_v2.preprocess_input

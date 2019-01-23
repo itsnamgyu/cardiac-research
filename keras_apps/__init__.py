@@ -94,6 +94,32 @@ def correct_pad(backend, inputs, kernel_size):
 
 __version__ = '1.0.6'
 
+# Add to use currently installed Keras backend
+
+from keras import backend
+from keras import layers
+from keras import models
+from keras import utils
+
+set_keras_submodules(
+    backend=backend,
+    layers=layers,
+    models=models,
+    utils=utils)
+
+
+def keras_modules_injection(base_fun):
+
+    def wrapper(*args, **kwargs):
+        if hasattr(keras_applications, 'get_submodules_from_kwargs'):
+            kwargs['backend'] = backend
+            kwargs['layers'] = layers
+            kwargs['models'] = models
+            kwargs['utils'] = utils
+        return base_fun(*args, **kwargs)
+
+    return wrapper
+
 
 from . import vgg16
 from . import vgg19

@@ -1,5 +1,3 @@
-
-
 # Cardiac Research
 
 Automatic classification of short axis cardiac CINE MRI images.

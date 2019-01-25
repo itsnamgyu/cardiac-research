@@ -111,12 +111,12 @@ class CrCollection:
         
         return splits
     
-    def k_split(self, columns, k):
+    def k_split(self, k, columns=['dataset_index', 'pid']):
         ratios = []
         for _ in range(k - 1):
             ratios.append(1 / k)
         ratios.append(1 - sum(ratios))
-        return self.split_by(['dataset_index', 'pid'], ratios)
+        return self.split_by(columns, ratios)
 
     def filter_by(self, inplace=False, **kwargs):
         '''

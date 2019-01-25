@@ -1,3 +1,4 @@
+import os
 import abc
 import warnings
 from abc import abstractmethod
@@ -8,10 +9,12 @@ from keras.models import Sequential, Model
 from keras.layers import Dense, Dropout
 import keras_apps as ka
 
+import core
+
 
 class FineModel(metaclass=abc.ABCMeta):
     description = 'Default fine model'
-    name = 'FineModel'
+    name = 'DefaultFineModel'
     depths = []
     output_shape = (224, 224)
 
@@ -44,10 +47,45 @@ class FineModel(metaclass=abc.ABCMeta):
         else:
             return image_size + (3,)
 
+    def _get_weight_path(self, key, directory, makedirs=True):
+        if directory == None:
+            path = os.path.join(core.BASE_DIR, '.fine_model_weights')
+        else:
+            path = directory
+        path = os.path.join(path, type(self).name)
+        if key:
+            path = os.path.join(path, key + '.hd5')
+        else:
+            path = os.path.join(path, 'default.hd5')
+
+        if makedirs:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+
+        return path
+
+    def save_weights(self, key=None, directory=None, verbose=1):
+        if self.model is None:
+            warnings.warn('saving weights for unloaded model')
+        model = self.get_model()
+        path = self._get_weight_path(key, directory)
+        if verbose:
+            print('Saving weights to {}...'.format(path), end='')
+        model.save_weights(path)
+        if verbose:
+            print('complete!')
+
+    def load_weights(self, key=None, directory=None, verbose=1):
+        model = self.get_model()
+        path = self._get_weight_path(key, directory)
+        if verbose:
+            print('Loading weights from {}...'.format(path), end='')
+        model.load_weights(path)
+        if verbose:
+            print('complete!')
+
     def compile_model(self, lr=1e-4, decay=1e-6):
         optimizer = optimizers.SGD(
             lr=lr, decay=decay, momentum=0.9, nesterov=True)
-        optimizer = optimizers.Adam()
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer=optimizer,
@@ -74,6 +112,13 @@ class FineModel(metaclass=abc.ABCMeta):
         return ImageDataGenerator(
             **augment_kwargs,
             preprocessing_function=zoom)
+
+    def reload_model(self):
+        if self.model is not None:
+            # TODO: free model from memory
+            self.model = None
+        self._load_model()
+        return self.model
 
     def get_model(self):
         if self.model is None:

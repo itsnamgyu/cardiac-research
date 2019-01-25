@@ -13,3 +13,4 @@ imageio
 keras
 tqdm
 requests
+bayesian-optimization

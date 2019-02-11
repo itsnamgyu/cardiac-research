@@ -83,9 +83,10 @@ class FineModel(metaclass=abc.ABCMeta):
         if verbose:
             print('complete!')
 
-    def compile_model(self, lr=1e-4, decay=1e-6):
-        optimizer = optimizers.SGD(
-            lr=lr, decay=decay, momentum=0.9, nesterov=True)
+    def compile_model(self, lr=1e-4, decay=1e-6, optimizer=None):
+        if optimizer is None:
+            optimizer = optimizers.SGD(
+                lr=lr, decay=decay, momentum=0.9, nesterov=True)
         self.model.compile(
             loss='categorical_crossentropy',
             optimizer=optimizer,

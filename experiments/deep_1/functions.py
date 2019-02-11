@@ -17,7 +17,7 @@ def train_k_by_t_epochs(fm, lr, decay, train_gen, val_gen, key, t=10):
         train_gen,
         validation_data=val_gen,
         steps_per_epoch=math.ceil(train_gen.n / BATCH_SIZE),
-        validation_steps=1,
+        validation_steps=len(val_gen),
         shuffle=True,
         epochs=t)
     ch.append_history(result.history, fm.get_name(), key)

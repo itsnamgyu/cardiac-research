@@ -87,7 +87,7 @@ class FineModel(metaclass=abc.ABCMeta):
         if optimizer is None:
             optimizer = optimizers.SGD(
                 lr=lr, decay=decay, momentum=0.9, nesterov=True)
-        self.model.compile(
+        self.get_model().compile(
             loss='categorical_crossentropy',
             optimizer=optimizer,
             metrics=['accuracy'])

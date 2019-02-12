@@ -8,10 +8,10 @@ import argparse
 from collections import defaultdict
 import warnings
 
+import keras
 from tqdm import tqdm
 import numpy as np
 import scipy.ndimage
-import imageio
 import matplotlib.pyplot as plt
 import pandas as pd
 
@@ -174,6 +174,25 @@ class CrCollection:
 
     def get_image_paths(self, generator=False):
         return get_image_paths(self.df['cr_code'], generator)
+
+    def load_images(self, target_size=None, stack=False):
+        '''
+        Return list of np arrays representing each image
+        Return stacked np array if stack=True
+        '''
+        if len(self.df) > 32:
+            warnings.warn('Loading more than 32 images')
+
+        images = []
+        for path in self.get_image_paths(generator=True):
+            image = keras.preprocessing.image.load_img(path, target_size=target_size)
+            images.append(image)
+
+        if stack:
+            return np.stack(images)
+        else:
+            return images
+
 
     def get_labels(self, generator=False):
         return list(self.df.loc[:, 'label'])

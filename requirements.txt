@@ -14,4 +14,3 @@ keras
 tqdm
 requests
 bayesian-optimization
-keras-vis

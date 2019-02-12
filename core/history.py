@@ -20,6 +20,8 @@ def _get_history_dir(model_name, key, directory=None, makedirs=True):
 
     os.makedirs(os.path.dirname(path), exist_ok=True)
 
+    return path
+
 
 def save_history(history, model_name, key, directory=None):
     '''

@@ -9,8 +9,9 @@ from core.fine_model import FineModel
 
 
 BATCH_SIZE = 32
+T = 10
 
-def train_k_by_t_epochs(fm, lr, decay, train_gen, val_gen, key, t=10):
+def train_k_by_t_epochs(fm, lr, decay, train_gen, val_gen, key, t=T):
     fm.load_weights(key, verbose=0)
     fm.compile_model(lr=lr, decay=decay)
     result = fm.get_model().fit_generator(
@@ -71,7 +72,7 @@ def train_k(train_collection, fm, lr, decay, k=5):
         fm.save_weights(_key.format(i), verbose=0)
         
     while True:
-        print('Training 5 epochs for k splits... ', end='')
+        print('Training {} epochs for k splits... '.format(T), end='')
         histories = []
         for i in range(k):
             key = _key.format(i)

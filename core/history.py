@@ -71,7 +71,7 @@ def get_average(histories):
         dfs = []
         for history in histories:
             dfs.append(history.loc[:, column])
-        df = dfs.concat(dfs, axis=1)
+        df = pd.concat(dfs, axis=1)
         average[column] = df.mean(axis=1)
     return pd.DataFrame(average)
 

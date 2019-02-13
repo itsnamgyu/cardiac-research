@@ -45,8 +45,8 @@ def append_history(history, model_name, key, directory=None):
     path = _get_history_dir(model_name, key, directory)
     new = pd.DataFrame(history)
 
-    if old:
-        df = pd.concat(old, new)
+    if old is not None:
+        df = pd.concat([old, new])
     else:
         df = new
 
@@ -59,7 +59,7 @@ def load_history(model_name, key, directory=None):
     '''
     path = _get_history_dir(model_name, key, directory)
     if os.path.exists(path):
-        return pd.from_csv(path)
+        return pd.read_csv(path)
     else:
         return None
 

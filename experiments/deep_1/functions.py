@@ -11,6 +11,7 @@ from core.fine_model import FineModel
 BATCH_SIZE = 32
 T = 10
 
+
 def train_k_by_t_epochs(fm, lr, decay, train_gen, val_gen, key, t=T):
     fm.load_weights(key, verbose=0)
     fm.compile_model(lr=lr, decay=decay)
@@ -29,19 +30,20 @@ def train_k(train_collection, fm, lr, decay, k=5):
     '''
     Returns (loss, epochs)
     '''
-    print('Converging {} [lr={}, decay={}]'.format(fm.get_name(), lr, decay).center(100, '-'))
-    
+    print('Converging {} [lr={}, decay={}]'.format(
+        fm.get_name(), lr, decay).center(100, '-'))
+
     k_collections = train_collection.k_split(k)
     _key = 'K{:02d}'
     _train_dir = 'temp_images/train_' + _key
     _val_dir = 'temp_images/val_' + _key
-    
+
     aug_gen = fm.get_image_data_generator(augment=True)
     pure_gen = fm.get_image_data_generator(augment=False)
-    
+
     train_gens = []
     val_gens = []
-    
+
     print('Exporting images... ', end='')
     for i, collection in enumerate(k_collections):
         for j in range(5):
@@ -52,7 +54,7 @@ def train_k(train_collection, fm, lr, decay, k=5):
             else:
                 collection.export_by_label(train_dir)
     print('complete.', end='')
-                
+
     for i in range(k):
         train_gens.append(aug_gen.flow_from_directory(
             train_dir,
@@ -67,10 +69,10 @@ def train_k(train_collection, fm, lr, decay, k=5):
             batch_size=BATCH_SIZE,
             class_mode='categorical'
         ))
-                         
+
     for i in range(k):
         fm.save_weights(_key.format(i), verbose=0)
-        
+
     while True:
         print('Training {} epochs for k splits... '.format(T), end='')
         histories = []
@@ -93,8 +95,9 @@ def optimize_hyperparameters(train_collection, fm, lr=(1e-4, 1e-1), decay=(0, 1e
     Returns (lr, decay, epochs)
     '''
     print('Optimizing {}'.format(fm.get_name()))
-    
+
     results = defaultdict(list)
+
     def f(lr, decay):
         loss, epochs = train_k(train_collection, fm, lr, decay)
         results['lr'].append(lr)
@@ -102,34 +105,35 @@ def optimize_hyperparameters(train_collection, fm, lr=(1e-4, 1e-1), decay=(0, 1e
         results['loss'].append(loss)
         results['epochs'].append(epochs)
         return -loss
-    
+
     pbounds = {
         'lr': lr,
         'decay': decay
     }
-    
+
     optimizer = BayesianOptimization(f=f, pbounds=pbounds, random_state=1)
     optimizer.maximize(init_points, n_iter)
-    
+
     loss = -optimizer.max['target']
     lr = optimizer.max['params']['lr']
     decay = optimizer.max['params']['decay']
-    
-    print('Validation Loss of {} for [lr={}, decay={}]'.format(loss, lr, decay))
-    
+
+    print('Validation Loss of {} for [lr={}, decay={}]'.format(
+        loss, lr, decay))
+
     for i in range(len(results['lr'])):
         if results['decay'][i] == decay and results['lr'][i] == lr:
             epochs = results['epochs'][i]
-            
+
     return lr, decay, epochs
 
 
 def optimize_full_model(train_collection, test_collection, fm):
     print('FULLY TRAINING {}'.format(fm.get_name().upper()).center(100, '='))
-    
+
     aug_gen = fm.get_image_data_generator(augment=True)
     pure_gen = fm.get_image_data_generator(augment=False)
-    
+
     train_dir = 'temp_images/train'
     test_dir = 'temp_images/test'
     train_collection.export_by_label(train_dir)
@@ -146,30 +150,30 @@ def optimize_full_model(train_collection, test_collection, fm):
         batch_size=BATCH_SIZE,
         class_mode='categorical'
     )
-    
+
     fm.reload_model()
-    
+
     for d in range(len(fm.depths)):
         print('TRAINING DEPTH #{}'.format(d).center(100, '='))
         key = 'D{:02d}'.format(d)
         fm.save_weights(key, verbose=0)
         fm.set_depth(d)
-        
+
         lr, decay, epochs = optimize_hyperparameters(train_collection, fm)
         with open('hp_{}_d{}'.format(fm.get_name(), d)) as f:
             f.write('lr,decay,epochs\n')
             f.write('{},{},{}\n'.format(lr, decay, epochs))
-        
+
         fm.load_weights(key, verbose=0)
         result = fm.get_model().fit_generator(
             train_gen,
             steps_per_epoch=math.ceil(train_gen.n / BATCH_SIZE),
             shuffle=True,
-            epochs=t)
-        
+            epochs=epochs)
+
         evaluation = fm.get_model().evaulate_generator(test_gen)
         fm.save_weights(key, verbose=0)
-        
+
         print('DEPTH #{} TRAIN RESULTS'.format(d))
         print(evaluation)
 

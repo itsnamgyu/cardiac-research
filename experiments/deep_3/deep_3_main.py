@@ -15,6 +15,7 @@ from core.fine_model import FineModel
 
 import cr_interface as cri
 import keras_utils as ku
+from lib import Timer, notify
 
 
 BATCH_SIZE = 32
@@ -23,8 +24,8 @@ BALANCE = 5
 LEARNING_RATES = [
     0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001
 ]
-EPOCHS = 3
-SAMPLE = True # sample 10% of examples for testing (sanity check stage)
+EPOCHS = 100
+SAMPLE = False  # sample 10% of examples for testing (sanity check stage)
 
 
 TEMP_IMAGE_DIR = 'temp_image'
@@ -301,6 +302,7 @@ def train_model_all_folds(fm, depth_index, lr_index,
     avg_acc = total_acc / K
 
     print('[debug] avg_test_loss={}, avg_test_acc={}'.format(avg_loss, avg_acc))
+    notify('AVG_LOSS={} / AVG_ACC={}'.format(avg_loss, avg_acc))
 
     return avg_loss, avg_acc
 
@@ -362,5 +364,6 @@ test_gen = get_test_generator(fm, test)
 
 for i, lr in enumerate(LEARNING_RATES):
     print('Starting training @lr={}'.format(lr).center(100, '-'))
+    notify('Starting learning rate: {}'.format(lr))
     train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
-
+    notify('Done with learning rate: {}'.format(lr))

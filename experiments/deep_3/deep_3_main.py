@@ -254,8 +254,8 @@ def train_model_all_folds(fm, depth_index, lr_index,
                 validation_data=val_gens[i],
                 steps_per_epoch=len(train_gens[i]),
                 validation_steps=len(val_gens[i]),
-                #workers=4,
-                #use_multiprocessing=True,
+                workers=16,
+                use_multiprocessing=True,
                 shuffle=True,
                 epochs=target_epoch,
                 initial_epoch=start_epoch,
@@ -282,8 +282,8 @@ def train_model_all_folds(fm, depth_index, lr_index,
         loss, acc = model.evaluate_generator(
             test_gen,
             steps=len(test_gen),
-            #workers=4,
-            #use_multiprogressing=True,
+            workers=16,
+            use_multiprogressing=True,
         )
 
         print('[debug] test_loss={}, test_acc={}'.format(loss, acc))

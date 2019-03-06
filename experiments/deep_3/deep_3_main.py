@@ -22,9 +22,9 @@ BATCH_SIZE = 32
 K = 5
 BALANCE = 5
 LEARNING_RATES = [
-    0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001
+    0.001, 0.0001, 0.00001, 0.000001, 0.0000001
 ]
-EPOCHS = 100
+EPOCHS = 150
 SAMPLE = False  # sample 10% of examples for testing (sanity check stage)
 
 
@@ -364,6 +364,7 @@ test_gen = get_test_generator(fm, test)
 
 for i, lr in enumerate(LEARNING_RATES):
     print('Starting training @lr={}'.format(lr).center(100, '-'))
-    notify('Starting learning rate: {}'.format(lr))
-    train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
-    notify('Done with learning rate: {}'.format(lr))
+    with Timer('5-fold Train LR={}, EPOCHS={}'.format(lr, EPOCHS)):
+        notify('Starting learning rate: {}'.format(lr))
+        train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
+        notify('Done with learning rate: {}'.format(lr))

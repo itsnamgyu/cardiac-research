@@ -1,6 +1,7 @@
 import os
 import json
 import sys
+import traceback
 
 import pandas as pd
 
@@ -62,6 +63,19 @@ def load_history(model_name, key, directory=None):
         return pd.read_csv(path)
     else:
         return None
+
+
+def reset_history(model_name, key, directory=None):
+    '''
+    Delete history file
+    '''
+    path = _get_history_dir(model_name, key, directory)
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception as e:
+            traceback.print_exc()
+            warnings.warn('error: could not delete {}:\n{}'.format(path, e))
 
 
 def get_average(histories):

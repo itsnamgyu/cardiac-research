@@ -1,6 +1,8 @@
 import os
 import json
 import sys
+import traceback
+from collections import defaultdict
 
 import pandas as pd
 
@@ -10,11 +12,15 @@ import core
 DEFAULT_HISTORY_DIR = os.path.join(core.BASE_DIR, '.history')
 
 
-def _get_history_dir(model_name, key, directory=None, makedirs=True):
+def _get_history_module_dir(directory=None):
     if directory:
-        path = directory
+        return directory
     else:
-        path = DEFAULT_HISTORY_DIR
+        return DEFAULT_HISTORY_DIR
+
+
+def _get_history_dir(model_name, key, directory=None, makedirs=True):
+    path = _get_history_module_dir(directory)
     path = os.path.join(path, model_name)
     path = os.path.join(path, key + '.csv')
 
@@ -62,6 +68,42 @@ def load_history(model_name, key, directory=None):
         return pd.read_csv(path)
     else:
         return None
+
+
+def get_keys(directory=None):
+    path = _get_history_module_dir(directory)
+    model_dirs = os.listdir(path)
+    d = defaultdict(list)
+    for model_dir in model_dirs:
+        model_name = model_dir
+        model_path = os.path.join(path, model_dir)
+        if not os.path.isdir(model_path):
+            continue
+        filenames = os.listdir(model_path)
+        for filename in filenames:
+            file_path = os.path.join(model_path, filename)
+            key, ext = os.path.splitext(filename)
+            if ext == '.csv':
+                d[model_name].append(key)
+
+    for keys in d.values():
+        keys.sort()
+
+    return dict(d)
+    
+
+
+def reset_history(model_name, key, directory=None):
+    '''
+    Delete history file
+    '''
+    path = _get_history_dir(model_name, key, directory)
+    if os.path.exists(path):
+        try:
+            os.remove(path)
+        except Exception as e:
+            traceback.print_exc()
+            warnings.warn('error: could not delete {}:\n{}'.format(path, e))
 
 
 def get_average(histories):

@@ -375,7 +375,7 @@ try:
     keys = [
         #'xception',
         #'mobileneta25',
-        'mobilenetv2a35'
+        'mobilenetv2a35',
         'vgg16',
         'resnet50v2',
         #'inception_v3',

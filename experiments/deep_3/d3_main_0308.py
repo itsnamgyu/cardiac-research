@@ -24,7 +24,7 @@ try:
     K = 5
     BALANCE = 5
     LEARNING_RATES = [
-        0.001, 0.0001, 0.00001
+        0.0001, 0.00001, 0.001
     ]
     EPOCHS = 100
     SAMPLE = False  # sample 10% of examples for testing (sanity check stage)
@@ -141,7 +141,7 @@ try:
         test_gen = pure_gen.flow_from_directory(
             test_dir,
             target_size=fm.get_output_shape(),
-            batch_size=test_collection.df.shape[0],
+            batch_size=BATCH_SIZE,
             class_mode='categorical',
             shuffle=False,
         )
@@ -364,18 +364,20 @@ try:
     models.keys()
 #dict_keys(['xception', 'mobileneta25', 'mobilenetv2a35', 'vgg16', 'resnet50v2',
 #'inception_v3','inception_resnet_v2', 'densenet121', 'nasnet_mobile'])
-    fm = models['mobileneta25']()
+    fm = models['resnet50v2']()
 
     train_gens, val_gens = get_train_val_generators(fm, folds)
     test_gen = get_test_generator(fm, test)
 
 
-    for i, lr in enumerate(LEARNING_RATES):
-        print('Starting training @lr={}'.format(lr).center(100, '-'))
-        with Timer('5-fold Train LR={}, EPOCHS={}'.format(lr, EPOCHS)):
-            notify('Starting learning rate: {}'.format(lr))
-            train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
-            notify('Done with learning rate: {}'.format(lr))
+    #for i, lr in enumerate(LEARNING_RATES):
+    i = 2
+    lr = LEARNING_RATES[2]
+    print('Starting training @lr={}'.format(lr).center(100, '-'))
+    with Timer('5-fold Train LR={}, EPOCHS={}'.format(lr, EPOCHS)):
+        notify('Starting learning rate: {}'.format(lr))
+        train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
+        notify('Done with learning rate: {}'.format(lr))
 
 except Exception as e:
     error = traceback.format_exc()

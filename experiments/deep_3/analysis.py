@@ -69,6 +69,7 @@ def plot_average_by_fold(histories, title=None, ax=None, metric='val_loss'):
     avg = ch.get_average(histories)[metric]
     ax.plot(avg, label=avg_label)
     ax.legend(loc='upper left')
+    ax.grid()
     
     return ax
 
@@ -108,6 +109,7 @@ def plot_average_by_lr(histories_by_lr, title=None, ax=None, metric='val_loss'):
         avg_history = ch.get_average(histories)
         ax.plot(avg_history.index, avg_history[metric], label='{:.1E}'.format(lr))
     ax.legend(loc='upper left')
+    ax.grid()
     
     return ax
 

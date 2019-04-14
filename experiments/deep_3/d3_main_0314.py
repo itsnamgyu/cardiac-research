@@ -3,7 +3,9 @@
 
 # In[1]:
 
+import matplotlib as mpl
 
+mpl.use('Agg')  # don't display mpl windows (will cause error in non-gui environment)
 from collections import defaultdict
 import math
 import os
@@ -31,7 +33,7 @@ try:
         0.001, 0.0001, 0.00001
     ]
     EPOCHS = 100
-    SAMPLE = False  # sample 10% of examples for testing (sanity check stage)
+    SAMPLE = False # sample 10% of examples for testing (sanity check stage)
 
 
 # In[3]:
@@ -375,8 +377,8 @@ try:
     keys = [
         #'xception',
         #'mobileneta25',
-        'mobilenetv2a35',
-        'vgg16',
+        #'mobilenetv2a35',
+        #'vgg16',
         'resnet50v2',
         #'inception_v3',
         #'inception_resnet_v2',

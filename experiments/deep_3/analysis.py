@@ -17,7 +17,6 @@ _depth_key = 'EXP{:02}_D{:02}'
 _fold_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}'
 _epoch_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}_E{:03}'
 
-EXP = 1
 K = 5
 DIR = 'figures'
 
@@ -114,7 +113,7 @@ def plot_average_by_lr(histories_by_lr, title=None, ax=None, metric='val_loss'):
     return ax
 
 
-def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_lr_list):
+def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_lr_list, exp=1):
     model_name = fm.get_name()
     
     print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index, lr_list))
@@ -128,7 +127,7 @@ def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_l
         histories = list()
         histories_by_lr[lr] = histories
         for k in range(K):
-            fold_key = _fold_key.format(EXP, depth_index, i, k)
+            fold_key = _fold_key.format(exp, depth_index, i, k)
             history = ch.load_history(model_name, fold_key)
             histories.append(history)
         name = 'Fold {} [{}D{}].png'.format(metric.upper(), model_name, depth_index)
@@ -144,7 +143,7 @@ def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_l
     lr_ax.get_figure().savefig(path, dpi=320, bbox_inches='tight')
 
 
-def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric):
+def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric, exp=1):
     model_name = fm.get_name()
 
     print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index, lr_value))
@@ -154,7 +153,7 @@ def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric):
     histories = list()
     histories_by_lr[lr_value] = histories
     for k in range(K):
-        fold_key = _fold_key.format(EXP, depth_index, lr_index, k)
+        fold_key = _fold_key.format(exp, depth_index, lr_index, k)
         history = ch.load_history(model_name, fold_key)
         histories.append(history)
     name = 'Fold {} [{}D{}@{:.1E}].png'.format(metric.upper(), model_name, depth_index, lr_value)

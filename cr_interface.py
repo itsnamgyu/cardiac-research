@@ -80,7 +80,7 @@ class CrCollection:
         '''
         return cls.from_dict(load_metadata())
     
-    def split_by(self, columns, ratios, copy=False):
+    def split_by(self, columns, ratios, seed=None, copy=False):
         cr_keys = ['dataset_index', 'pid', 'phase_index', 'slice_index']
         ratios = pd.Series(ratios)
 
@@ -93,30 +93,37 @@ class CrCollection:
         for column in columns:
             if column not in cr_keys:
                 raise ValueError('invalid column {}'.format(column))
-                
-        key_df = self.df.loc[:, columns].drop_duplicates()
-        key_df = key_df.reindex(np.random.permutation(key_df.index), copy=False)
-        key_df = key_df.sort_index()
         
+        # build permutation of unique keys (e.g., database-patient pairs)
+        keys = self.df.loc[:, columns].drop_duplicates()
+        keys = keys.sort_values(columns)
+        p_indices = np.random.RandomState(seed).permutation(keys.index)
+        keys = keys.reindex(p_indices, copy=False)
+        keys = keys.reset_index(drop=True)
+
+        def filter_by_keys(df, keys):
+            for column in columns:
+                df = df.loc[df[column].isin(keys[column])]
+            return df
+
         lower_bounds = pd.Series([0] + list(ratios)[:-1]).cumsum()
         upper_bounds = ratios.cumsum()
         splits = []
         for lower, upper in zip(lower_bounds, upper_bounds):
-            split = key_df.iloc[int(lower * len(key_df)):int(upper * len(key_df))]
+            split_keys = keys.iloc[int(lower * len(keys)):int(upper * len(keys))]
             df = self.df
-            for column in columns:
-                df = df.loc[df[column].isin(split[column])]
+            df = filter_by_keys(df, split_keys)
             df = df.reset_index(drop=True)
             splits.append(CrCollection(df, copy))
         
         return splits
     
-    def k_split(self, k, columns=['dataset_index', 'pid']):
+    def k_split(self, k, seed=None, columns=['dataset_index', 'pid']):
         ratios = []
         for _ in range(k - 1):
             ratios.append(1 / k)
         ratios.append(1 - sum(ratios))
-        return self.split_by(columns, ratios)
+        return self.split_by(columns, ratios, seed)
 
     def filter_by(self, inplace=False, **kwargs):
         '''

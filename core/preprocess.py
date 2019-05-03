@@ -37,5 +37,6 @@ def preprocess_dataset(input_dir=DATABASE_DIR, output_dir=PROCESSED_DIR):
 
         scipy.misc.imsave(output_path, result)
 
-                    
-preprocess_dataset()
+
+if __name__ == '__main__':
+    preprocess_dataset()

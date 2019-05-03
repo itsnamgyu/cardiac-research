@@ -93,10 +93,7 @@ class FineModel(metaclass=abc.ABCMeta):
             metrics=['accuracy'])
 
     def get_image_data_generator(self, augment=True):
-        transform_parameters = {
-            'zx': 0.6,
-            'zy': 0.6,
-        }
+        transform_parameters = {}
         zoom_gen = ImageDataGenerator()
 
         def zoom(x): return self._get_preprocess_func()(

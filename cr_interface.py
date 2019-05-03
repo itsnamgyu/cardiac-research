@@ -19,6 +19,7 @@ import pandas as pd
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(PROJECT_DIR, 'data/database')
+PROCESSED_DIR = os.path.join(PROJECT_DIR, 'data/database_processed')
 DATASET_DIR = os.path.join(PROJECT_DIR, 'data/datasets')
 DATA_DIR = os.path.join(PROJECT_DIR, 'data/data')  # legacy
 METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
@@ -333,7 +334,7 @@ def parse_cr_code(cr_code, match=True):
     return tuple(map(lambda index: int(index), match.groups()))
 
 def get_image_path(cr_code):
-    return os.path.join(DATABASE_DIR, '{}.jpg'.format(cr_code))
+    return os.path.join(PROCESSED_DIR, '{}.jpg'.format(cr_code))
 
 def get_image_paths(cr_codes, generator=False):
     if generator:

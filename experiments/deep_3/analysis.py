@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 from core import history as ch
 from core.fine_model import FineModel
 import matplotlib as mpl
@@ -11,7 +5,6 @@ import matplotlib.pyplot as plt
 import traceback
 import warnings
 import os
-
 
 _depth_key = 'EXP{:02}_D{:02}'
 _fold_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}'

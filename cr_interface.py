@@ -15,7 +15,6 @@ import scipy.ndimage
 import matplotlib.pyplot as plt
 import pandas as pd
 
-
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 DATABASE_DIR = os.path.join(PROJECT_DIR, 'data/database')
@@ -29,8 +28,6 @@ SPEC_CSV = os.path.join(PROJECT_DIR, 'analysis/images_spec.csv')
 DATA_DIRS = {}
 for split in ['test', 'validation', 'train']:
     DATA_DIRS[split] = os.path.join(DATA_DIR, split)
-
-
 '''
 cr_metadata.json
 {
@@ -43,7 +40,6 @@ cr_metadata.json
     ...
 }
 '''
-
 
 
 class CrCollection:
@@ -72,14 +68,14 @@ class CrCollection:
         df = pd.DataFrame.from_dict(dict_of_series)[index]
         df.sort_values('cr_code')
         return cls(df)
-    
+
     @classmethod
     def load(cls):
         '''
         Load all data from cr_metadata.json
         '''
         return cls.from_dict(load_metadata())
-    
+
     def split_by(self, columns, ratios, seed=None, copy=False):
         cr_keys = ['dataset_index', 'pid', 'phase_index', 'slice_index']
         ratios = pd.Series(ratios)
@@ -89,11 +85,11 @@ class CrCollection:
 
         if type(columns) == str:
             columns = [columns]  # hotfix string iteration issue
-        
+
         for column in columns:
             if column not in cr_keys:
                 raise ValueError('invalid column {}'.format(column))
-        
+
         # build permutation of unique keys (e.g., database-patient pairs)
         keys = self.df.loc[:, columns].drop_duplicates()
         keys = keys.sort_values(columns)
@@ -110,14 +106,15 @@ class CrCollection:
         upper_bounds = ratios.cumsum()
         splits = []
         for lower, upper in zip(lower_bounds, upper_bounds):
-            split_keys = keys.iloc[int(lower * len(keys)):int(upper * len(keys))]
+            split_keys = keys.iloc[int(lower * len(keys)):int(upper *
+                                                              len(keys))]
             df = self.df
             df = filter_by_keys(df, split_keys)
             df = df.reset_index(drop=True)
             splits.append(CrCollection(df, copy))
-        
+
         return splits
-    
+
     def k_split(self, k, seed=None, columns=['dataset_index', 'pid']):
         ratios = []
         for _ in range(k - 1):
@@ -134,43 +131,43 @@ class CrCollection:
             df = self.df
         else:
             df = self.df.copy()
-            
+
         for key, val in kwargs.items():
             try:
                 df = df.loc[df[key].isin(val)]
-            except TypeError: # element
-                df = df.loc[df[key]==val]
-            
+            except TypeError:  # element
+                df = df.loc[df[key] == val]
+
         df = df.sort_values('cr_code').reset_index(drop=True)
-        
+
         if not inplace:
             return CrCollection(df)
         else:
             self.df = df
-    
+
     def labeled(self, inplace=False):
         if inplace:
             df = self.df
         else:
             df = self.df.copy()
-            
+
         df = df.loc[df['label'] != '']
-            
+
         df = df.sort_values('cr_code').reset_index(drop=True)
-        
+
         if not inplace:
             return CrCollection(df)
         else:
             self.df = df
-            
+
     def tri_label(self, inplace=False):
         if inplace:
             df = self.df
         else:
             df = self.df.copy()
-            
+
         df.loc[:, 'label'] = df.loc[:, 'label'].apply(to_tri_label)
-        
+
         if not inplace:
             return CrCollection(df)
         else:
@@ -192,14 +189,14 @@ class CrCollection:
 
         images = []
         for path in self.get_image_paths(generator=True):
-            image = keras.preprocessing.image.load_img(path, target_size=target_size)
+            image = keras.preprocessing.image.load_img(path,
+                                                       target_size=target_size)
             images.append(image)
 
         if stack:
             return np.stack(images)
         else:
             return images
-
 
     def get_labels(self, generator=False):
         return list(self.df.loc[:, 'label'])
@@ -208,14 +205,15 @@ class CrCollection:
         df = self.labeled(inplace=False).df
         labels = list(df.loc[:, 'label'].drop_duplicates())
         cr_codes = dict()
-        
+
         for label in labels:
-            cr_codes[label] = list(df.loc[df.loc[:, 'label']==label]['cr_code'])
+            cr_codes[label] = list(
+                df.loc[df.loc[:, 'label'] == label]['cr_code'])
 
         return cr_codes
 
     def export_by_label(self, dest, balancing=5, verbose=0):
-        _inner_labels = [ 'in', 'ap', 'md', 'bs' ]
+        _inner_labels = ['in', 'ap', 'md', 'bs']
 
         os.makedirs(dest, exist_ok=True)
         if not os.path.isdir(dest):
@@ -238,7 +236,9 @@ class CrCollection:
             raise OSError('export path already exists and is not a directory')
 
         if by_label is not None:
-            warnings.warn('The by_label argument in export is depreciated. Use export_by_label')
+            warnings.warn(
+                'The by_label argument in export is depreciated. Use export_by_label'
+            )
 
         if by_label == True:
             self.export_by_label(dest, verbose)
@@ -247,7 +247,8 @@ class CrCollection:
             for path in self.get_image_paths():
                 for i in range(n):
                     base_path = os.path.basename(path)
-                    dest_path = os.path.join(dest, '{:02d}_{}'.format(i, base_path))
+                    dest_path = os.path.join(dest,
+                                             '{:02d}_{}'.format(i, base_path))
                     pairs.append((path, dest_path))
             if verbose:
                 for pair in tqdm(pairs):
@@ -263,7 +264,9 @@ class CrCollection:
         if isinstance(other, CrCollection):
             return CrCollection(pd.concat([self.df, other.df], copy=True))
         else:
-            raise TypeError('cannot add CrCollection with {}'.format(type(other)))
+            raise TypeError('cannot add CrCollection with {}'.format(
+                type(other)))
+
 
 def load_metadata() -> Dict[str, Dict[str, str]]:
     '''
@@ -273,13 +276,13 @@ def load_metadata() -> Dict[str, Dict[str, str]]:
     if os.path.isfile(METADATA_FILE):
         try:
             with open(METADATA_FILE) as f:
-                metadata: Dict[str: Dict[str: str]] = json.load(f)
+                metadata: Dict[str:Dict[str:str]] = json.load(f)
         except json.JSONDecodeError:
             raise Exception('corrupt metadata file: {}'.format(METADATA_FILE))
     else:
         print('no metadata file')
         print('initializing new metadata')
-        metadata: Dict[str: Dict[str: str]] = {}
+        metadata: Dict[str:Dict[str:str]] = {}
 
     return metadata
 
@@ -332,8 +335,10 @@ def parse_cr_code(cr_code, match=True):
 
     return tuple(map(lambda index: int(index), match.groups()))
 
+
 def get_image_path(cr_code):
     return os.path.join(DATABASE_DIR, '{}.jpg'.format(cr_code))
+
 
 def get_image_paths(cr_codes, generator=False):
     if generator:
@@ -341,15 +346,19 @@ def get_image_paths(cr_codes, generator=False):
     else:
         return list(map(get_image_path, cr_codes))
 
+
 def visualize_metadata():
     metadata = load_metadata()
-    print(json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
+    print(
+        json.dumps(metadata, sort_keys=True, indent=4, separators=(',', ': ')))
+
 
 def to_tri_label(label):
     if label in ['ap', 'md', 'bs']:
         return 'in'
     else:
         return label
+
 
 def get_label(cr_code, tri_label=True):
     metadata = load_metadata()
@@ -361,13 +370,16 @@ def get_label(cr_code, tri_label=True):
         label = to_tri_label(label)
     return label
 
+
 def get_labels(cr_codes, tri_label=True, generator=False):
     labels = map(lambda c: get_label(c, tri_label=tri_label), cr_codes)
     if not generator:
         labels = list(labels)
     return labels
 
+
 def load_results(results_dir=RESULTS_DIR):
+    warnings.warn('[cri.load_results] deprecated: refer to cr_analysis')
     '''
     Returns
     [
@@ -412,21 +424,22 @@ def load_results(results_dir=RESULTS_DIR):
 
 
 def select_result(results, sort_by=['test_accuracy']):
+    warnings.warn('[cri.select_result] deprecated: refer to cr_analysis')
+
     def sort_key(result):
         values = []
         for key in sort_by:
             values.append(result[key])
         return values
+
     results.sort(key=sort_key, reverse=True)
 
     print('{:-^80}'.format(' Predictions List '))
     for i, result in enumerate(results):
         print('%d.\tModule: %s' % (i, result['tfhub_module']))
-        print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' % (
-            result['training_steps'],
-            result['learning_rate'],
-            result['test_accuracy'])
-        )
+        print('\tSteps: %-10sRate: %-10sAccuracy: %-10s' %
+              (result['training_steps'], result['learning_rate'],
+               result['test_accuracy']))
         print()
 
     while True:
@@ -440,19 +453,23 @@ def select_result(results, sort_by=['test_accuracy']):
 
 
 def load_best_result(results_dir=RESULTS_DIR):
+    warnings.warn('[cri.load_best_result] deprecated: refer to cr_analysis')
     results = load_results(results_dir)
     results.sort(key=lambda r: r['test_accuracy'])
     return results[-1]
 
 
 def prompt_and_load_result(results_dir=RESULTS_DIR):
+    warnings.warn(
+        '[cri.prompt_and_load_result] deprecated: refer to cr_analysis')
     results = load_results(results_dir)
     result = select_result(results)
     return result
 
 
 def load_result(results_dir=RESULTS_DIR):
-    # deprecated
+    warnings.warn(
+        '[cri.load_result] deprecated: using cri.prompt_and_load_result')
     return prompt_and_load_result(results_dir)
 
 

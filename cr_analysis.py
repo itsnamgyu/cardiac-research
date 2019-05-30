@@ -2,6 +2,8 @@ import json
 import os
 import warnings
 import errno
+import glob
+import traceback
 
 import numpy as np
 import pandas as pd
@@ -13,14 +15,33 @@ metadata = cri.load_metadata()
 
 DEFAULT_CLASSES = ['in', 'oap', 'obs']
 
+results = None
+currently_loaded_results_dir = None
+
 
 class Result():
     def __init__(self, data: dict):
         self.data = data
         self.df = Result._generate_dataframe(data)
 
+    @staticmethod
+    def _key_to_dir(key):
+        if isinstance(key, str):
+            dirname = key
+        else:
+            try:
+                iterator = iter(key)
+            except TypeError:
+                raise TypeError('keys must be a string or iterable of strings')
+            else:
+                dirname = os.path.join(*iterator)
+
+        return dirname
+
     @classmethod
-    def from_json(cls, dirname, basename='cr_result.json', full_path=False):
+    def from_json(cls, key, basename='cr_result.json', full_path=False):
+        dirname = cls._key_to_dir(key)
+
         if full_path:
             path = os.path.join(dirname, basename)
         else:
@@ -126,8 +147,9 @@ class Result():
 
         return pd.DataFrame(result_dict)
 
-    def to_json(self, dirname, basename='cr_result.json',
-                full_path=None) -> None:
+    def to_json(self, key, basename='cr_result.json', full_path=None) -> None:
+        dirname = self._key_to_dir(key)
+
         if full_path:
             path = os.path.join(dirname, basename)
         else:
@@ -250,6 +272,56 @@ class Result():
         string += str(self.get_precision_and_recall()) + '\n\n'
 
         return string
+
+
+def get_results(results_dir=cri.RESULTS_DIR, force_reload=False):
+    global results
+    global currently_loaded_results_dir
+    if results is None or results_dir != currently_loaded_results_dir or force_reload:
+        results = dict()
+        result_paths = glob.glob(os.path.join(results_dir,
+                                              '**/cr_result.json'),
+                                 recursive=True)
+        result_paths = map(lambda path: path[len(results_dir) + 1:],
+                           result_paths)
+        result_dirs = map(os.path.dirname, result_paths)
+
+        for result_dir in result_dirs:
+            try:
+                result = Result.from_json(result_dir)
+            except Exception as e:
+                warnings.warn('invalid result file: {}'.format(
+                    os.path.join(result_dir, 'cr_result.json')))
+                print(traceback.format_exc())
+                print(e)
+                continue
+
+            results[result_dir] = result
+
+    return results
+
+
+def select_result(force_reload=False):
+    results = get_results(results_dir=cri.RESULTS_DIR,
+                          force_reload=force_reload)
+
+    result_pairs = results.items()
+    result_pairs = sorted(result_pairs, key=lambda t: t[0])
+
+    print(' Results List '.center(80, '-'))
+    fmt = '{:3d}. {:50s}ACC={:.6f}'
+    for i, result_pair in enumerate(result_pairs):
+        key, result = result_pair
+        print(fmt.format(i, key, float(result.data['test_accuracy'])))
+    print('-' * 80)
+
+    while True:
+        try:
+            index = int(input('Which of the results would you like to use? '))
+            return result_pairs[index][1]
+        except (IndexError, ValueError):
+            print('Invalid index')
+            continue
 
 
 def evaluate_model(model: keras.models.Model,

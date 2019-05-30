@@ -14,6 +14,7 @@ from typing import List
 
 import core
 import cr_interface as cri
+import cr_analysis as cra
 
 
 class FineModel(metaclass=abc.ABCMeta):
@@ -303,6 +304,18 @@ class FineModel(metaclass=abc.ABCMeta):
                     i + 1, train_gens[-1].n, val_gens[-1].n))
 
         return train_gens, val_gens
+
+    def generate_test_result(self, test_collection:cri.CrCollection, verbose=1):
+        model = self.get_model()
+        test_gen = self.get_test_generator(test_collection)
+        test_gen.reset()
+        if (verbose):
+            print('Generating predictions for {}'.format(self.get_name()).center(80, '-'))
+        predictions = model.predict_generator(test_gen, steps=len(test_gen), workers=4, verbose=1)
+        filenames = test_gen.filenames
+        cr_codes = cri.extract_cr_codes(filenames)
+        result = cra.Result.from_predictions(predictions, cr_codes, dict(), 'short_name')
+        return result
 
     @classmethod
     def get_list(cls):

@@ -1,9 +1,3 @@
-#!/usr/bin/env python
-# coding: utf-8
-
-# In[1]:
-
-
 from core import history as ch
 from core.fine_model import FineModel
 import matplotlib as mpl
@@ -11,7 +5,6 @@ import matplotlib.pyplot as plt
 import traceback
 import warnings
 import os
-
 
 _depth_key = 'EXP{:02}_D{:02}'
 _fold_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}'
@@ -33,8 +26,25 @@ metric_names = {
     'acc': 'Training Accuracy',
 }
 
+bounds_per_metric = {
+    'val_loss': (0.5, 1.5),
+    'loss': (0.5, 1.5),
+    'val_acc': (0.4, 0.9),
+    'acc': (0.4, 0.9)
+}
 
-def plot_average_by_fold(histories, title=None, ax=None, metric='val_loss'):
+
+def _set_ax_bounds(ax, metric, force_bounds=None):
+    bounds = force_bounds
+    if bounds is None:
+        if metric in bounds_per_metric:
+            bounds = bounds_per_metric[metric]
+        else:
+            warnings.warn('bounds are not set for metric {}'.format(metric))
+    ax.set_ylim(*bounds)
+
+
+def plot_average_by_fold(histories, title=None, ax=None, metric='val_loss', force_bounds=None):
     """
     ax: matplotlib.Axes on which to plot the figure
     """
@@ -44,36 +54,39 @@ def plot_average_by_fold(histories, title=None, ax=None, metric='val_loss'):
         traceback.print_exc()
         fig = plt.Figure()
         return fig
-    
+
     metric_name = metric_names[metric]
 
     _fold_label = 'Fold #{}'
     avg_label = 'K-Fold Average'
-    figsize=(6, 6)
+    figsize = (6, 6)
     fold_alpha = 0.5
     xlabel = 'Epochs'
     ylabel = metric_name
-    
+
     if ax is None:
         fig, ax = plt.subplots(squeeze=True, figsize=figsize)
-    
+
     if title is not None:
         ax.set_title(title)
+
+    _set_ax_bounds(ax, metric, force_bounds)
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     for i, history in enumerate(histories):
-        ax.plot(history.index, history[metric], alpha=fold_alpha, label=_fold_label.format(i + 1))
+        ax.plot(history.index, history[metric],
+                alpha=fold_alpha, label=_fold_label.format(i + 1))
 
     avg = ch.get_average(histories)[metric]
     ax.plot(avg, label=avg_label)
     ax.legend(loc='upper left')
     ax.grid()
-    
+
     return ax
 
 
-def plot_average_by_lr(histories_by_lr, title=None, ax=None, metric='val_loss'):
+def plot_average_by_lr(histories_by_lr, title=None, ax=None, metric='val_loss', force_bounds=None):
     """
     histories_by_lr: {
         '0.001': list_of_history_dataframes,
@@ -88,35 +101,39 @@ def plot_average_by_lr(histories_by_lr, title=None, ax=None, metric='val_loss'):
         traceback.print_exc()
         fig = plt.Figure()
         return fig
-    
+
     metric_name = metric_names[metric]
 
     _fold_label = 'Fold #{}'
-    figsize=(6, 6)
+    figsize = (6, 6)
     xlabel = 'Epochs'
     ylabel = metric_name
-    
+
     if ax is None:
         fig, ax = plt.subplots(squeeze=True, figsize=figsize)
-    
+
     if title is not None:
         ax.set_title(title)
+
+    _set_ax_bounds(ax, metric, force_bounds)
 
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     for lr, histories in histories_by_lr.items():
         avg_history = ch.get_average(histories)
-        ax.plot(avg_history.index, avg_history[metric], label='{:.1E}'.format(lr))
+        ax.plot(avg_history.index,
+                avg_history[metric], label='{:.1E}'.format(lr))
     ax.legend(loc='upper left')
     ax.grid()
-    
+
     return ax
 
 
 def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_lr_list, exp=1):
     model_name = fm.get_name()
-    
-    print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index, lr_list))
+
+    print('Analyzing {} D={}, LR={}'.format(
+        verbose_model_name, depth_index, lr_list))
 
     title = verbose_model_name
     fig, axes = plt.subplots(1, 3, squeeze=True, figsize=(18, 6))
@@ -130,14 +147,17 @@ def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_l
             fold_key = _fold_key.format(exp, depth_index, i, k)
             history = ch.load_history(model_name, fold_key)
             histories.append(history)
-        name = 'Fold {} [{}D{}].png'.format(metric.upper(), model_name, depth_index)
+        name = 'Fold {} [{}D{}].png'.format(
+            metric.upper(), model_name, depth_index)
         path = os.path.join(DIR, name)
         os.makedirs(DIR, exist_ok=True)
-        plot_average_by_fold(histories, title=verbose_model_name, metric=metric, ax=ax)
+        plot_average_by_fold(
+            histories, title=verbose_model_name, metric=metric, ax=ax)
     fig.savefig(path, dpi=320, bbox_inches='tight')
 
     lr_ax = plot_average_by_lr(histories_by_lr, title=title, metric=metric)
-    name = 'Average {} [{}D{}].png'.format(metric.upper(), model_name, depth_index)
+    name = 'Average {} [{}D{}].png'.format(
+        metric.upper(), model_name, depth_index)
     path = os.path.join(DIR, name)
     os.makedirs(DIR, exist_ok=True)
     lr_ax.get_figure().savefig(path, dpi=320, bbox_inches='tight')
@@ -146,7 +166,8 @@ def analyze_depth(fm, verbose_model_name, depth_index, metric, lr_list=default_l
 def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric, exp=1):
     model_name = fm.get_name()
 
-    print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index, lr_value))
+    print('Analyzing {} D={}, LR={}'.format(
+        verbose_model_name, depth_index, lr_value))
     title = verbose_model_name
     histories_by_lr = dict()
 
@@ -156,7 +177,8 @@ def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric, 
         fold_key = _fold_key.format(exp, depth_index, lr_index, k)
         history = ch.load_history(model_name, fold_key)
         histories.append(history)
-    name = 'Fold {} [{}D{}@{:.1E}].png'.format(metric.upper(), model_name, depth_index, lr_value)
+    name = 'Fold {} [{}D{}@{:.1E}].png'.format(
+        metric.upper(), model_name, depth_index, lr_value)
     path = os.path.join(DIR, name)
     os.makedirs(DIR, exist_ok=True)
     ax = plot_average_by_fold(histories, title=title, metric=metric)
@@ -166,8 +188,10 @@ def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value, metric, 
 def analyze_all(fm, verbose_model_name, depth_index):
     metrics = metric_names.keys()
     for metric in metrics:
-        print('Analyzing {} metric={}, depth_index={}'.format(verbose_model_name, metric, depth_index))
-        analyze_depth(fm, verbose_model_name, depth_index=depth_index, metric=metric)
+        print('Analyzing {} metric={}, depth_index={}'.format(
+            verbose_model_name, metric, depth_index))
+        analyze_depth(fm, verbose_model_name,
+                      depth_index=depth_index, metric=metric)
 
 
 if __name__ == '__main__':

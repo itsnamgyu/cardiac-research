@@ -10,7 +10,10 @@ history
 weights
 images
 
+# Etc
 .DS_Store
+.vscode
+.idea
 
 *.swp
 *.bak

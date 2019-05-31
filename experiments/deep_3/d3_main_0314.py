@@ -5,7 +5,9 @@
 
 import matplotlib as mpl
 
-mpl.use('Agg')  # don't display mpl windows (will cause error in non-gui environment)
+mpl.use(
+    'Agg'
+)  # don't display mpl windows (will cause error in non-gui environment)
 from collections import defaultdict
 import math
 import os
@@ -24,23 +26,17 @@ import keras_utils as ku
 from lib import Timer, notify
 import traceback
 
-
 try:
     BATCH_SIZE = 32
     K = 5
     BALANCE = 5
-    LEARNING_RATES = [
-        0.001, 0.0001, 0.00001
-    ]
+    LEARNING_RATES = [0.001, 0.0001, 0.00001]
     EPOCHS = 100
-    SAMPLE = False # sample 10% of examples for testing (sanity check stage)
+    SAMPLE = False  # sample 10% of examples for testing (sanity check stage)
 
-
-# In[3]:
-
+    # In[3]:
 
     TEMP_IMAGE_DIR = 'temp_image'
-
 
     def get_train_val_generators(fm: FineModel, folds):
         """
@@ -62,16 +58,16 @@ try:
         val_gens: list of ImageDataGenerators for the validation data in each fold
         """
         print('Loading Train/Val ImageDataGenerators'.center(80, '-'))
-        
+
         aug_gen = fm.get_image_data_generator(augment=True)
-        
+
         val_gens = []
         train_gens = []
-        
+
         for i in range(len(folds)):
             val_dir = os.path.join(TEMP_IMAGE_DIR, 'val{}'.format(i))
             train_dir = os.path.join(TEMP_IMAGE_DIR, 'train{}'.format(i))
-            
+
             # refresh directories
             os.makedirs(val_dir, exist_ok=True)
             os.makedirs(train_dir, exist_ok=True)
@@ -88,31 +84,35 @@ try:
                 else:
                     # export train data for fold i
                     fold.export_by_label(train_dir, balancing=5)
-            
-            train_gens.append(aug_gen.flow_from_directory(
-                train_dir,
-                target_size=fm.get_output_shape(),
-                batch_size=BATCH_SIZE,
-                class_mode='categorical',
-            ))
-            val_gens.append(aug_gen.flow_from_directory(
-                val_dir,
-                target_size=fm.get_output_shape(),
-                batch_size=BATCH_SIZE,
-                class_mode='categorical',
-            ))
-            
-            print('Fold {}: {:<4} train images / {:<4} validation images'.format(
-                i + 1, train_gens[-1].n, val_gens[-1].n,
-            ))
-        
+
+            train_gens.append(
+                aug_gen.flow_from_directory(
+                    train_dir,
+                    target_size=fm.get_output_shape(),
+                    batch_size=BATCH_SIZE,
+                    class_mode='categorical',
+                ))
+            val_gens.append(
+                aug_gen.flow_from_directory(
+                    val_dir,
+                    target_size=fm.get_output_shape(),
+                    batch_size=BATCH_SIZE,
+                    class_mode='categorical',
+                ))
+
+            print(
+                'Fold {}: {:<4} train images / {:<4} validation images'.format(
+                    i + 1,
+                    train_gens[-1].n,
+                    val_gens[-1].n,
+                ))
+
         test_dir = os.path.join(TEMP_IMAGE_DIR, 'test')
         for fold in folds:
             # export test data for all
-            fold.export_by_label(test_dir, balancing=1) 
-        
-        return train_gens, val_gens
+            fold.export_by_label(test_dir, balancing=1)
 
+        return train_gens, val_gens
 
     def get_test_generator(fm: FineModel, test_collection: cri.CrCollection):
         """
@@ -132,18 +132,19 @@ try:
         ImageDataGenerator
         """
         print('Loading Test ImageDataGenerator'.center(80, '-'))
-        
+
         pure_gen = fm.get_image_data_generator(augment=False)
         test_dir = os.path.join(TEMP_IMAGE_DIR, 'test')
-        
+
         # refresh directories
         os.makedirs(test_dir, exist_ok=True)
         shutil.rmtree(test_dir)
         os.makedirs(test_dir, exist_ok=True)
         test_collection.export_by_label(test_dir, balancing=1)
-        
-        print('[debug] test image count: {}'.format(test_collection.df.shape[0]))
-        
+
+        print('[debug] test image count: {}'.format(
+            test_collection.df.shape[0]))
+
         test_gen = pure_gen.flow_from_directory(
             test_dir,
             target_size=fm.get_output_shape(),
@@ -152,14 +153,13 @@ try:
             shuffle=False,
         )
         print('Test images: {}'.format(test_gen.n))
-        
-        return test_gen
 
+        return test_gen
 
 # In[4]:
 
-
-    def optimize_learning_rate(fm: FineModel, depth_index, train_gens, val_gens, test_gen):
+    def optimize_learning_rate(fm: FineModel, depth_index, train_gens,
+                               val_gens, test_gen):
         """
         Train the fine model (frozen at some given depth) for all five folds of data,
         and choose the optimal learning rate BASED ON THE FINAL VALIDATION ACCURACY.
@@ -188,10 +188,9 @@ try:
         
         :return: None
         """
-        
-        
-    def train_model_all_folds(fm, depth_index, lr_index,
-                              epochs, train_gens, val_gens, test_gen):
+
+    def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
+                              val_gens, test_gen):
         """
         Train the model (frozen at some depth) for all five folds
 
@@ -277,19 +276,20 @@ try:
                 start_epoch = target_epoch
 
                 # update training history
-                ch.append_history(result.history, fm.get_name(), _fold_key.format(
-                    depth_index, lr_index, i
-                ))
+                ch.append_history(result.history, fm.get_name(),
+                                  _fold_key.format(depth_index, lr_index, i))
                 # save intermediate weights
-                fm.save_weights(_epoch_key.format(
-                    depth_index, lr_index, i, target_epoch,
-                ))
+                fm.save_weights(
+                    _epoch_key.format(
+                        depth_index,
+                        lr_index,
+                        i,
+                        target_epoch,
+                    ))
 
             # save final weights
-            fm.save_weights(_fold_key.format(
-                depth_index, lr_index, i
-            ))
-            
+            fm.save_weights(_fold_key.format(depth_index, lr_index, i))
+
             print('[debug] test size: {}'.format(test_gen.n))
             print('[debug] test steps: {}'.format(len(test_gen)))
 
@@ -304,10 +304,11 @@ try:
 
             loss_list.append(loss)
             acc_list.append(acc)
-            
+
         print('Exporting analysis')
         for metric in analysis.metric_names.keys():
-            analysis.analyze_lr(fm, fm.get_name(), depth_index, lr_index, lr, metric)
+            analysis.analyze_lr(fm, fm.get_name(), depth_index, lr_index, lr,
+                                metric)
 
         total_loss = 0
         for loss in loss_list:
@@ -319,10 +320,10 @@ try:
             total_acc += acc
         avg_acc = total_acc / K
 
-        print('[debug] avg_test_loss={}, avg_test_acc={}'.format(avg_loss, avg_acc))
+        print('[debug] avg_test_loss={}, avg_test_acc={}'.format(
+            avg_loss, avg_acc))
 
         return avg_loss, avg_acc
-
 
 # ## Load Data
 
@@ -330,20 +331,20 @@ try:
 
 # In[ ]:
 
-
-    train = cri.CrCollection.load().filter_by(dataset_index=0).tri_label().labeled()
-    test = cri.CrCollection.load().filter_by(dataset_index=1).tri_label().labeled()
+    train = cri.CrCollection.load().filter_by(
+        dataset_index=0).tri_label().labeled()
+    test = cri.CrCollection.load().filter_by(
+        dataset_index=1).tri_label().labeled()
 
     if SAMPLE:
         train = train.sample(frac=0.1)
         test = test.sample(frac=0.1)
 
-
     def print_stats(collection):
         df = collection.df
-        print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0], df.shape[0]))
+        print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0],
+                                                     df.shape[0]))
         print(df.label.value_counts().to_string())
-
 
     print('Training/Validation Set'.center(80, '-'))
     print_stats(train)
@@ -352,15 +353,15 @@ try:
     print_stats(test)
 
     print()
-    print('Note that OAP, OBS images in the training/validation set will be duplicated 5 times')
+    print(
+        'Note that OAP, OBS images in the training/validation set will be duplicated 5 times'
+    )
     print('to solve the class imbalance issue')
     print()
 
+    # ### Print statistics on 5-fold split data
 
-# ### Print statistics on 5-fold split data
-
-# In[ ]:
-
+    # In[ ]:
 
     folds = train.k_split(K)
 
@@ -370,7 +371,7 @@ try:
         counts.loc['total'] = fold.df.shape[0]
         stats[i + 1] = counts
     stats = pd.DataFrame(stats)
-        
+
     print('5-Fold Training Set Data'.center(80, '-'))
     print(stats.to_string(col_space=8))
 
@@ -394,8 +395,10 @@ try:
         train_gens, val_gens = get_train_val_generators(fm, folds)
         test_gen = get_test_generator(fm, test)
         for i, lr in enumerate(LEARNING_RATES):
-            print('Starting training {} lr={}'.format(fm.get_name(), lr).center(100, '-'))
-            train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
+            print('Starting training {} lr={}'.format(fm.get_name(),
+                                                      lr).center(100, '-'))
+            train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens,
+                                  test_gen)
 
 except Exception as e:
     error = traceback.format_exc()

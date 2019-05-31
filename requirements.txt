@@ -14,3 +14,4 @@ keras
 tqdm
 requests
 bayesian-optimization
+yapf

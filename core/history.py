@@ -3,11 +3,11 @@ import json
 import sys
 import traceback
 from collections import defaultdict
+import warnings
 
 import pandas as pd
 
 import core
-
 
 DEFAULT_HISTORY_DIR = os.path.join(core.BASE_DIR, '.history')
 
@@ -90,7 +90,6 @@ def get_keys(directory=None):
         keys.sort()
 
     return dict(d)
-    
 
 
 def reset_history(model_name, key, directory=None):

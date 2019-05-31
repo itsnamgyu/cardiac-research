@@ -11,6 +11,7 @@ from keras.layers import Dense, Dropout
 import keras_apps as ka
 import shutil
 from typing import List
+import datetime
 
 import core
 import cr_interface as cri
@@ -305,16 +306,46 @@ class FineModel(metaclass=abc.ABCMeta):
 
         return train_gens, val_gens
 
-    def generate_test_result(self, test_collection:cri.CrCollection, verbose=1):
+    def generate_test_result(self,
+                             test_collection: cri.CrCollection,
+                             verbose=1,
+                             save_to_key=None,
+                             verbose_short_name=None):
+        """
+        Genereates a cra.Result based on predictions against test_collection.
+
+        When save_to_key is not None, the results are saved to
+            <model_name>/<save_to_key>/cr_result.json
+        
+        You can explore these results via cra.select_result
+        """
         model = self.get_model()
         test_gen = self.get_test_generator(test_collection)
         test_gen.reset()
         if (verbose):
-            print('Generating predictions for {}'.format(self.get_name()).center(80, '-'))
-        predictions = model.predict_generator(test_gen, steps=len(test_gen), workers=4, verbose=1)
+            print('Generating predictions for {}'.format(
+                self.get_name()).center(80, '-'))
+        predictions = model.predict_generator(test_gen,
+                                              steps=len(test_gen),
+                                              workers=4,
+                                              verbose=1)
         filenames = test_gen.filenames
         cr_codes = cri.extract_cr_codes(filenames)
-        result = cra.Result.from_predictions(predictions, cr_codes, dict(), 'short_name')
+
+        if verbose_short_name is None:
+            short_name = self.get_name()
+            dt = datetime.datetime.now()
+            short_name += ' analyzed on {}'.format(
+                dt.strftime("%Y-%m-%d %H:%M:%S"))
+        else:
+            short_name = verbose_short_name
+
+        result = cra.Result.from_predictions(predictions, cr_codes, dict(),
+                                             short_name)
+
+        if save_to_key:
+            result.to_json([self.get_name(), save_to_key])
+
         return result
 
     @classmethod

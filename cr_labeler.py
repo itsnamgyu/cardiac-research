@@ -6,12 +6,12 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import cr_interface as cri
+import cr_analysis as cra
 import scipy.misc
 import scipy.ndimage
 from sklearn import linear_model
 
-
-LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
+LABELS = [None, 'oap', 'in', 'obs']
 
 DISPLAY_NAME = {
     'oap': 'OUT_AP',
@@ -35,8 +35,6 @@ current_label = None
 fig = plt.figure()
 index = 0
 last_index = None
-
-
 '''
 Global Variables
 
@@ -46,6 +44,7 @@ Global Variables
 ]
 
 '''
+
 
 def get_window_title():
     global metadata, results, predictions, percentages, image_collection, index, current_label
@@ -57,8 +56,8 @@ def get_window_title():
         label = 'NO_LABEL'
 
     title = 'DB#{:02d} PATIENT{:08d} ({:03d}/{:03d}) [ {:^10s} ]'
-    title = title.format(patient[0][0], patient[0]
-                         [1], index + 1, len(image_collection), label)
+    title = title.format(patient[0][0], patient[0][1], index + 1,
+                         len(image_collection), label)
 
     return title
 
@@ -67,12 +66,11 @@ def update_plot():
     global metadata, results, predictions, percentages, image_collection
     global index, last_index, current_label, show_chart, all_bars, all_texts
 
-
     def regress(values):
         # values: [ 0, 2, 1, 3 ]
         # output: [ 0, 1, 2, 3 ]
         regr = linear_model.LinearRegression()
-        regr.fit(np.arange(len(values)).reshape(-1 ,1), values)
+        regr.fit(np.arange(len(values)).reshape(-1, 1), values)
         return regr.predict(np.arange(len(values)).reshape(-1, 1))
 
     patient = image_collection[index]
@@ -117,9 +115,13 @@ def update_plot():
                                    color=wrong_color)
                 all_bars.extend(bars)
                 for j, p in enumerate(patient_percentages):
-                    text = axes[i].text(x_locations[j], p * 8 + 0.5, '%d' % (p * 100),
-                                        color=(1, 1, 0), horizontalalignment='center',
-                                        bbox=dict(facecolor='black', alpha=0.5))
+                    text = axes[i].text(x_locations[j],
+                                        p * 8 + 0.5,
+                                        '%d' % (p * 100),
+                                        color=(1, 1, 0),
+                                        horizontalalignment='center',
+                                        bbox=dict(facecolor='black',
+                                                  alpha=0.5))
                     text.set_fontsize(8)
                     all_texts.append(text)
 
@@ -209,7 +211,7 @@ def on_key_press(event):
 
     try:
         current_label = LABELS[int(event.key)]
-    except(ValueError, KeyError, IndexError):
+    except (ValueError, KeyError, IndexError):
         pass
 
     update()
@@ -243,12 +245,14 @@ def main():
     description = \
         '''Start in prediction mode. Note that in predicitons mode,
     you can press the spacebar to use the predictions to label the images'''
-    parser.add_argument('-P', '--predictions', help=description,
+    parser.add_argument('-P',
+                        '--predictions',
+                        help=description,
                         action='store_true')
     args = parser.parse_args()
 
     if args.predictions:
-        result_dict = cri.prompt_and_load_result()
+        result_dict = cra.select_result().data
         p = result_dict['predictions']
 
         # hotfix
@@ -283,8 +287,12 @@ def main():
     fig.canvas.mpl_connect('key_press_event', on_key_press)
     fig.canvas.mpl_connect('button_press_event', on_button_press)
 
-    plt.subplots_adjust(top=0.95, bottom=0.05, right=1, left=0,
-                        hspace=0.2, wspace=0)
+    plt.subplots_adjust(top=0.95,
+                        bottom=0.05,
+                        right=1,
+                        left=0,
+                        hspace=0.2,
+                        wspace=0)
     update()
     plt.show()
 

@@ -22,8 +22,10 @@ DATASET_DIR = os.path.join(PROJECT_DIR, 'data/datasets')
 DATA_DIR = os.path.join(PROJECT_DIR, 'data/data')  # legacy
 METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 IMAGES_DIR = os.path.join(PROJECT_DIR, 'images')
-RESULTS_DIR = os.path.join(PROJECT_DIR, 'results')
 SPEC_CSV = os.path.join(PROJECT_DIR, 'analysis/images_spec.csv')
+
+OUTPUT_DIR = os.path.join(PROJECT_DIR, 'output')
+RESULTS_DIR = os.path.join(OUTPUT_DIR, 'results')
 
 DATA_DIRS = {}
 for split in ['test', 'validation', 'train']:

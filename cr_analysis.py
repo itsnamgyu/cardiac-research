@@ -337,3 +337,8 @@ def evaluate_model(model: keras.models.Model,
     result = Result.from_predictions(predictions, cr_codes, params,
                                      'AUTO_EVAL', '')
     print(result.describe())
+
+
+if __name__ == '__main__':
+    result = select_result()
+    print(result.describe())

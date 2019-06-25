@@ -37,9 +37,15 @@ def parse_key(key):
     return params
 
 
-def generate_test_result(fm: FineModel, key, save=True, verbose=1):
+def generate_test_result(fm: FineModel,
+                         key,
+                         save=True,
+                         verbose=1,
+                         load_weights=True):
     """
     Generates test results using all test images from db_index=1 (CAP TEST)
+
+    If the weights are already loaded, set load_weight=False
     """
     params = parse_key(key)
     description = ''
@@ -88,19 +94,13 @@ def main():
     print('Generating results for existing weights (model={}) (exp={}) ...'.
           format(MODEL_KEY, EXP_LIST))
 
-    fm = FineModel.get_dict()['mobileneta25']()
+    fm = FineModel.get_dict()[MODEL_KEY]()
     fm.get_weight_keys()
 
     for key in fm.get_weight_keys():
         params = parse_key(key)
-        if params['exp'] in [1, 2]:
-            fm.load_weights(key)
-            fm.compile_model()
-            test = cri.CrCollection.load().filter_by(
-                dataset_index=1).tri_label().labeled()
-            result = fm.generate_test_result(test, save_to_key=key)
-            print(key.center(80, '-'))
-            print(result.describe())
+        if params['exp'] in EXP_LIST:
+            generate_test_result(fm, key)
 
 
 if __name__ == '__main__':

@@ -94,12 +94,12 @@ def main():
     print('Generating results for existing weights (model={}) (exp={}) ...'.
           format(MODEL_KEY, EXP_LIST))
 
-    fm = FineModel.get_dict()['mobileneta25']()
+    fm = FineModel.get_dict()[MODEL_KEY]()
     fm.get_weight_keys()
 
     for key in fm.get_weight_keys():
         params = parse_key(key)
-        if params['exp'] in [1, 2]:
+        if params['exp'] in EXP_LIST:
             fm.load_weights(key)
             fm.compile_model()
             test = cri.CrCollection.load().filter_by(

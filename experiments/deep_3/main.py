@@ -1,7 +1,12 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# In[ ]:
+import matplotlib as mpl
+mpl.use(
+    'Agg'
+)  # don't display mpl windows (will cause error in non-gui environment)
+
+import main
 
 from collections import defaultdict
 import math
@@ -18,171 +23,40 @@ from core.fine_model import FineModel
 import cr_interface as cri
 import keras_utils as ku
 
-# In[ ]:
+import results
+import analysis
 
 BATCH_SIZE = 32
+
+# number of folds
 K = 5
+# save intermediate weights
+SAVE_ALL_WEIGHTS = False
+# interval for saving intermediate weights (in epochs)
+T = 10
+# multiplier for out_of_myocardial (OAP, OBS) slices
 BALANCE = 5
-LEARNING_RATES = [0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001]
-EPOCHS = 3
-SAMPLE = True  # sample 10% of examples for testing (sanity check stage)
-
-# In[ ]:
-
-TEMP_IMAGE_DIR = 'temp_image'
-
-
-def get_train_val_generators(fm: FineModel, folds):
-    """
-    Get train/validation ImageDataGenerators for the given model for each fold.
-    Note that subsequent calls to this method will invalidate the generators
-    returned from previous calls.
-    
-    Train/validation images are BOTH BALANCED AND AUGMENTED
-    
-    :param fm: 
-    The base model for which you want to use the generators
-    
-    :param folds: 
-    
-    :return: 
-    tuple(train_gens, val_gens)
-    
-    train_gens: list of ImageDataGenerators for the train data in each fold
-    val_gens: list of ImageDataGenerators for the validation data in each fold
-    """
-    print('Loading Train/Val ImageDataGenerators'.center(80, '-'))
-
-    aug_gen = fm.get_image_data_generator(augment=True)
-
-    val_gens = []
-    train_gens = []
-
-    for i in range(len(folds)):
-        val_dir = os.path.join(TEMP_IMAGE_DIR, 'val{}'.format(i))
-        train_dir = os.path.join(TEMP_IMAGE_DIR, 'train{}'.format(i))
-
-        # refresh directories
-        os.makedirs(val_dir, exist_ok=True)
-        os.makedirs(train_dir, exist_ok=True)
-        shutil.rmtree(val_dir)
-        shutil.rmtree(train_dir)
-        os.makedirs(val_dir, exist_ok=True)
-        os.makedirs(train_dir, exist_ok=True)
-
-        fold: cri.CrCollection
-        for j, fold in enumerate(folds):
-            if i == j:
-                # export validation data for fold i
-                fold.export_by_label(val_dir, balancing=5)
-            else:
-                # export train data for fold i
-                fold.export_by_label(train_dir, balancing=5)
-
-        train_gens.append(
-            aug_gen.flow_from_directory(
-                train_dir,
-                target_size=fm.get_output_shape(),
-                batch_size=BATCH_SIZE,
-                class_mode='categorical',
-            ))
-        val_gens.append(
-            aug_gen.flow_from_directory(
-                val_dir,
-                target_size=fm.get_output_shape(),
-                batch_size=BATCH_SIZE,
-                class_mode='categorical',
-            ))
-
-        print('Fold {}: {:<4} train images / {:<4} validation images'.format(
-            i + 1,
-            train_gens[-1].n,
-            val_gens[-1].n,
-        ))
-
-    test_dir = os.path.join(TEMP_IMAGE_DIR, 'test')
-    for fold in folds:
-        # export test data for all
-        fold.export_by_label(test_dir, balancing=1)
-
-    return train_gens, val_gens
-
-
-def get_test_generator(fm: FineModel, test_collection: cri.CrCollection):
-    """
-    Get ImageDataGenerator for the test data, compatible with the given model.
-    Note that subsequent calls to this method will invalidate the generator
-    returned from previous calls.
-    
-    Test images are NOT AUGMENTED NOR BALANCED
-    
-    :param fm: 
-    The base model for which you want to use the generators
-    
-    :param test_collection:
-    CrCollection containing test data
-    
-    :return: 
-    ImageDataGenerator
-    """
-    print('Loading Test ImageDataGenerator'.center(80, '-'))
-
-    pure_gen = fm.get_image_data_generator(augment=False)
-    test_dir = os.path.join(TEMP_IMAGE_DIR, 'test')
-
-    # refresh directories
-    os.makedirs(test_dir, exist_ok=True)
-    shutil.rmtree(test_dir)
-    os.makedirs(test_dir, exist_ok=True)
-    test_collection.export_by_label(test_dir, balancing=1)
-
-    print('[debug] test image count: {}'.format(test_collection.df.shape[0]))
-
-    test_gen = pure_gen.flow_from_directory(
-        test_dir,
-        target_size=fm.get_output_shape(),
-        batch_size=test_collection.df.shape[0],
-        class_mode='categorical',
-        shuffle=False,
-    )
-    print('Test images: {}'.format(test_gen.n))
-
-    return test_gen
-
-
-# In[ ]:
-
-
-def optimize_learning_rate(fm: FineModel, depth_index, train_gens, val_gens,
-                           test_gen):
-    """
-    Train the fine model (frozen at some given depth) for all five folds of data,
-    and choose the optimal learning rate BASED ON THE FINAL VALIDATION ACCURACY.
-    Consider learning rates defined in the global variable LEARNING_RATES
-    
-    
-    Save model with the following KEYS: [load weights via fm.load_weights(KEY)]
-    EXP01_D01
-    Fully trained model for the optimal learning rate
-    
-    
-    :param fm:
-    FineModel to train, i.e., the base network to train on
-    
-    :param depth_index:
-    The INDEX of the "freeze depth" for the given FineModel
-    
-    :param train_gens
-    List of train ImageDataGenerators for each fold
-    
-    :param val_gens  
-    List of validation ImageDataGenerators for each fold
-    
-    :param val_gens  
-    Test ImageDataGenerator for each fold
-    
-    :return: None
-    """
+LEARNING_RATES = [0.0001, 0.00001]
+EPOCHS = 100
+# experiment index to track saved model weights, training history etc.
+# iterate this index for each run (make sure to keep track of this index)
+EXP = 6
+# whether to sample 10% of all slices (for sanity checking purposes)
+SAMPLE = True
+# seed for k-fold split
+K_SPLIT_SEED = 1
+# models to train
+MODEL_KEYS = [
+    #'xception',
+    'mobileneta25',
+    #'mobilenetv2a35',
+    #'vgg16',
+    #'resnet50v2',
+    #'inception_v3',
+    #'inception_resnet_v2',
+    #'densenet121',
+    #'nasnet_mobile',
+]
 
 
 def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
@@ -222,13 +96,11 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
 
     :param val_gens
     Test ImageDataGenerator for each fold
-
-    :return:
-    tuple(val_loss, val_acc): AVERAGE validation loss and accuracy at FINAL EPOCH
     """
-    _depth_key = 'EXP01_D{:02}'
-    _fold_key = 'EXP01_D{:02}_L{:02}_F{:02}'
-    _epoch_key = 'EXP01_D{:02}_L{:02}_F{:02}_E{:03}'
+    _exp_key = 'EXP{:02}'.format(EXP)
+    _depth_key = _exp_key + '_D{:02}'
+    _fold_key = _depth_key + '_L{:02}_F{:02}'
+    _epoch_key = _fold_key + '_E{:03}'
 
     lr = LEARNING_RATES[lr_index]
     loss_list = []
@@ -236,6 +108,8 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
 
     # train the model K times, one for each fold
     for i in range(K):
+        fold_key = _fold_key.format(depth_index, lr_index, i)
+
         # load model at previous state
         previous_depth_index = depth_index - 1
         if previous_depth_index < 0:
@@ -250,12 +124,12 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
         print('[debug] size: {}'.format(train_gens[i].n))
         print('[debug] steps: {}'.format(len(train_gens[i])))
 
-        # train 5 epochs at a time
-        T = 5  # model save interval in epochs
+        # train T epochs at a time
         start_epoch = 0
+        save_interval = T
         while start_epoch < epochs:
             print('[debug] epoch {}'.format(start_epoch))
-            target_epoch = start_epoch + T
+            target_epoch = start_epoch + save_interval
             if target_epoch > epochs:
                 target_epoch = epochs
             result = model.fit_generator(
@@ -263,8 +137,8 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
                 validation_data=val_gens[i],
                 steps_per_epoch=len(train_gens[i]),
                 validation_steps=len(val_gens[i]),
-                #workers=4,
-                #use_multiprocessing=True,
+                workers=16,
+                use_multiprocessing=True,
                 shuffle=True,
                 epochs=target_epoch,
                 initial_epoch=start_epoch,
@@ -272,68 +146,38 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
             start_epoch = target_epoch
 
             # update training history
-            ch.append_history(result.history, fm.get_name(),
-                              _fold_key.format(depth_index, lr_index, i))
-            # save intermediate weights
-            fm.save_weights(
-                _epoch_key.format(
-                    depth_index,
-                    lr_index,
-                    i,
-                    target_epoch,
-                ))
+            ch.append_history(result.history, fm.get_name(), fold_key)
+
+            if SAVE_ALL_WEIGHTS:
+                # save intermediate weights
+                fm.save_weights(
+                    _epoch_key.format(
+                        depth_index,
+                        lr_index,
+                        i,
+                        target_epoch,
+                    ))
 
         # save final weights
-        fm.save_weights(_fold_key.format(depth_index, lr_index, i))
+        fm.save_weights(fold_key)
 
-        print('[debug] test size: {}'.format(test_gen.n))
-        print('[debug] test steps: {}'.format(len(test_gen)))
+        # generate test results
+        print('[debug] generating test results...')
+        results.generate_test_result(fm, fold_key, load_weights=False)
 
-        loss, acc = model.evaluate_generator(
-            test_gen,
-            steps=len(test_gen),
-            #workers=4,
-            #use_multiprogressing=True,
-        )
-
-        print('[debug] test_loss={}, test_acc={}'.format(loss, acc))
-
-        loss_list.append(loss)
-        acc_list.append(acc)
-
-    total_loss = 0
-    for loss in loss_list:
-        total_loss += loss
-    avg_loss = total_loss / K
-
-    total_acc = 0
-    for acc in acc_list:
-        total_acc += acc
-    avg_acc = total_acc / K
-
-    print('[debug] avg_test_loss={}, avg_test_acc={}'.format(
-        avg_loss, avg_acc))
-
-    return avg_loss, avg_acc
+    print('[debug] generating analysis of training process')
+    for metric in analysis.metric_names.keys():
+        analysis.analyze_lr(fm,
+                            fm.get_name(),
+                            depth_index,
+                            lr_index,
+                            lr,
+                            metric,
+                            exp=EXP)
 
 
-# ## Load Data
-
-# ### Select train/test data and print statistics
-
-# In[ ]:
-
-
-def main():
-    train = cri.CrCollection.load().filter_by(
-        dataset_index=0).tri_label().labeled()
-    test = cri.CrCollection.load().filter_by(
-        dataset_index=1).tri_label().labeled()
-
-    if SAMPLE:
-        train = train.sample(frac=0.1)
-        test = test.sample(frac=0.1)
-
+def print_all_stats(train, test, folds):
+    # Print stats for each train/test set
     def print_stats(collection):
         df = collection.df
         print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0],
@@ -353,8 +197,7 @@ def main():
     print('to solve the class imbalance issue')
     print()
 
-    folds = train.k_split(K)
-
+    # Print number of images by fold by label (training data)
     stats = dict()
     for i, fold in enumerate(folds):
         counts = fold.df.label.value_counts()
@@ -364,24 +207,63 @@ def main():
 
     print('5-Fold Training Set Data'.center(80, '-'))
     print(stats.to_string(col_space=8))
+    print()
 
-    # In[ ]:
+    # Columnwise-print or cr_codes (training data)
+    cr_codes_by_fold = list(sorted(fold.df.pid.unique()) for fold in folds)
+    max_len = 0
+    for codes in cr_codes_by_fold:
+        if max_len < len(codes):
+            max_len = len(codes)
+    for i, _ in enumerate(folds):
+        print('Fold {}'.format(i + 1).ljust(16), end='')
+    print()
+    print('-' * 80)
+    for i in range(max_len):
+        for codes in cr_codes_by_fold:
+            if i < len(codes):
+                print('{:<16d}'.format(codes[i]), end='')
+            else:
+                print('{:<16s}'.format(''), end='')
+        print()
+    print()
 
+
+def run_on_model(model_key, train_folds, test):
+    print(' MODEL: {} '.format(model_key).center(100, '#'))
+    keras.backend.clear_session()
     models = FineModel.get_dict()
-    models.keys()
-    #dict_keys(['xception', 'mobileneta25', 'mobilenetv2a35', 'vgg16', 'resnet50v2',
-    #'inception_v3','inception_resnet_v2', 'densenet121', 'nasnet_mobile'])
-    fm = models['mobileneta25']()
-
-    train_gens, val_gens = get_train_val_generators(fm, folds)
-    test_gen = get_test_generator(fm, test)
-
-    # In[ ]:
-
+    fm = models[model_key]()
+    train_gens, val_gens = fm.get_train_val_generators(train_folds)
+    test_gen = fm.get_test_generator(test)
     for i, lr in enumerate(LEARNING_RATES):
-        print('Starting training @lr={}'.format(lr).center(100, '-'))
+        print('Starting training {} lr={}'.format(fm.get_name(),
+                                                  lr).center(100, '-'))
         train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
 
 
+def main():
+    train = cri.CrCollection.load().filter_by(
+        dataset_index=0).tri_label().labeled()
+    test = cri.CrCollection.load().filter_by(
+        dataset_index=1).tri_label().labeled()
+    if SAMPLE:
+        train = train.sample(frac=0.1)
+        test = test.sample(frac=0.1)
+    folds = train.k_split(K, seed=K_SPLIT_SEED)
+
+    print_all_stats(train, test, folds)
+
+    for key in MODEL_KEYS:
+        run_on_model(key, folds, test)
+
+
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except Exception as e:
+        error = traceback.format_exc()
+        error += '\n'
+        error += str(e)
+        print(error)
+        notify(error)

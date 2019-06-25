@@ -137,6 +137,7 @@ class Result():
         results['params'] = params
         results['short_name'] = short_name
         results['description'] = description
+        results['schema_version'] = RESULTS_SCHEMA_VERSION
 
         result = cls(results)
         result.populate_metrics()

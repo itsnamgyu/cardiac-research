@@ -100,13 +100,7 @@ def main():
     for key in fm.get_weight_keys():
         params = parse_key(key)
         if params['exp'] in EXP_LIST:
-            fm.load_weights(key)
-            fm.compile_model()
-            test = cri.CrCollection.load().filter_by(
-                dataset_index=1).tri_label().labeled()
-            result = fm.generate_test_result(test, save_to_key=key)
-            print(key.center(80, '-'))
-            print(result.describe())
+            generate_test_result(fm, key)
 
 
 if __name__ == '__main__':

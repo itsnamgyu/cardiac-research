@@ -323,64 +323,65 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
 
 # In[ ]:
 
-train = cri.CrCollection.load().filter_by(
-    dataset_index=0).tri_label().labeled()
-test = cri.CrCollection.load().filter_by(dataset_index=1).tri_label().labeled()
 
-if SAMPLE:
-    train = train.sample(frac=0.1)
-    test = test.sample(frac=0.1)
+def main():
+    train = cri.CrCollection.load().filter_by(
+        dataset_index=0).tri_label().labeled()
+    test = cri.CrCollection.load().filter_by(
+        dataset_index=1).tri_label().labeled()
+
+    if SAMPLE:
+        train = train.sample(frac=0.1)
+        test = test.sample(frac=0.1)
+
+    def print_stats(collection):
+        df = collection.df
+        print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0],
+                                                     df.shape[0]))
+        print(df.label.value_counts().to_string())
+
+    print('Training/Validation Set'.center(80, '-'))
+    print_stats(train)
+
+    print('Test Set'.center(80, '-'))
+    print_stats(test)
+
+    print()
+    print(
+        'Note that OAP, OBS images in the training/validation set will be duplicated 5 times'
+    )
+    print('to solve the class imbalance issue')
+    print()
+
+    folds = train.k_split(K)
+
+    stats = dict()
+    for i, fold in enumerate(folds):
+        counts = fold.df.label.value_counts()
+        counts.loc['total'] = fold.df.shape[0]
+        stats[i + 1] = counts
+    stats = pd.DataFrame(stats)
+
+    print('5-Fold Training Set Data'.center(80, '-'))
+    print(stats.to_string(col_space=8))
+
+    # In[ ]:
+
+    models = FineModel.get_dict()
+    models.keys()
+    #dict_keys(['xception', 'mobileneta25', 'mobilenetv2a35', 'vgg16', 'resnet50v2',
+    #'inception_v3','inception_resnet_v2', 'densenet121', 'nasnet_mobile'])
+    fm = models['mobileneta25']()
+
+    train_gens, val_gens = get_train_val_generators(fm, folds)
+    test_gen = get_test_generator(fm, test)
+
+    # In[ ]:
+
+    for i, lr in enumerate(LEARNING_RATES):
+        print('Starting training @lr={}'.format(lr).center(100, '-'))
+        train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
 
 
-def print_stats(collection):
-    df = collection.df
-    print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0],
-                                                 df.shape[0]))
-    print(df.label.value_counts().to_string())
-
-
-print('Training/Validation Set'.center(80, '-'))
-print_stats(train)
-
-print('Test Set'.center(80, '-'))
-print_stats(test)
-
-print()
-print(
-    'Note that OAP, OBS images in the training/validation set will be duplicated 5 times'
-)
-print('to solve the class imbalance issue')
-print()
-
-# ### Print statistics on 5-fold split data
-
-# In[ ]:
-
-folds = train.k_split(K)
-
-stats = dict()
-for i, fold in enumerate(folds):
-    counts = fold.df.label.value_counts()
-    counts.loc['total'] = fold.df.shape[0]
-    stats[i + 1] = counts
-stats = pd.DataFrame(stats)
-
-print('5-Fold Training Set Data'.center(80, '-'))
-print(stats.to_string(col_space=8))
-
-# In[ ]:
-
-models = FineModel.get_dict()
-models.keys()
-#dict_keys(['xception', 'mobileneta25', 'mobilenetv2a35', 'vgg16', 'resnet50v2',
-#'inception_v3','inception_resnet_v2', 'densenet121', 'nasnet_mobile'])
-fm = models['mobileneta25']()
-
-train_gens, val_gens = get_train_val_generators(fm, folds)
-test_gen = get_test_generator(fm, test)
-
-# In[ ]:
-
-for i, lr in enumerate(LEARNING_RATES):
-    print('Starting training @lr={}'.format(lr).center(100, '-'))
-    train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
+if __name__ == '__main__':
+    main()

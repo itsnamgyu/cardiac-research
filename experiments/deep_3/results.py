@@ -37,9 +37,15 @@ def parse_key(key):
     return params
 
 
-def generate_test_result(fm: FineModel, key, save=True, verbose=1):
+def generate_test_result(fm: FineModel,
+                         key,
+                         save=True,
+                         verbose=1,
+                         load_weights=True):
     """
     Generates test results using all test images from db_index=1 (CAP TEST)
+
+    If the weights are already loaded, set load_weight=False
     """
     params = parse_key(key)
     description = ''

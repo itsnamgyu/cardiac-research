@@ -1,19 +1,26 @@
-import json
-import os
-import warnings
 import errno
 import glob
+import json
+import os
 import traceback
+import warnings
+import argparse
 
+import keras
 import numpy as np
 import pandas as pd
-import keras
+from sklearn.metrics import f1_score, roc_auc_score
 
 import cr_interface as cri
+from core import BASE_DIR
 
 metadata = cri.load_metadata()
 
 DEFAULT_CLASSES = ['in', 'oap', 'obs']
+RESULTS_SCHEMA_VERSION = '2.0'
+
+# params that should be passed manually while calling from_predictions
+CORE_PARAMS = ['epochs', 'lr']
 
 results = None
 currently_loaded_results_dir = None
@@ -51,7 +58,21 @@ class Result():
         with open(path) as f:
             data = json.load(f)
 
-        return cls(data)
+        result = cls(data)
+
+        # update legacy result files
+        if 'schema_version' not in result.data:
+            result.data['schema_version'] = '1.0'
+        if result.data['schema_version'] != RESULTS_SCHEMA_VERSION:
+            result.data['schema_version'] = RESULTS_SCHEMA_VERSION
+            result.populate_metrics()
+            result.to_json(key, basename, full_path, overwrite=True)
+
+        return result
+
+    @staticmethod
+    def select():
+        return select_result()
 
     @classmethod
     def from_predictions(cls,
@@ -83,8 +104,6 @@ class Result():
         Result instance
         '''
         global metadata
-
-        CORE_PARAMS = ['epochs', 'lr']
 
         if not set(CORE_PARAMS) <= set(params.keys()):
             warnings.warn("params doesn't contain {}".format(CORE_PARAMS))
@@ -119,7 +138,124 @@ class Result():
         results['short_name'] = short_name
         results['description'] = description
 
-        return cls(results)
+        result = cls(results)
+        result.populate_metrics()
+
+        return result
+
+    def populate_metrics(self):
+        metrics = dict()
+        if 'metrics' not in self.data:
+            self.data['metrics'] = metrics
+
+        metrics['accuracy'] = self._get_accuracy()
+        metrics['soft_accuracy'] = self._get_soft_accuracy()
+        metrics.update(self.get_auc_f1())
+
+    def to_json(self,
+                key,
+                basename='cr_result.json',
+                full_path=None,
+                overwrite=False) -> None:
+        dirname = self._key_to_dir(key)
+
+        if full_path:
+            path = os.path.join(dirname, basename)
+        else:
+            path = os.path.join(cri.RESULTS_DIR, dirname)
+            path = os.path.join(path, basename)
+
+        try:
+            os.makedirs(os.path.dirname(path))
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                if not overwrite:
+                    warnings.warn('results directory already exists')
+                    print(e)
+            else:
+                raise e
+
+        with open(path, 'w') as f:
+            json.dump(self.data, f)
+
+    def get_accuracy(self):
+        return self.data['metrics']['accuracy']
+
+    def get_soft_accuracy(self):
+        return self.data['metrics']['soft_accuracy']
+
+    def get_confusion_matrix(self):
+        return pd.crosstab(self.df['truth'], self.df['prediction'])
+
+    def get_precision_and_recall(self):
+        pd.crosstab(self.df['truth'], self.df['prediction'])
+
+        precision = {}
+        recall = {}
+
+        tp = self.df[['truth', 'prediction']]
+        for truth in set(self.df['truth']):
+            true_positives = tp[lambda e: (e.truth == truth) &
+                                (e.prediction == truth)]
+            truths = tp[lambda e: e.truth == truth]
+            positives = tp[lambda e: e.prediction == truth]
+
+            try:
+                precision[truth] = len(true_positives) / len(positives)
+            except ZeroDivisionError:
+                precision[truth] = float('nan')
+            try:
+                recall[truth] = len(true_positives) / len(truths)
+            except ZeroDivisionError:
+                recall[truth] = float('nan')
+
+        return pd.DataFrame(dict(precision=precision, recall=recall))
+
+    def get_auc_f1_by_class(self):
+        keys = DEFAULT_CLASSES
+
+        p = self.data['predictions'].values()
+        truths = np.array(list(map(self._extract_truth_array, p)))
+        percentages = np.array(list(map(self._extract_percentage_array, p)))
+        predictions = np.array(list(map(self._extract_prediction_array, p)))
+
+        auc = roc_auc_score(truths, percentages, average=None)
+        auc = dict(zip(keys, auc))
+        f1 = f1_score(truths, predictions, average=None)
+        f1 = dict(zip(keys, f1))
+
+        return pd.DataFrame(dict(auc=auc, f1=f1))
+
+    def get_auc_f1(self):
+        p = self.data['predictions'].values()
+        truths = np.array(list(map(self._extract_truth_array, p)))
+        percentages = np.array(list(map(self._extract_percentage_array, p)))
+        predictions = np.array(list(map(self._extract_prediction_array, p)))
+
+        auc_micro = roc_auc_score(truths, percentages, average='micro')
+        auc_macro = roc_auc_score(truths, percentages, average='macro')
+        f1_micro = f1_score(truths, predictions, average='micro')
+        f1_macro = f1_score(truths, predictions, average='macro')
+
+        return dict(auc_micro=auc_micro,
+                    auc_macro=auc_macro,
+                    f1_micro=f1_micro,
+                    f1_macro=f1_macro)
+
+    def describe(self) -> str:
+        '''
+        Convinience function that prints core metrics
+        '''
+        string = ''
+        string += '{:<18s}: {}\n'.format('Model', self.data['short_name'])
+        for key, val in self.data['metrics'].items():
+            string += '{:<18s}: {:.6f}\n'.format(key, float(val))
+        string += '\n'
+        string += str(self.get_confusion_matrix()) + '\n\n'
+        string += str(self.get_precision_and_recall()) + '\n\n'
+        string += str(self.get_auc_f1_by_class()) + '\n'
+
+        return string
 
     @classmethod
     def _generate_dataframe(cls, result: dict, tri_label=True):
@@ -147,28 +283,34 @@ class Result():
 
         return pd.DataFrame(result_dict)
 
-    def to_json(self, key, basename='cr_result.json', full_path=None) -> None:
-        dirname = self._key_to_dir(key)
-
-        if full_path:
-            path = os.path.join(dirname, basename)
-        else:
-            path = os.path.join(cri.RESULTS_DIR, dirname)
-            path = os.path.join(path, basename)
-
-        try:
-            os.makedirs(os.path.dirname(path))
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                warnings.warn('results directory already exists')
-                print(e)
+    @staticmethod
+    def _extract_truth_array(prediction, keys=DEFAULT_CLASSES):
+        array = []
+        for cls in keys:
+            if (cls == prediction['truth']):
+                array.append(1.0)
             else:
-                raise
+                array.append(0.0)
+        return array
 
-        with open(path, 'w') as f:
-            json.dump(self.data, f)
+    @staticmethod
+    def _extract_percentage_array(prediction, keys=DEFAULT_CLASSES):
+        array = []
+        for cls in keys:
+            array.append(float(prediction['percentages'][cls]))
+        return array
 
-    def get_accuracy(self) -> float:
+    @staticmethod
+    def _extract_prediction_array(prediction, keys=DEFAULT_CLASSES):
+        array = []
+        for cls in keys:
+            if (cls == prediction['prediction']):
+                array.append(1.0)
+            else:
+                array.append(0.0)
+        return array
+
+    def _get_accuracy(self) -> float:
         tp = self.df[['truth', 'prediction']]
         correct = tp[lambda e: (e.truth == e.prediction)]
         try:
@@ -180,7 +322,7 @@ class Result():
 
         return accuracy
 
-    def get_soft_accuracy(self) -> float:
+    def _get_soft_accuracy(self) -> float:
         '''
         The standards for labeling cardiac short-axis MRI images leave
         room for some ambiguity. One practitioner may determine a given slice
@@ -232,47 +374,6 @@ class Result():
 
         return soft_accuracy
 
-    def get_confusion_matrix(self):
-        return pd.crosstab(self.df['truth'], self.df['prediction'])
-
-    def get_precision_and_recall(self):
-        pd.crosstab(self.df['truth'], self.df['prediction'])
-
-        precision = {}
-        recall = {}
-
-        tp = self.df[['truth', 'prediction']]
-        for truth in set(self.df['truth']):
-            true_positives = tp[lambda e: (e.truth == truth) &
-                                (e.prediction == truth)]
-            truths = tp[lambda e: e.truth == truth]
-            positives = tp[lambda e: e.prediction == truth]
-
-            try:
-                precision[truth] = len(true_positives) / len(positives)
-            except ZeroDivisionError:
-                precision[truth] = float('nan')
-            try:
-                recall[truth] = len(true_positives) / len(truths)
-            except ZeroDivisionError:
-                recall[truth] = float('nan')
-
-        return pd.DataFrame(dict(precision=precision, recall=recall))
-
-    def describe(self) -> str:
-        '''
-        Convinience function that prints core metrics
-        '''
-        string = ''
-        string += '{:<18s}: {}\n'.format('Model', self.data['short_name'])
-        string += '{:<18s}: {}\n'.format('Accuracy', self.get_accuracy())
-        string += '{:<18s}: {}\n\n'.format('Soft Accuracy',
-                                           self.get_soft_accuracy())
-        string += str(self.get_confusion_matrix()) + '\n\n'
-        string += str(self.get_precision_and_recall()) + '\n\n'
-
-        return string
-
 
 def get_results(results_dir=cri.RESULTS_DIR, force_reload=False):
     global results
@@ -301,6 +402,48 @@ def get_results(results_dir=cri.RESULTS_DIR, force_reload=False):
     return results
 
 
+def export_csv(path='results.csv',
+               full_path=False,
+               results_dir=cri.RESULTS_DIR):
+    if full_path:
+        export_path = path
+    else:
+        export_path = os.path.join(cri.PROJECT_DIR, path)
+
+    print('Exporting csv to {}'.format(export_path))
+
+    metrics = [
+        'accuracy',
+        'soft_accuracy',
+        'f1_macro',
+        'auc_macro',
+        'f1_micro',
+        'auc_micro',
+    ]
+
+    results = get_results(results_dir, force_reload=True)
+    result_pairs = results.items()
+    result_pairs = sorted(result_pairs, key=lambda t: t[0])
+
+    with open(export_path, 'w') as f:
+        f.write('key,')
+        f.write(','.join(metrics))
+        f.write('\n')
+        mod5 = 0
+        for key, result in result_pairs:
+            f.write(key + ',')
+            metric_values = [
+                str(result.data['metrics'][metric]) for metric in metrics
+            ]
+            f.write(','.join(metric_values))
+            f.write('\n')
+
+            mod5 += 1
+            if mod5 == 5:
+                f.write('\n')
+            mod5 = mod5 % 5
+
+
 def select_result(force_reload=False):
     results = get_results(results_dir=cri.RESULTS_DIR,
                           force_reload=force_reload)
@@ -309,10 +452,14 @@ def select_result(force_reload=False):
     result_pairs = sorted(result_pairs, key=lambda t: t[0])
 
     print(' Results List '.center(80, '-'))
-    fmt = '{:3d}. {:50s}ACC={:.6f}'
+    print('  #. {:40s}{:10s}{:10s}'.format('KEY', 'ACC', 'F1_MACRO'))
+    print('-' * 80)
+    fmt = '{:3d}. {:40s}{:<10.4f}{:<10.4f}'
     for i, result_pair in enumerate(result_pairs):
         key, result = result_pair
-        print(fmt.format(i, key, float(result.data['test_accuracy'])))
+        acc = result.data['metrics']['accuracy']
+        f1_macro = result.data['metrics']['f1_macro']
+        print(fmt.format(i, key, float(acc), float(f1_macro)))
     print('-' * 80)
 
     while True:
@@ -337,3 +484,19 @@ def evaluate_model(model: keras.models.Model,
     result = Result.from_predictions(predictions, cr_codes, params,
                                      'AUTO_EVAL', '')
     print(result.describe())
+
+
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    description = 'Select result and print details'
+    parser.add_argument('-S',
+                        '--select',
+                        help=description,
+                        action='store_true')
+    args = parser.parse_args()
+
+    if args.select:
+        result = select_result()
+        print(result.describe())
+    else:
+        export_csv()

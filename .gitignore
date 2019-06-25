@@ -1,5 +1,4 @@
 # Data related files
-results*
 data
 .data.bak
 datasets
@@ -9,6 +8,8 @@ bottlenecks
 history
 weights
 images
+/output
+/results.csv
 
 # Etc
 .DS_Store

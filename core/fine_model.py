@@ -310,7 +310,9 @@ class FineModel(metaclass=abc.ABCMeta):
                              test_collection: cri.CrCollection,
                              verbose=1,
                              save_to_key=None,
-                             verbose_short_name=None):
+                             verbose_short_name=None,
+                             params={},
+                             description=''):
         """
         Genereates a cra.Result based on predictions against test_collection.
 
@@ -340,8 +342,8 @@ class FineModel(metaclass=abc.ABCMeta):
         else:
             short_name = verbose_short_name
 
-        result = cra.Result.from_predictions(predictions, cr_codes, dict(),
-                                             short_name)
+        result = cra.Result.from_predictions(predictions, cr_codes, params,
+                                             short_name, description)
 
         if save_to_key:
             result.to_json([self.get_name(), save_to_key])

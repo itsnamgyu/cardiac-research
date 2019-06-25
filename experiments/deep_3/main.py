@@ -42,7 +42,7 @@ EPOCHS = 100
 # iterate this index for each run (make sure to keep track of this index)
 EXP = 6
 # whether to sample 10% of all slices (for sanity checking purposes)
-SAMPLE = True
+SAMPLE = False
 # seed for k-fold split
 K_SPLIT_SEED = 1
 # models to train

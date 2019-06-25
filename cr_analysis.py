@@ -4,6 +4,7 @@ import json
 import os
 import traceback
 import warnings
+import argparse
 
 import keras
 import numpy as np
@@ -486,5 +487,16 @@ def evaluate_model(model: keras.models.Model,
 
 
 if __name__ == '__main__':
-    result = select_result()
-    print(result.describe())
+    parser = argparse.ArgumentParser()
+    description = 'Select result and print details'
+    parser.add_argument('-S',
+                        '--select',
+                        help=description,
+                        action='store_true')
+    args = parser.parse_args()
+
+    if args.select:
+        result = select_result()
+        print(result.describe())
+    else:
+        export_csv()

@@ -27,10 +27,10 @@ metric_names = {
 }
 
 bounds_per_metric = {
-    'val_loss': (0.5, 1.5),
-    'loss': (0.5, 1.5),
-    'val_acc': (0.4, 0.9),
-    'acc': (0.4, 0.9)
+    'val_loss': (0, 2),
+    'loss': (0, 2),
+    'val_acc': (0.3, 1),
+    'acc': (0.3, 1)
 }
 
 

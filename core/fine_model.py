@@ -312,6 +312,8 @@ class FineModel(metaclass=abc.ABCMeta):
                              save_to_key=None,
                              verbose_short_name=None,
                              params={},
+                             use_multiprocessing=False,
+                             workers=4,
                              description=''):
         """
         Genereates a cra.Result based on predictions against test_collection.
@@ -327,10 +329,12 @@ class FineModel(metaclass=abc.ABCMeta):
         if (verbose):
             print('Generating predictions for {}'.format(
                 self.get_name()).center(80, '-'))
-        predictions = model.predict_generator(test_gen,
-                                              steps=len(test_gen),
-                                              workers=4,
-                                              verbose=1)
+        predictions = model.predict_generator(
+            test_gen,
+            steps=len(test_gen),
+            use_multiprocessing=use_multiprocessing,
+            workers=workers,
+            verbose=1)
         filenames = test_gen.filenames
         cr_codes = cri.extract_cr_codes(filenames)
 

@@ -36,13 +36,13 @@ SAVE_ALL_WEIGHTS = False
 T = 10
 # multiplier for out_of_myocardial (OAP, OBS) slices
 BALANCE = 5
-LEARNING_RATES = [0.0001, 0.00001]
-EPOCHS = 100
+LEARNING_RATES = [0.01, 0.001, 0.0001]
+EPOCHS = 3
 # experiment index to track saved model weights, training history etc.
 # iterate this index for each run (make sure to keep track of this index)
-EXP = 6
+EXP = 7
 # whether to sample 10% of all slices (for sanity checking purposes)
-SAMPLE = False
+SAMPLE = True
 # seed for k-fold split
 K_SPLIT_SEED = 1
 # models to train
@@ -58,11 +58,29 @@ MODEL_KEYS = [
     #'nasnet_mobile',
 ]
 
+# Setup the module to train for one specific learning rate (0...2)
+# LR_INDEX = None: train on all learning rates
+LR_INDEX = 0
 
-def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
-                          val_gens, test_gen):
+# Setup the module to train for one specific fold (0...4)
+# FOLD_INDEX = None: train on all folds
+FOLD_INDEX = 0
+
+# use_multiprocessing, workers arguments for fit/predict functions
+USE_MULTIPROCESSING = False
+MULTIPROCESSING_WORKERS = 8
+
+
+def run_by_fold(fm,
+                depth_index,
+                lr_index,
+                epochs,
+                train_gens,
+                val_gens,
+                test_gen,
+                fold_index=None):
     """
-    Train the model (frozen at some depth) for all five folds
+    Train the model (frozen at some depth) for all five folds OR a specific fold
 
 
     Saves intermediate models with the following KEYS: [load weights via fm.load_weights(KEY)]
@@ -96,6 +114,9 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
 
     :param val_gens
     Test ImageDataGenerator for each fold
+
+    :param fold_index
+    If specified, will only run the specific fold index
     """
     _exp_key = 'EXP{:02}'.format(EXP)
     _depth_key = _exp_key + '_D{:02}'
@@ -106,8 +127,15 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
     loss_list = []
     acc_list = []
 
+    folds = range(K)
+    if fold_index is not None:
+        if fold_index < 0 or K <= fold_index:
+            raise IndexError('Invalid fold_index: {}'.format(fold_index))
+        folds = [fold_index]
+        print('Fold index {} specified'.format(fold_index))
+
     # train the model K times, one for each fold
-    for i in range(K):
+    for i in folds:
         fold_key = _fold_key.format(depth_index, lr_index, i)
 
         # load model at previous state
@@ -137,8 +165,8 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
                 validation_data=val_gens[i],
                 steps_per_epoch=len(train_gens[i]),
                 validation_steps=len(val_gens[i]),
-                workers=16,
-                use_multiprocessing=True,
+                workers=MULTIPROCESSING_WORKERS,
+                use_multiprocessing=USE_MULTIPROCESSING,
                 shuffle=True,
                 epochs=target_epoch,
                 initial_epoch=start_epoch,
@@ -163,17 +191,24 @@ def train_model_all_folds(fm, depth_index, lr_index, epochs, train_gens,
 
         # generate test results
         print('[debug] generating test results...')
-        results.generate_test_result(fm, fold_key, load_weights=False)
+        results.generate_test_result(fm,
+                                     fold_key,
+                                     load_weights=False,
+                                     workers=MULTIPROCESSING_WORKERS,
+                                     use_multiprocessing=USE_MULTIPROCESSING)
 
-    print('[debug] generating analysis of training process')
-    for metric in analysis.metric_names.keys():
-        analysis.analyze_lr(fm,
-                            fm.get_name(),
-                            depth_index,
-                            lr_index,
-                            lr,
-                            metric,
-                            exp=EXP)
+    if fold_index == None or fold_index == 4:
+        # this will result in an error if fold_index == 4 and fold_index 0...3
+        # have not been completed
+        print('[debug] generating analysis of training process')
+        for metric in analysis.metric_names.keys():
+            analysis.analyze_lr(fm,
+                                fm.get_name(),
+                                depth_index,
+                                lr_index,
+                                lr,
+                                metric,
+                                exp=EXP)
 
 
 def print_all_stats(train, test, folds):
@@ -229,17 +264,32 @@ def print_all_stats(train, test, folds):
     print()
 
 
-def run_on_model(model_key, train_folds, test):
+def run_by_lr(model_key,
+              train_folds,
+              test_collection,
+              lr_index=None,
+              fold_index=None):
     print(' MODEL: {} '.format(model_key).center(100, '#'))
     keras.backend.clear_session()
     models = FineModel.get_dict()
     fm = models[model_key]()
     train_gens, val_gens = fm.get_train_val_generators(train_folds)
-    test_gen = fm.get_test_generator(test)
-    for i, lr in enumerate(LEARNING_RATES):
+    test_gen = fm.get_test_generator(test_collection)
+
+    learning_rates = LEARNING_RATES
+    if lr_index is not None:
+        try:
+            lr = LEARNING_RATES[lr_index]
+            learning_rates = [lr]
+        except IndexError as e:
+            raise IndexError('Invalid lr_index: {}'.format(lr_index))
+        print('Learning rate #{} ({}) specified'.format(lr_index, lr))
+
+    for i, lr in enumerate(learning_rates):
         print('Starting training {} lr={}'.format(fm.get_name(),
                                                   lr).center(100, '-'))
-        train_model_all_folds(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen)
+        run_by_fold(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen,
+                    fold_index)
 
 
 def main():
@@ -255,7 +305,7 @@ def main():
     print_all_stats(train, test, folds)
 
     for key in MODEL_KEYS:
-        run_on_model(key, folds, test)
+        run_by_lr(key, folds, test, lr_index=LR_INDEX, fold_index=FOLD_INDEX)
 
 
 if __name__ == '__main__':

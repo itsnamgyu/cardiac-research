@@ -41,6 +41,8 @@ def generate_test_result(fm: FineModel,
                          key,
                          save=True,
                          verbose=1,
+                         workers=4,
+                         use_multiprocessing=False,
                          load_weights=True):
     """
     Generates test results using all test images from db_index=1 (CAP TEST)
@@ -78,6 +80,8 @@ def generate_test_result(fm: FineModel,
                                      verbose=verbose,
                                      save_to_key=key,
                                      params=params,
+                                     workers=workers,
+                                     use_multiprocessing=use_multiprocessing,
                                      description=description)
 
     if (verbose):

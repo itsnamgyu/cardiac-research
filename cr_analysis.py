@@ -430,7 +430,6 @@ def export_csv(path='results.csv',
         f.write('key,')
         f.write(','.join(metrics))
         f.write('\n')
-        mod5 = 0
         for key, result in result_pairs:
             f.write(key + ',')
             metric_values = [
@@ -438,11 +437,6 @@ def export_csv(path='results.csv',
             ]
             f.write(','.join(metric_values))
             f.write('\n')
-
-            mod5 += 1
-            if mod5 == 5:
-                f.write('\n')
-            mod5 = mod5 % 5
 
 
 def select_result(force_reload=False):

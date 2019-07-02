@@ -42,7 +42,7 @@ LEARNING_RATES = [0.01, 0.001, 0.0001]
 EPOCHS = 50
 # experiment index to track saved model weights, training history etc.
 # iterate this index for each run (make sure to keep track of this index)
-EXP = 97
+EXP = 7
 # whether to sample 10% of all slices (for sanity checking purposes)
 SAMPLE = False
 # seed for k-fold split

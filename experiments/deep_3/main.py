@@ -195,6 +195,7 @@ def run_by_fold(fm,
         print('[debug] generating test results...')
         results.generate_test_result(fm,
                                      fold_key,
+                                     LEARNING_RATES,
                                      load_weights=False,
                                      workers=MULTIPROCESSING_WORKERS,
                                      use_multiprocessing=USE_MULTIPROCESSING)

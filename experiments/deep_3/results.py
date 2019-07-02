@@ -39,6 +39,7 @@ def parse_key(key):
 
 def generate_test_result(fm: FineModel,
                          key,
+                         lr_list,
                          save=True,
                          verbose=1,
                          workers=4,
@@ -65,8 +66,8 @@ def generate_test_result(fm: FineModel,
     if exp == 5:
         description = 'No Crop (seed=1)'
 
-    lrs = [0.0001, 0.00001]
-    params['lr'] = lrs[params['lr']]
+    lr_index = params['lr']
+    params['lr'] = lr_list[lr_index]
 
     dt = datetime.datetime.now()
     description += '\n'
@@ -92,7 +93,9 @@ def generate_test_result(fm: FineModel,
 
 
 def main():
+    # set LR_LIST based on the specifications of the experiment
     EXP_LIST = [1, 2]
+    LR_LIST = [0.0001, 0.00001]
     MODEL_KEY = 'mobileneta25'
 
     print('Generating results for existing weights (model={}) (exp={}) ...'.
@@ -104,7 +107,7 @@ def main():
     for key in fm.get_weight_keys():
         params = parse_key(key)
         if params['exp'] in EXP_LIST:
-            generate_test_result(fm, key)
+            generate_test_result(fm, key, lr_list=LR_LIST)
 
 
 if __name__ == '__main__':

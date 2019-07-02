@@ -15,6 +15,7 @@ import shutil
 import pandas as pd
 from bayes_opt import BayesianOptimization
 import keras
+import traceback
 
 import core.history as ch
 import core.fine_model as cm
@@ -23,6 +24,7 @@ from core.fine_model import FineModel
 import cr_interface as cri
 import keras_utils as ku
 
+from lib import notify
 import results
 import analysis
 
@@ -193,6 +195,7 @@ def run_by_fold(fm,
         print('[debug] generating test results...')
         results.generate_test_result(fm,
                                      fold_key,
+                                     LEARNING_RATES,
                                      load_weights=False,
                                      workers=MULTIPROCESSING_WORKERS,
                                      use_multiprocessing=USE_MULTIPROCESSING)
@@ -276,16 +279,16 @@ def run_by_lr(model_key,
     train_gens, val_gens = fm.get_train_val_generators(train_folds)
     test_gen = fm.get_test_generator(test_collection)
 
-    learning_rates = LEARNING_RATES
+    enumerated_learning_rates = list(enumerate(LEARNING_RATES))
     if lr_index is not None:
         try:
-            lr = LEARNING_RATES[lr_index]
-            learning_rates = [lr]
+            elr = enumerated_learning_rates[lr_index]
+            enumerated_learning_rates = [elr]
         except IndexError as e:
             raise IndexError('Invalid lr_index: {}'.format(lr_index))
-        print('Learning rate #{} ({}) specified'.format(lr_index, lr))
+        print('Learning rate #{} ({}) specified'.format(elr[0], elr[1]))
 
-    for i, lr in enumerate(learning_rates):
+    for i, lr in enumerated_learning_rates:
         print('Starting training {} lr={}'.format(fm.get_name(),
                                                   lr).center(100, '-'))
         run_by_fold(fm, 0, i, EPOCHS, train_gens, val_gens, test_gen,

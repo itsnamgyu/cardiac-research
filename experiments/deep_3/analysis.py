@@ -214,13 +214,18 @@ def analyze_lr(fm,
     ax.get_figure().savefig(path, format='eps', dpi=320, bbox_inches='tight')
 
 
-def analyze_all(fm, verbose_model_name, depth_index):
+def analyze_all(fm, verbose_model_name, depth_index, lr_list=None):
+    if lr_list is None:
+        warnings.warn('You should specify lr_list for analyze_all')
+        lr_list = default_lr_list
+
     metrics = metric_names.keys()
     for metric in metrics:
         print('Analyzing {} metric={}, depth_index={}'.format(
             verbose_model_name, metric, depth_index))
         analyze_depth(fm,
                       verbose_model_name,
+                      lr_list=default_lr_list,
                       depth_index=depth_index,
                       metric=metric)
 

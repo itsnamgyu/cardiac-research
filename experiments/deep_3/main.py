@@ -22,7 +22,6 @@ import core.fine_model as cm
 from core.fine_model import FineModel
 
 import cr_interface as cri
-import keras_utils as ku
 
 from lib import notify
 import results

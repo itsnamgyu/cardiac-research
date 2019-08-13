@@ -7,7 +7,7 @@ import keras
 from keras.preprocessing.image import ImageDataGenerator
 from keras import optimizers
 from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout
+from keras.layers import Dense, Dropout, Flatten
 import keras_apps as ka
 import shutil
 from typing import List
@@ -17,6 +17,8 @@ import core
 import cr_interface as cri
 import cr_analysis as cra
 
+
+DEFAULT_POOLING = 'avg'
 
 class FineModel(metaclass=abc.ABCMeta):
     description = 'Default fine model'
@@ -35,6 +37,7 @@ class FineModel(metaclass=abc.ABCMeta):
     def __init__(self):
         self.model = None
         self.base_layer = None
+        self.pooling = DEFAULT_POOLING
 
     @staticmethod
     def get_input_shape(image_size):
@@ -155,6 +158,8 @@ class FineModel(metaclass=abc.ABCMeta):
             print('Loading model {}... '.format(self.__class__.name), end='')
             self.model = self._load_base_model()
             top = Sequential()
+            if not self.pooling:
+                top.add(Flatten())
             top.add(Dense(256, activation='relu'))
             top.add(Dropout(0.5))
             top.add(Dense(3, activation='softmax'))
@@ -393,7 +398,7 @@ class FineXception(FineModel):
     def _load_base_model(self):
         return keras.applications.xception.Xception(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -411,7 +416,7 @@ class FineMobileNet(FineModel):
     def _load_base_model(self):
         return keras.applications.mobilenet.MobileNet(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -428,7 +433,7 @@ class FineMobileNetV2(FineModel):
     def _load_base_model(self):
         return keras.applications.mobilenetv2.MobileNetV2(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -446,7 +451,7 @@ class FineVGG16(FineModel):
     def _load_base_model(self):
         return keras.applications.vgg16.VGG16(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -463,7 +468,7 @@ class FineVGG19(FineModel):
     def _load_base_model(self):
         return keras.applications.vgg19.VGG19(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -481,7 +486,7 @@ class FineResNet50(FineModel):
     def _load_base_model(self):
         return keras.applications.resnet50.ResNet50(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -499,7 +504,7 @@ class FineInceptionV3(FineModel):
     def _load_base_model(self):
         return keras.applications.inception_v3.InceptionV3(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -517,7 +522,7 @@ class FineInceptionResNetV2(FineModel):
     def _load_base_model(self):
         return keras.applications.inception_resnet_v2.InceptionResNetV2(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -535,7 +540,7 @@ class FineDenseNet121(FineModel):
     def _load_base_model(self):
         return keras.applications.densenet.DenseNet121(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -553,7 +558,7 @@ class FineNASNetMobile(FineModel):
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetMobile(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -570,7 +575,7 @@ class FineNASNetLarge(FineModel):
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetLarge(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -588,7 +593,7 @@ class FineResNet50V2(FineModel):
     def _load_base_model(self):
         return ka.resnet_v2.ResNet50V2(
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -607,7 +612,7 @@ class FineMobileNetA25(FineModel):
         return ka.mobilenet.MobileNet(
             alpha=0.25,
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )
@@ -626,7 +631,7 @@ class FineMobileNetV2A35(FineModel):
         return ka.mobilenet_v2.MobileNetV2(
             alpha=0.35,
             include_top=False,
-            pooling='avg',
+            pooling=self.pooling,
             weights='imagenet',
             input_shape=FineModel.get_input_shape(self.__class__.output_shape),
         )

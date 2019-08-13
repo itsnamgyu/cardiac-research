@@ -4,23 +4,27 @@ import sys
 import traceback
 from collections import defaultdict
 import warnings
+import shutil
 
 import pandas as pd
 
 import core
+from .utils import validate_exp_dir
 
-DEFAULT_HISTORY_DIR = os.path.join(core.BASE_DIR, '.history')
-
-
-def _get_history_module_dir(directory=None):
-    if directory:
-        return directory
-    else:
-        return DEFAULT_HISTORY_DIR
+HISTORY_DIR = 'cr_train_val_history'
 
 
-def _get_history_dir(model_name, key, directory=None, makedirs=True):
-    path = _get_history_module_dir(directory)
+def _get_history_dir(exp_dir=None):
+    if exp_dir is None:
+        exp_dir = '.'
+
+    validate_exp_dir(exp_dir)
+
+    return os.path.abspath(os.path.join(exp_dir, HISTORY_DIR))
+
+
+def _get_history_path(model_name, key, exp_dir=None, makedirs=True):
+    path = _get_history_dir(exp_dir)
     path = os.path.join(path, model_name)
     path = os.path.join(path, key + '.csv')
 
@@ -29,26 +33,27 @@ def _get_history_dir(model_name, key, directory=None, makedirs=True):
     return path
 
 
-def save_history(history, model_name, key, directory=None):
+def save_history(history, model_name, key, exp_dir=None):
     '''
     history: keras_model.fit().history
         contains val_loss, val_acc, loss, acc
     '''
-    path = _get_history_dir(model_name, key, directory)
+    path = _get_history_path(model_name, key, exp_dir)
     df = pd.DataFrame(history)
     df.to_csv(path, index=False)
 
 
-def append_history(history, model_name, key, directory=None):
-    '''
-    Creates history if it doesn't exist
+def append_history(history, model_name, key, exp_dir=None):
+    """Append history to existing file, mainly for use when you train N epochs
+    at a time, calling model.fit() multiple times.
 
-    history: keras_model.fit().history
-        contains val_loss, val_acc, loss, acc
-    '''
-    old = load_history(model_name, key, directory)
+    Arguments:
+    - history: keras_model.fit().history (should contain val_loss, val_acc,
+      loss, acc)
+    """
+    old = load_history(model_name, key, exp_dir)
 
-    path = _get_history_dir(model_name, key, directory)
+    path = _get_history_path(model_name, key, exp_dir)
     new = pd.DataFrame(history)
 
     if old is not None:
@@ -59,19 +64,27 @@ def append_history(history, model_name, key, directory=None):
     df.to_csv(path, index=False)
 
 
-def load_history(model_name, key, directory=None):
+def reset_history(model_name, key, exp_dir=None, force=False):
+    """Reset history, mainly for use before append_history to prevent
+    appending to an existing, complete history file.
+    """
+    path = _get_history_path(model_name, key, exp_dir)
+    if os.path.exists(path):
+        os.remove(path)
+
+
+def load_history(model_name, key, exp_dir=None):
+    '''Load history as a DataFrame
     '''
-    Return in pd.DataFrame
-    '''
-    path = _get_history_dir(model_name, key, directory)
+    path = _get_history_path(model_name, key, exp_dir)
     if os.path.exists(path):
         return pd.read_csv(path)
     else:
         return None
 
 
-def get_keys(directory=None):
-    path = _get_history_module_dir(directory)
+def get_keys(exp_dir=None):
+    path = _get_history_dir(exp_dir)
     model_dirs = os.listdir(path)
     d = defaultdict(list)
     for model_dir in model_dirs:
@@ -92,11 +105,11 @@ def get_keys(directory=None):
     return dict(d)
 
 
-def reset_history(model_name, key, directory=None):
+def reset_history(model_name, key, exp_dir=None):
     '''
     Delete history file
     '''
-    path = _get_history_dir(model_name, key, directory)
+    path = _get_history_path(model_name, key, exp_dir)
     if os.path.exists(path):
         try:
             os.remove(path)

@@ -18,7 +18,7 @@ import cr_interface as cri
 import cr_analysis as cra
 
 
-DEFAULT_POOLING = 'avg'
+DEFAULT_POOLING = None
 
 class FineModel(metaclass=abc.ABCMeta):
     description = 'Default fine model'

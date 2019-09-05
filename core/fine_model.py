@@ -9,7 +9,7 @@ import warnings
 
 import keras
 from keras import optimizers
-from keras.layers import Dense, Dropout, Flatten
+from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D
 from keras.models import Sequential, Model
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -396,6 +396,7 @@ class FineModel(metaclass=abc.ABCMeta):
             FineInceptionResNetV2,
             FineDenseNet121,
             FineNASNetMobile,
+            BaselineModelV1,
         ]
 
     @classmethod
@@ -655,3 +656,41 @@ class FineMobileNetV2A35(FineModel):
 
     def _get_preprocess_func(self):
         return ka.mobilenet_v2.preprocess_input
+
+
+class BaselineModel(FineModel):
+    description = 'Baseline CNN model'
+    name = 'GenericBaselineModel'
+    output_shape = (224, 224)
+    depths = [0]  # no layerwise fine-tuning
+
+    def set_depth(self, *args, **kwargs):
+        warnings.warn('You should not call set_depth() on BaselineModels')
+        return super(BaselineModel, self).set_depth(*args, **kwargs)
+
+    def _get_preprocess_func(self):
+        return ka.imagenet_utils.preprocess_input
+
+class BaselineModelV1(BaselineModel):
+    name = 'baselinemodelv1'
+
+    def _load_base_model(self):
+        model = Sequential()
+        model.add(Conv2D(32, (3, 3), input_shape=fine_model.get_input_shape(self.__class__.output_shape))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(32, (3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        model.add(Conv2D(64, (3, 3)))
+        model.add(Activation('relu'))
+        model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        if self.pooling == 'avg':
+            model.add(GlobalAveragePooling2D())
+        elif self.pooling == 'max':
+            model.add(GlobalMaxPooling2D())
+
+        return model

@@ -9,7 +9,7 @@ import warnings
 
 import keras
 from keras import optimizers
-from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D
+from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
 from keras.models import Sequential, Model
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -676,7 +676,7 @@ class BaselineModelV1(BaselineModel):
 
     def _load_base_model(self):
         model = Sequential()
-        model.add(Conv2D(32, (3, 3), input_shape=fine_model.get_input_shape(self.__class__.output_shape))
+        model.add(Conv2D(32, (3, 3), input_shape=FineModel.get_input_shape(self.__class__.output_shape)))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 

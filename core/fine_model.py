@@ -22,6 +22,22 @@ import keras_apps as ka
 DEFAULT_POOLING = 'avg'
 
 class FineModel(metaclass=abc.ABCMeta):
+    """A fine-tunable model that provides the following features
+
+    - Load model with new top-model
+    - Load weight based on string keys
+    - Load ImageDataGenerator for K-fold validation data and test data
+      - Includes default preprocessing functions
+      - Includes augmentation
+    
+    Fields
+    - `depths`: List of layer depths used for partial model freezing during
+      layerwise fine tuning. `set_depth(index)` will freeze all layers starting from the
+      bottom layer (0th layer) until the `depth[index]`th layer, exclusive. Hence, the larger
+      the value of `depth[index]`, the more layers we will freeze. `depths[0]` should be the number
+      of layers in the convolutional base, and `depths[-1]` should be 0.
+    """
+
     description = 'Default fine model'
     name = 'DefaultFineModel'
     depths = []

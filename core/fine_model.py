@@ -1,26 +1,43 @@
-import os
 import abc
-import warnings
-import glob
 from abc import abstractmethod
-import keras
-from keras.preprocessing.image import ImageDataGenerator
-from keras import optimizers
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten
-import keras_apps as ka
+import datetime
+import glob
+import os
 import shutil
 from typing import List
-import datetime
+import warnings
+
+import keras
+from keras import optimizers
+from keras.layers import Dense, Dropout, Flatten
+from keras.models import Sequential, Model
+from keras.preprocessing.image import ImageDataGenerator
 
 import core
 import cr_interface as cri
 import cr_analysis as cra
+import keras_apps as ka
 
 
 DEFAULT_POOLING = 'avg'
 
 class FineModel(metaclass=abc.ABCMeta):
+    """A fine-tunable model that provides the following features
+
+    - Load model with new top-model
+    - Load weight based on string keys
+    - Load ImageDataGenerator for K-fold validation data and test data
+      - Includes default preprocessing functions
+      - Includes augmentation
+    
+    Fields
+    - `depths`: List of layer depths used for partial model freezing during
+      layerwise fine tuning. `set_depth(index)` will freeze all layers starting from the
+      bottom layer (0th layer) until the `depth[index]`th layer, exclusive. Hence, the larger
+      the value of `depth[index]`, the more layers we will freeze. `depths[0]` should be the number
+      of layers in the convolutional base, and `depths[-1]` should be 0.
+    """
+
     description = 'Default fine model'
     name = 'DefaultFineModel'
     depths = []

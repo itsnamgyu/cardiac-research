@@ -1,21 +1,22 @@
-import os
 import abc
-import warnings
-import glob
 from abc import abstractmethod
-import keras
-from keras.preprocessing.image import ImageDataGenerator
-from keras import optimizers
-from keras.models import Sequential, Model
-from keras.layers import Dense, Dropout, Flatten
-import keras_apps as ka
+import datetime
+import glob
+import os
 import shutil
 from typing import List
-import datetime
+import warnings
+
+import keras
+from keras import optimizers
+from keras.layers import Dense, Dropout, Flatten
+from keras.models import Sequential, Model
+from keras.preprocessing.image import ImageDataGenerator
 
 import core
 import cr_interface as cri
 import cr_analysis as cra
+import keras_apps as ka
 
 
 DEFAULT_POOLING = 'avg'

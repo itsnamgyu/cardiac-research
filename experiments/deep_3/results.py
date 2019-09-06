@@ -19,14 +19,15 @@ from core.fine_model import FineModel
 def parse_key(key):
     params = {}
 
-    fmt = 'EXP{:02d}_D{:02d}_L{:02d}_F{:02d}_E{:03d}'
+    #fmt = 'EXP{:02d}_D{:02d}_L{:02d}_F{:02d}_E{:03d}'
+    fmt = 'EXP{:d}_D{:d}_L{:d}_F{:d}_E{:d}'  # hotfix for more digits
     parsed = parse.parse(fmt, key)
 
     if parsed:
         params['epochs'] = parsed[4]
     else:
         params['epochs'] = 100
-        fmt = 'EXP{:02d}_D{:02d}_L{:02d}_F{:02d}'
+        fmt = 'EXP{:2d}_D{:2d}_L{:2d}_F{:2d}'
         parsed = parse.parse(fmt, key)
 
     params['exp'] = parsed[0]

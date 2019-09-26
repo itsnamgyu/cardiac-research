@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+import keras
 from keras import backend as K
 from .utils import utils
 
@@ -73,13 +74,12 @@ class ActivationMaximization(Loss):
         self.filter_indices = utils.listify(filter_indices)
 
     def build_loss(self):
-        '''
-        Changes made by Namgyu Ho
-        
-        layer.output to layer.get_output_at(-1) to allow for
-        Sequential top models
-        '''
-        layer_output = self.layer.get_output_at(-1)
+        # Modified by Namgyu Ho (092619). Retrieves the output of the final inner
+        # layer if `layer` is a Sequential model.
+        if isinstance(self.layer, keras.engine.sequential.Sequential):
+            layer_output = self.layer.get_output_at(-1)
+        else:
+            layer_output = self.layer.output
 
         # For all other layers it is 4
         is_dense = K.ndim(layer_output) == 2

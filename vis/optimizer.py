@@ -23,12 +23,13 @@ class Optimizer(object):
         Args:
             input_tensor: An input tensor of shape: `(samples, channels, image_dims...)` if `image_data_format=
                 channels_first` or `(samples, image_dims..., channels)` if `image_data_format=channels_last`.
-            losses: List of ([Loss](vis.losses#Loss), weight) tuples.
+            losses: List of ([Loss](vis.losses.md#Loss), weight) tuples.
             input_range: Specifies the input range as a `(min, max)` tuple. This is used to rescale the
                 final optimized input to the given range. (Default value=(0, 255))
             wrt_tensor: Short for, with respect to. This instructs the optimizer that the aggregate loss from `losses`
-                should be minimized with respect to `wrt`. `wrt` can be any tensor that is part of the model graph.
-                Default value is set to None which means that loss will simply be minimized with respect to `input_tensor`.
+                should be minimized with respect to `wrt_tensor`.
+                `wrt_tensor` can be any tensor that is part of the model graph. Default value is set to None
+                which means that loss will simply be minimized with respect to `input_tensor`.
             norm_grads: True to normalize gradients. Normalization avoids very small or large gradients and ensures
                 a smooth gradient gradient descent process. If you want the actual gradient
                 (for example, visualizing attention), set this to false.
@@ -38,6 +39,11 @@ class Optimizer(object):
         self.loss_names = []
         self.loss_functions = []
         self.wrt_tensor = self.input_tensor if wrt_tensor is None else wrt_tensor
+        if self.input_tensor is self.wrt_tensor:
+            self.wrt_tensor_is_input_tensor = True
+            self.wrt_tensor = K.identity(self.wrt_tensor)
+        else:
+            self.wrt_tensor_is_input_tensor = False
 
         overall_loss = None
         for loss, weight in losses:
@@ -49,9 +55,12 @@ class Optimizer(object):
                 self.loss_functions.append(loss_fn)
 
         # Compute gradient of overall with respect to `wrt` tensor.
-        grads = K.gradients(overall_loss, self.wrt_tensor)[0]
+        if self.wrt_tensor_is_input_tensor:
+            grads = K.gradients(overall_loss, self.input_tensor)[0]
+        else:
+            grads = K.gradients(overall_loss, self.wrt_tensor)[0]
         if norm_grads:
-            grads = grads / (K.sqrt(K.mean(K.square(grads))) + K.epsilon())
+            grads = K.l2_normalize(grads)
 
         # The main function to compute various quantities in optimization loop.
         self.compute_fn = K.function([self.input_tensor, K.learning_phase()],
@@ -92,7 +101,8 @@ class Optimizer(object):
             seed_input = np.expand_dims(seed_input, 0)
 
         # Only possible if channel idx is out of place.
-        if seed_input.shape != desired_shape:
+        if seed_input.shape[-1] != desired_shape[-1] and \
+           seed_input.shape[1] != desired_shape[1]:
             seed_input = np.moveaxis(seed_input, -1, 1)
         return seed_input.astype(K.floatx())
 
@@ -106,13 +116,13 @@ class Optimizer(object):
                 channels_first` or `(samples, image_dims..., channels)` if `image_data_format=channels_last`.
                 Seeded with random noise if set to None. (Default value = None)
             max_iter: The maximum number of gradient descent iterations. (Default value = 200)
-            input_modifiers: A list of [InputModifier](vis.input_modifiers#inputmodifier) instances specifying
+            input_modifiers: A list of [InputModifier](vis.input_modifiers.md#inputmodifier) instances specifying
                 how to make `pre` and `post` changes to the optimized input during the optimization process.
                 `pre` is applied in list order while `post` is applied in reverse order. For example,
                 `input_modifiers = [f, g]` means that `pre_input = g(f(inp))` and `post_input = f(g(inp))`
             grad_modifier: gradient modifier to use. See [grad_modifiers](vis.grad_modifiers.md). If you don't
                 specify anything, gradients are unchanged. (Default value = None)
-            callbacks: A list of [OptimizerCallback](vis.callbacks#optimizercallback) instances to trigger.
+            callbacks: A list of [OptimizerCallback](vis.callbacks.md#optimizercallback) instances to trigger.
             verbose: Logs individual losses at the end of every gradient descent iteration.
                 Very useful to estimate loss weight factor(s). (Default value = True)
 
@@ -142,7 +152,7 @@ class Optimizer(object):
             # 0 learning phase for 'test'
             computed_values = self.compute_fn([seed_input, 0])
             losses = computed_values[:len(self.loss_names)]
-            named_losses = zip(self.loss_names, losses)
+            named_losses = list(zip(self.loss_names, losses))
             overall_loss, grads, wrt_value = computed_values[len(self.loss_names):]
 
             # TODO: theano grads shape is inconsistent for some reason. Patch for now and investigate later.
@@ -158,7 +168,7 @@ class Optimizer(object):
 
             # Gradient descent update.
             # It only makes sense to do this if wrt_tensor is input_tensor. Otherwise shapes wont match for the update.
-            if self.wrt_tensor is self.input_tensor:
+            if self.wrt_tensor_is_input_tensor:
                 step, cache = self._rmsprop(grads, cache)
                 seed_input += step
 

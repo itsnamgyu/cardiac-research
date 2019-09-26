@@ -1,11 +1,11 @@
 from __future__ import absolute_import
 
 import numpy as np
-import matplotlib.cm as cm
-from scipy.misc import imresize
+from scipy.ndimage.interpolation import zoom
 
 from keras.layers.convolutional import _Conv
 from keras.layers.pooling import _Pooling1D, _Pooling2D, _Pooling3D
+from keras.layers.wrappers import Wrapper
 from keras import backend as K
 
 from ..losses import ActivationMaximization
@@ -28,6 +28,8 @@ def _find_penultimate_layer(model, layer_idx, penultimate_layer_idx):
     """
     if penultimate_layer_idx is None:
         for idx, layer in utils.reverse_enumerate(model.layers[:layer_idx - 1]):
+            if isinstance(layer, Wrapper):
+                layer = layer.layer
             if isinstance(layer, (_Conv, _Pooling1D, _Pooling2D, _Pooling3D)):
                 penultimate_layer_idx = idx
                 break
@@ -45,7 +47,7 @@ def _find_penultimate_layer(model, layer_idx, penultimate_layer_idx):
     return model.layers[penultimate_layer_idx]
 
 
-def visualize_saliency_with_losses(input_tensor, losses, seed_input, grad_modifier='absolute'):
+def visualize_saliency_with_losses(input_tensor, losses, seed_input, wrt_tensor=None, grad_modifier='absolute', keepdims=False):
     """Generates an attention heatmap over the `seed_input` by using positive gradients of `input_tensor`
     with respect to weighted `losses`.
 
@@ -59,29 +61,31 @@ def visualize_saliency_with_losses(input_tensor, losses, seed_input, grad_modifi
     Args:
         input_tensor: An input tensor of shape: `(samples, channels, image_dims...)` if `image_data_format=
             channels_first` or `(samples, image_dims..., channels)` if `image_data_format=channels_last`.
-        losses: List of ([Loss](vis.losses#Loss), weight) tuples.
+        losses: List of ([Loss](vis.losses.md#Loss), weight) tuples.
         seed_input: The model input for which activation map needs to be visualized.
+        wrt_tensor: Short for, with respect to. The gradients of losses are computed with respect to this tensor.
+            When None, this is assumed to be the same as `input_tensor` (Default value: None)
         grad_modifier: gradient modifier to use. See [grad_modifiers](vis.grad_modifiers.md). By default `absolute`
             value of gradients are used. To visualize positive or negative gradients, use `relu` and `negate`
             respectively. (Default value = 'absolute')
+        keepdims: A boolean, whether to keep the dimensions or not.
+            If keepdims is False, the channels axis is deleted.
+            If keepdims is True, the grad with same shape as input_tensor is returned. (Default value: False)
 
     Returns:
-        The heatmap image indicating the `seed_input` regions whose change would most contribute towards minimizing
-        weighted `losses`.
+        The normalized gradients of `seed_input` with respect to weighted `losses`.
     """
-    opt = Optimizer(input_tensor, losses, norm_grads=False)
+    opt = Optimizer(input_tensor, losses, wrt_tensor=wrt_tensor, norm_grads=False)
     grads = opt.minimize(seed_input=seed_input, max_iter=1, grad_modifier=grad_modifier, verbose=False)[1]
 
-    channel_idx = 1 if K.image_data_format() == 'channels_first' else -1
-    grads = np.max(grads, axis=channel_idx)
-
-    # Normalize and create heatmap.
-    grads = utils.normalize(grads)
-    return np.uint8(cm.jet(grads)[..., :3] * 255)[0]
+    if not keepdims:
+        channel_idx = 1 if K.image_data_format() == 'channels_first' else -1
+        grads = np.max(grads, axis=channel_idx)
+    return utils.normalize(grads)[0]
 
 
-def visualize_saliency(model, layer_idx, filter_indices, seed_input,
-                       backprop_modifier=None, grad_modifier='absolute'):
+def visualize_saliency(model, layer_idx, filter_indices, seed_input, wrt_tensor=None,
+                       backprop_modifier=None, grad_modifier='absolute', keepdims=False):
     """Generates an attention heatmap over the `seed_input` for maximizing `filter_indices`
     output in the given `layer_idx`.
 
@@ -94,13 +98,18 @@ def visualize_saliency(model, layer_idx, filter_indices, seed_input,
             If None, all filters are visualized. (Default value = None)
             For `keras.layers.Dense` layer, `filter_idx` is interpreted as the output index.
             If you are visualizing final `keras.layers.Dense` layer, consider switching 'softmax' activation for
-            'linear' using [utils.apply_modifications](vis.utils.utils#apply_modifications) for better results.
+            'linear' using [utils.apply_modifications](vis.utils.utils.md#apply_modifications) for better results.
         seed_input: The model input for which activation map needs to be visualized.
+        wrt_tensor: Short for, with respect to. The gradients of losses are computed with respect to this tensor.
+            When None, this is assumed to be the same as `input_tensor` (Default value: None)
         backprop_modifier: backprop modifier to use. See [backprop_modifiers](vis.backprop_modifiers.md). If you don't
             specify anything, no backprop modification is applied. (Default value = None)
         grad_modifier: gradient modifier to use. See [grad_modifiers](vis.grad_modifiers.md). By default `absolute`
             value of gradients are used. To visualize positive or negative gradients, use `relu` and `negate`
             respectively. (Default value = 'absolute')
+        keepdims: A boolean, whether to keep the dimensions or not.
+            If keepdims is False, the channels axis is deleted.
+            If keepdims is True, the grad with same shape as input_tensor is returned. (Default value: False)
 
     Example:
         If you wanted to visualize attention over 'bird' category, say output index 22 on the
@@ -122,12 +131,10 @@ def visualize_saliency(model, layer_idx, filter_indices, seed_input,
     losses = [
         (ActivationMaximization(model.layers[layer_idx], filter_indices), -1)
     ]
-    return visualize_saliency_with_losses(model.input, losses, seed_input, grad_modifier)
+    return visualize_saliency_with_losses(model.input, losses, seed_input, wrt_tensor, grad_modifier, keepdims)
 
 
-def visualize_cam_with_losses(input_tensor, losses,
-                              seed_input, penultimate_layer,
-                              grad_modifier=None):
+def visualize_cam_with_losses(input_tensor, losses, seed_input, penultimate_layer, grad_modifier=None):
     """Generates a gradient based class activation map (CAM) by using positive gradients of `input_tensor`
     with respect to weighted `losses`.
 
@@ -144,7 +151,7 @@ def visualize_cam_with_losses(input_tensor, losses,
     Args:
         input_tensor: An input tensor of shape: `(samples, channels, image_dims...)` if `image_data_format=
             channels_first` or `(samples, image_dims..., channels)` if `image_data_format=channels_last`.
-        losses: List of ([Loss](vis.losses#Loss), weight) tuples.
+        losses: List of ([Loss](vis.losses.md#Loss), weight) tuples.
         seed_input: The model input for which activation map needs to be visualized.
         penultimate_layer: The pre-layer to `layer_idx` whose feature maps should be used to compute gradients
             with respect to filter output.
@@ -152,8 +159,7 @@ def visualize_cam_with_losses(input_tensor, losses,
             specify anything, gradients are unchanged (Default value = None)
 
     Returns:
-        The heatmap image indicating the `seed_input` regions whose change would most contribute towards minimizing the
-        weighted `losses`.
+        The normalized gradients of `seed_input` with respect to weighted `losses`.
     """
     penultimate_output = penultimate_layer.output
     opt = Optimizer(input_tensor, losses, wrt_tensor=penultimate_output, norm_grads=False)
@@ -170,7 +176,7 @@ def visualize_cam_with_losses(input_tensor, losses,
     weights = np.mean(grads, axis=tuple(other_axis))
 
     # Generate heatmap by computing weight * output over feature maps
-    output_dims = utils.get_img_shape(penultimate_output)[2:]
+    output_dims = utils.get_img_shape(penultimate_output_value)[2:]
     heatmap = np.zeros(shape=output_dims, dtype=K.floatx())
     for i, w in enumerate(weights):
         if channel_idx == -1:
@@ -183,11 +189,11 @@ def visualize_cam_with_losses(input_tensor, losses,
 
     # The penultimate feature map size is definitely smaller than input image.
     input_dims = utils.get_img_shape(input_tensor)[2:]
-    heatmap = imresize(heatmap, input_dims, interp='bicubic', mode='F')
 
-    # Normalize and create heatmap.
-    heatmap = utils.normalize(heatmap)
-    return np.uint8(cm.jet(heatmap)[..., :3] * 255)
+    # Figure out the zoom factor.
+    zoom_factor = [i / (j * 1.0) for i, j in iter(zip(input_dims, output_dims))]
+    heatmap = zoom(heatmap, zoom_factor)
+    return utils.normalize(heatmap)
 
 
 def visualize_cam(model, layer_idx, filter_indices,
@@ -205,7 +211,7 @@ def visualize_cam(model, layer_idx, filter_indices,
             If None, all filters are visualized. (Default value = None)
             For `keras.layers.Dense` layer, `filter_idx` is interpreted as the output index.
             If you are visualizing final `keras.layers.Dense` layer, consider switching 'softmax' activation for
-            'linear' using [utils.apply_modifications](vis.utils.utils#apply_modifications) for better results.
+            'linear' using [utils.apply_modifications](vis.utils.utils.md#apply_modifications) for better results.
         seed_input: The input image for which activation map needs to be visualized.
         penultimate_layer_idx: The pre-layer to `layer_idx` whose feature maps should be used to compute gradients
             wrt filter output. If not provided, it is set to the nearest penultimate `Conv` or `Pooling` layer.
@@ -236,5 +242,4 @@ def visualize_cam(model, layer_idx, filter_indices,
     losses = [
         (ActivationMaximization(model.layers[layer_idx], filter_indices), -1)
     ]
-    
     return visualize_cam_with_losses(model.input, losses, seed_input, penultimate_layer, grad_modifier)

@@ -196,8 +196,8 @@ class Result():
 
         tp = self.df[['truth', 'prediction']]
         for truth in set(self.df['truth']):
-            true_positives = tp[lambda e: (e.truth == truth) &
-                                (e.prediction == truth)]
+            true_positives = tp[lambda e:
+                                (e.truth == truth) & (e.prediction == truth)]
             truths = tp[lambda e: e.truth == truth]
             positives = tp[lambda e: e.prediction == truth]
 
@@ -439,7 +439,7 @@ def export_csv(path='results.csv',
             f.write('\n')
 
 
-def select_result(force_reload=False):
+def select_result(force_reload=False, return_key=False):
     results = get_results(results_dir=cri.RESULTS_DIR,
                           force_reload=force_reload)
 
@@ -460,7 +460,11 @@ def select_result(force_reload=False):
     while True:
         try:
             index = int(input('Which of the results would you like to use? '))
-            return result_pairs[index][1]
+            result_pair = result_pairs[index]
+            if return_key:
+                return result_pair
+            else:
+                return result_pair[1]
         except (IndexError, ValueError):
             print('Invalid index')
             continue

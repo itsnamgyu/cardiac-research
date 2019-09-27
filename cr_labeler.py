@@ -4,12 +4,15 @@ import collections
 
 import numpy as np
 import matplotlib.pyplot as plt
-
-import cr_interface as cri
-import cr_analysis as cra
+from PIL import Image
 import scipy.misc
 import scipy.ndimage
 from sklearn import linear_model
+
+import cr_interface as cri
+import cr_analysis as cra
+from core import cam
+from core.fine_model import FineModel
 
 LABELS = [None, 'oap', 'in', 'obs']
 
@@ -24,8 +27,13 @@ DISPLAY_NAME = {
 }
 
 axes = []
+
+show_predictions = False
 predictions = None
 percentages = None  # { 'oap': '0.009' ... } Note: it's a string number
+
+show_cam = False  # class activation maps
+cam_fm: FineModel = None  # model used for CAM
 
 show_chart = False
 
@@ -64,7 +72,7 @@ def get_window_title():
 
 def update_plot():
     global metadata, results, predictions, percentages, image_collection
-    global index, last_index, current_label, show_chart, all_bars, all_texts
+    global index, last_index, current_label, show_chart, all_bars, all_texts, show_predictions
 
     def regress(values):
         # values: [ 0, 2, 1, 3 ]
@@ -85,12 +93,25 @@ def update_plot():
             path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
 
             axes.append(fig.add_subplot(4, 6, i + 1))
-
-            image = scipy.ndimage.imread(path)
             extent = (0, 10, 0, 10)
-            axes[i].imshow(image, cmap=plt.cm.gray, extent=extent)
 
-            if percentages:
+            image = plt.imread(path)
+
+            # Class activation maps
+            if show_cam:
+                # Convert to rgb image
+                image = np.stack((image, ) * 3, axis=-1)
+                # Resize
+                image = np.array(
+                    Image.fromarray(image).resize(cam_fm.get_output_shape()))
+                # Apply gradcam
+                image = cam.overlay_gradcam(cam_fm, image)
+                axes[i].imshow(image, extent=extent)
+            else:
+                # Display grayscale image
+                axes[i].imshow(image, cmap=plt.cm.gray, extent=extent)
+
+            if show_predictions:
                 patient_percentages = []
                 for label in LABELS[1:]:
                     patient_percentages.append(
@@ -130,7 +151,7 @@ def update_plot():
 
             axes[i].set_axis_off()
 
-    if percentages:
+    if show_predictions:
         weighted_averages = []
         for cr_code in patient[1]:
             avg = 0
@@ -147,7 +168,7 @@ def update_plot():
                 truth = 'in'
         truth = DISPLAY_NAME[truth]
         origin = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
-        if predictions:
+        if show_predictions:
             prediction = DISPLAY_NAME[predictions[cr_code]]
 
             label = '{} / {} (P)'.format(origin, prediction)
@@ -186,7 +207,7 @@ def update():
 
 
 def on_key_press(event):
-    global metadata, results, predictions, image_collection, index, last_index, current_label, show_chart
+    global metadata, results, predictions, image_collection, index, last_index, current_label, show_chart, show_predictions
     last_index = index
 
     if event.key == 'left':
@@ -234,7 +255,7 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, percentages, image_collection, LABELS
+    global metadata, results, predictions, percentages, image_collection, LABELS, show_cam, cam_fm, show_predictions
 
     metadata = cri.load_metadata()
     for p in metadata:
@@ -249,11 +270,20 @@ def main():
                         '--predictions',
                         help=description,
                         action='store_true')
+    description = 'Show class activation maps in prediction mode'
+    parser.add_argument('-C', '--cam', help=description, action='store_true')
     args = parser.parse_args()
 
-    if args.predictions:
-        result_dict = cra.select_result().data
+    show_cam = args.cam
+    show_predictions = args.predictions or args.cam
+
+    if show_predictions:
+        result_key, result = cra.select_result(return_key=True)
+        result_dict = result.data
+
         p = result_dict['predictions']
+        import json
+        print('Predictions: {}'.format(json.dumps(p, indent=4)))
 
         # hotfix
         if cri.is_tri_label_result(result_dict):
@@ -281,6 +311,19 @@ def main():
         for cr_code in metadata.keys():
             cr = cri.parse_cr_code(cr_code)
             image_collection[tuple(cr[:3])].append(cr_code)
+
+    if show_cam:
+        print('Loading model for CAM analysis')
+        try:
+            model_name, weight_key = result_key.split(os.sep)
+            print(
+                'Loading model {} with weight key {} for CAM analysis'.format(
+                    model_name, weight_key))
+            fm = FineModel.get_dict()[model_name]()
+            fm.load_weights(weight_key)
+        except Exception:
+            raise RuntimeError('Failed to load corresponding model weights')
+        cam_fm = fm
 
     image_collection = sorted(image_collection.items())
 

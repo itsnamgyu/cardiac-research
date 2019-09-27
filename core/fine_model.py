@@ -12,14 +12,28 @@ from keras import optimizers
 from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
 from keras.models import Sequential, Model
 from keras.preprocessing.image import ImageDataGenerator
+import numpy as np
 
 import core
 import cr_interface as cri
 import cr_analysis as cra
 import keras_apps as ka
 
-
 DEFAULT_POOLING = 'avg'
+
+
+def _get_prediction_index(percentages):
+    """
+    Utility function: get index of prediction from vector of prediction percentages.
+    """
+    max_p = 0
+    max_i = 0
+    for i, p in enumerate(percentages):
+        if p > max_p:
+            max_i = i
+            max_p = p
+    return max_i
+
 
 class FineModel(metaclass=abc.ABCMeta):
     """A fine-tunable model that provides the following features
@@ -376,6 +390,14 @@ class FineModel(metaclass=abc.ABCMeta):
 
         return result
 
+    def predict(self, image: np.ndarray):
+        """
+        Get prediction index for given image and classifier
+        """
+        prediction_percentages = self.get_model().predict(np.stack([image]))[0]
+        prediction_index = _get_prediction_index(prediction_percentages)
+        return prediction_index
+
     @classmethod
     def get_list(cls):
         """
@@ -671,12 +693,16 @@ class BaselineModel(FineModel):
     def _get_preprocess_func(self):
         return ka.imagenet_utils.preprocess_input
 
+
 class BaselineModelV1(BaselineModel):
     name = 'baselinemodelv1'
 
     def _load_base_model(self):
         model = Sequential()
-        model.add(Conv2D(32, (3, 3), input_shape=FineModel.get_input_shape(self.__class__.output_shape)))
+        model.add(
+            Conv2D(32, (3, 3),
+                   input_shape=FineModel.get_input_shape(
+                       self.__class__.output_shape)))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 

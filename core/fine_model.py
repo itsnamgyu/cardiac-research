@@ -89,7 +89,7 @@ class FineModel(metaclass=abc.ABCMeta):
 
     def _get_weight_path(self, key, directory, makedirs=True):
         if directory == None:
-            path = os.path.join(core.BASE_DIR, '.fine_model_weights')
+            path = cri.TRAINED_WEIGHTS_DIR
         else:
             path = directory
         path = os.path.join(path, type(self).name)
@@ -125,7 +125,7 @@ class FineModel(metaclass=abc.ABCMeta):
 
     def get_weight_keys(self, directory=None, makedirs=True):
         if directory is None:
-            path = os.path.join(core.BASE_DIR, '.fine_model_weights')
+            path = cri.TRAINED_WEIGHTS_DIR
         else:
             path = directory
         path = os.path.join(path, type(self).name)

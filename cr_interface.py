@@ -23,6 +23,7 @@ METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 
 OUTPUT_DIR = os.path.join(PROJECT_DIR, 'output')
 RESULTS_DIR = os.path.join(OUTPUT_DIR, 'results')
+TRAINED_WEIGHTS_DIR = os.path.join(OUTPUT_DIR, 'trained_weights')
 '''
 cr_metadata.json
 {

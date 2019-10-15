@@ -9,7 +9,7 @@ import shutil
 import pandas as pd
 
 import core
-from .utils import validate_exp_dir
+from . import utils
 
 HISTORY_DIR = 'cr_train_val_history'
 
@@ -18,7 +18,7 @@ def _get_history_dir(exp_dir=None):
     if exp_dir is None:
         exp_dir = '.'
 
-    validate_exp_dir(exp_dir)
+    utils.validate_exp_dir(exp_dir)
 
     return os.path.abspath(os.path.join(exp_dir, HISTORY_DIR))
 
@@ -64,13 +64,12 @@ def append_history(history, model_name, key, exp_dir=None):
     df.to_csv(path, index=False)
 
 
-def reset_history(model_name, key, exp_dir=None, force=False):
+def reset_history(model_name, key, exp_dir=None):
     """Reset history, mainly for use before append_history to prevent
     appending to an existing, complete history file.
     """
     path = _get_history_path(model_name, key, exp_dir)
-    if os.path.exists(path):
-        os.remove(path)
+    utils.remove_safe(path)
 
 
 def load_history(model_name, key, exp_dir=None):

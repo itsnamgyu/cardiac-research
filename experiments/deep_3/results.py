@@ -26,8 +26,7 @@ def parse_key(key):
     if parsed:
         params['epochs'] = parsed[4]
     else:
-        params['epochs'] = 100
-        fmt = 'EXP{:2d}_D{:2d}_L{:2d}_F{:2d}'
+        fmt = 'EXP{:d}_D{:2d}_L{:2d}_F{:2d}'  # hotfix for more digits
         parsed = parse.parse(fmt, key)
 
     params['exp'] = parsed[0]
@@ -45,13 +44,16 @@ def generate_test_result(fm: FineModel,
                          verbose=1,
                          workers=4,
                          use_multiprocessing=False,
-                         load_weights=True):
+                         load_weights=True,
+                         total_epochs=None):
     """
     Generates test results using all test images from db_index=1 (CAP TEST)
 
     If the weights are already loaded, set load_weight=False
     """
     params = parse_key(key)
+    if 'epochs' not in params:
+        params['epochs'] = total_epochs
     description = ''
 
     exp = params['exp']

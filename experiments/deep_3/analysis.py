@@ -160,20 +160,22 @@ def analyze_depth(fm,
     for i, ax in enumerate(axes):
         lr = lr_list[i]
         histories = list()
-        histories_by_lr[lr] = histories
         for k in range(K):
             fold_key = _fold_key.format(exp, depth_index, i, k)
             history = ch.load_history(model_name, fold_key)
-            histories.append(history)
-        name = 'Fold {} [{}D{}].eps'.format(metric.upper(), model_name,
-                                            depth_index)
-        path = os.path.join(DIR, name)
-        os.makedirs(DIR, exist_ok=True)
-        plot_average_by_fold(histories,
-                             title=verbose_model_name,
-                             metric=metric,
-                             ax=ax)
-    fig.savefig(path, format='eps', dpi=320, bbox_inches='tight')
+            if history is not None and not history.empty:
+                histories.append(history)
+        if len(histories):
+            histories_by_lr[lr] = histories
+            name = 'Fold {} [{}D{}].eps'.format(metric.upper(), model_name,
+                                                depth_index)
+            path = os.path.join(DIR, name)
+            os.makedirs(DIR, exist_ok=True)
+            plot_average_by_fold(histories,
+                                 title=verbose_model_name,
+                                 metric=metric,
+                                 ax=ax)
+            fig.savefig(path, format='eps', dpi=320, bbox_inches='tight')
 
     lr_ax = plot_average_by_lr(histories_by_lr, title=title, metric=metric)
     name = 'Average {} [{}D{}].eps'.format(metric.upper(), model_name,
@@ -205,7 +207,8 @@ def analyze_lr(fm,
     for k in range(K):
         fold_key = _fold_key.format(exp, depth_index, lr_index, k)
         history = ch.load_history(model_name, fold_key)
-        histories.append(history)
+        if history is not None and not history.empty:
+            histories.append(history)
     name = 'Fold {} [{}D{}@{:.1E}].eps'.format(metric.upper(), model_name,
                                                depth_index, lr_value)
     path = os.path.join(DIR, name)

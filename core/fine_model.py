@@ -1,25 +1,31 @@
 import abc
-from abc import abstractmethod
 import datetime
 import glob
 import os
 import shutil
-from typing import List
 import warnings
+from abc import abstractmethod
+from typing import List
 
 import keras
-from keras import optimizers
-from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
-from keras.models import Sequential, Model
-from keras.preprocessing.image import ImageDataGenerator
 import numpy as np
+from keras import optimizers
+from keras.layers import (Activation, Conv2D, Dense, Dropout, Flatten,
+                          GlobalAveragePooling2D, GlobalMaxPooling2D,
+                          MaxPooling2D)
+from keras.models import Model, Sequential
+from keras.preprocessing.image import ImageDataGenerator
+from tensorflow.contrib.model_pruning.python.pruning import get_weights
 
 import core
-import cr_interface as cri
 import cr_analysis as cra
+import cr_interface as cri
 import keras_apps as ka
 
+from . import paths, utils
+
 DEFAULT_POOLING = 'avg'
+TRAINED_WEIGHTS_DIR = 'cr_trained_weights'
 
 
 def _get_prediction_index(percentages):
@@ -87,58 +93,45 @@ class FineModel(metaclass=abc.ABCMeta):
         else:
             return image_size + (3, )
 
-    def _get_weight_path(self, key, directory, makedirs=True):
-        if directory == None:
-            path = cri.TRAINED_WEIGHTS_DIR
-        else:
-            path = directory
-        path = os.path.join(path, type(self).name)
-        if key:
-            path = os.path.join(path, key + '.hd5')
-        else:
-            path = os.path.join(path, 'default.hd5')
+    def get_weights_path(self, instance_key, exp_key=None):
+        """If `exp_key` is not specified, the current directory is considered
+        as the exp_dir.
+        """
+        if exp_key is None:
+            exp_key = paths.get_exp_key_from_dir('.')
+        return paths.get_weights_path(exp_key, self.get_name(), instance_key)
 
-        if makedirs:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        return path
-
-    def save_weights(self, key=None, directory=None, verbose=1):
+    def save_weights(self,
+                     instance_key,
+                     exp_key=None,
+                     makedirs=True,
+                     verbose=1):
         if self.model is None:
             warnings.warn('saving weights for unloaded model')
-        model = self.get_model()
-        path = self._get_weight_path(key, directory)
+        path = self.get_weights_path(instance_key, exp_key)
+        if makedirs:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         if verbose:
-            print('Saving weights to {}...'.format(path), end='')
+            print('Saving weights to {}...'.format(path))
+        model = self.get_model()
         model.save_weights(path)
         if verbose:
-            print('complete!')
+            print('Save weights complete')
 
-    def load_weights(self, key=None, directory=None, verbose=1):
+    def load_weights(self,
+                     instance_key,
+                     exp_key=None,
+                     makedirs=True,
+                     verbose=1):
         model = self.get_model()
-        path = self._get_weight_path(key, directory)
+        path = self.get_weights_path(instance_key, exp_key)
+        if makedirs:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         if verbose:
-            print('Loading weights from {}...'.format(path), end='')
+            print('Loading weights from {}...'.format(path))
         model.load_weights(path)
         if verbose:
-            print('complete!')
-
-    def get_weight_keys(self, directory=None, makedirs=True):
-        if directory is None:
-            path = cri.TRAINED_WEIGHTS_DIR
-        else:
-            path = directory
-        path = os.path.join(path, type(self).name)
-        paths = [
-            os.path.splitext(os.path.basename(d))[0]
-            for d in glob.glob(os.path.join(path, '*'))
-        ]
-        paths.sort()
-        return paths
-
-    def load_weights_by_index(self, index, directory=None):
-        key = self.get_weight_keys(directory)[index]
-        self.load_weights(key, directory)
+            print('Weights loaded')
 
     def compile_model(self, lr=1e-4, decay=1e-6, optimizer=None):
         if optimizer is None:
@@ -345,7 +338,8 @@ class FineModel(metaclass=abc.ABCMeta):
     def generate_test_result(self,
                              test_collection: cri.CrCollection,
                              verbose=1,
-                             save_to_key=None,
+                             save_to_instance_key=None,
+                             exp_key=None,
                              verbose_short_name=None,
                              params={},
                              use_multiprocessing=False,
@@ -354,7 +348,7 @@ class FineModel(metaclass=abc.ABCMeta):
         """
         Genereates a cra.Result based on predictions against test_collection.
 
-        When save_to_key is not None, the results are saved to
+        When save_to_instance_key is not None, the results are saved to
             <model_name>/<save_to_key>/cr_result.json
         
         You can explore these results via cra.select_result
@@ -385,8 +379,11 @@ class FineModel(metaclass=abc.ABCMeta):
         result = cra.Result.from_predictions(predictions, cr_codes, params,
                                              short_name, description)
 
-        if save_to_key:
-            result.to_json([self.get_name(), save_to_key])
+        if save_to_instance_key:
+            if exp_key is None:
+                # Used for scripts that are run within an experiment directory
+                exp_key = paths.get_exp_key_from_dir('.')
+            result.save(self.get_name(), save_to_instance_key, exp_key)
 
         return result
 

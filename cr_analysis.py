@@ -13,6 +13,7 @@ from sklearn.metrics import f1_score, roc_auc_score
 
 import cr_interface as cri
 from core import BASE_DIR
+from core import paths
 
 metadata = cri.load_metadata()
 
@@ -33,6 +34,7 @@ class Result():
 
     @staticmethod
     def _key_to_dir(key):
+        warnings.warn('Deprecated')
         if isinstance(key, str):
             dirname = key
         else:
@@ -46,18 +48,22 @@ class Result():
         return dirname
 
     @classmethod
-    def from_json(cls, key, basename='cr_result.json', full_path=False):
-        dirname = cls._key_to_dir(key)
+    def load(cls, model_key, instance_key, exp_key=None):
+        if not exp_key:
+            exp_key = paths.get_exp_key_from_dir('.')
+        path = paths.get_test_result_path(exp_key, model_key, instance_key)
+        return cls.load_from_path(path)
 
-        if full_path:
-            path = os.path.join(dirname, basename)
-        else:
-            path = os.path.join(cri.RESULTS_DIR, dirname)
-            path = os.path.join(path, basename)
+    def save(self, model_key, instance_key, exp_key=None):
+        if not exp_key:
+            exp_key = paths.get_exp_key_from_dir('.')
+        path = paths.get_test_result_path(exp_key, model_key, instance_key)
+        return self.save_to_path(path)
 
+    @classmethod
+    def load_from_path(cls, path):
         with open(path) as f:
             data = json.load(f)
-
         result = cls(data)
 
         # update legacy result files
@@ -69,6 +75,11 @@ class Result():
             result.to_json(key, basename, full_path, overwrite=True)
 
         return result
+
+    def save_to_path(self, path):
+        os.makedirs(os.path.dirname(path), exist_ok=True)
+        with open(path, 'w') as f:
+            json.dump(self.data, f)
 
     @staticmethod
     def select():
@@ -152,32 +163,6 @@ class Result():
         metrics['accuracy'] = self._get_accuracy()
         metrics['soft_accuracy'] = self._get_soft_accuracy()
         metrics.update(self.get_auc_f1())
-
-    def to_json(self,
-                key,
-                basename='cr_result.json',
-                full_path=None,
-                overwrite=False) -> None:
-        dirname = self._key_to_dir(key)
-
-        if full_path:
-            path = os.path.join(dirname, basename)
-        else:
-            path = os.path.join(cri.RESULTS_DIR, dirname)
-            path = os.path.join(path, basename)
-
-        try:
-            os.makedirs(os.path.dirname(path))
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                if not overwrite:
-                    warnings.warn('results directory already exists')
-                    print(e)
-            else:
-                raise e
-
-        with open(path, 'w') as f:
-            json.dump(self.data, f)
 
     def get_accuracy(self):
         return self.data['metrics']['accuracy']

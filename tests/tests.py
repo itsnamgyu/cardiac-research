@@ -53,7 +53,7 @@ class IoTest(unittest.TestCase):
 
         result = cra.Result.from_predictions(predictions,
                                              cr_codes,
-                                             params=dict(),
+                                             params=dict(lr=1e-4, epochs=1),
                                              short_name='test')
         result.save(model_key=fm.get_key(),
                     instance_key='test',
@@ -83,10 +83,7 @@ class IoTest(unittest.TestCase):
         epochs = 1
         fm = self.__class__.fm
         generator = self.__class__.generator
-
-        history = ch.load_history(model_key=fm.get_key(),
-                                  instance_key='test',
-                                  exp_key='test')
+        history = pd.DataFrame(self.__class__.fit_output.history)
 
         # Generate more history
         fm.compile_model()
@@ -94,7 +91,7 @@ class IoTest(unittest.TestCase):
             generator, epochs=epochs, steps_per_epoch=len(generator))
         new_history = pd.DataFrame(new_output.history)
 
-        # Append & load history
+        # Save, apppend & load history
         ch.save_history(history,
                         model_key=fm.get_key(),
                         instance_key='test',

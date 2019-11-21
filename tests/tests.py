@@ -55,10 +55,10 @@ class IoTest(unittest.TestCase):
                                              cr_codes,
                                              params=dict(),
                                              short_name='test')
-        result.save(model_key=fm.get_name(),
+        result.save(model_key=fm.get_key(),
                     instance_key='test',
                     exp_key='test')
-        loaded_result = cra.Result.load(model_key=fm.get_name(),
+        loaded_result = cra.Result.load(model_key=fm.get_key(),
                                         instance_key='test',
                                         exp_key='test')
         self.assertTrue(result.df.equals(loaded_result.df))
@@ -68,10 +68,10 @@ class IoTest(unittest.TestCase):
         history = pd.DataFrame(self.__class__.fit_output.history)
 
         ch.save_history(history,
-                        model_key=fm.get_name(),
+                        model_key=fm.get_key(),
                         instance_key='test',
                         exp_key='test')
-        loaded_history = ch.load_history(model_key=fm.get_name(),
+        loaded_history = ch.load_history(model_key=fm.get_key(),
                                          instance_key='test',
                                          exp_key='test')
         self.assertEqual(len(history), self.__class__.INITIAL_EPOCHS)
@@ -84,7 +84,7 @@ class IoTest(unittest.TestCase):
         fm = self.__class__.fm
         generator = self.__class__.generator
 
-        history = ch.load_history(model_key=fm.get_name(),
+        history = ch.load_history(model_key=fm.get_key(),
                                   instance_key='test',
                                   exp_key='test')
 
@@ -96,14 +96,14 @@ class IoTest(unittest.TestCase):
 
         # Append & load history
         ch.save_history(history,
-                        model_key=fm.get_name(),
+                        model_key=fm.get_key(),
                         instance_key='test',
                         exp_key='test')
         ch.append_history(new_history,
-                          model_key=fm.get_name(),
+                          model_key=fm.get_key(),
                           instance_key='test',
                           exp_key='test')
-        appended = ch.load_history(model_key=fm.get_name(),
+        appended = ch.load_history(model_key=fm.get_key(),
                                    instance_key='test',
                                    exp_key='test')
 
@@ -121,15 +121,15 @@ class IoTest(unittest.TestCase):
         fm = self.__class__.fm
 
         ch.save_history(history,
-                        fm.get_name(),
+                        fm.get_key(),
                         instance_key='test',
                         exp_key='test')
-        loaded_history = ch.load_history(fm.get_name(),
+        loaded_history = ch.load_history(fm.get_key(),
                                          instance_key='test',
                                          exp_key='test')
 
-        ch.reset_history(fm.get_name(), instance_key='test', exp_key='test')
-        reloaded_history = ch.load_history(fm.get_name(),
+        ch.reset_history(fm.get_key(), instance_key='test', exp_key='test')
+        reloaded_history = ch.load_history(fm.get_key(),
                                            instance_key='test',
                                            exp_key='test')
 

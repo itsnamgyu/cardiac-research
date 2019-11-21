@@ -59,7 +59,7 @@ class FineModel(metaclass=abc.ABCMeta):
     """
 
     description = 'Default fine model'
-    name = 'DefaultFineModel'
+    name = 'default_finemodel'
     depths = []
     output_shape = (224, 224)
 
@@ -94,12 +94,7 @@ class FineModel(metaclass=abc.ABCMeta):
             return image_size + (3, )
 
     def get_weights_path(self, instance_key, exp_key=None):
-        """If `exp_key` is not specified, the current directory is considered
-        as the exp_dir.
-        """
-        if exp_key is None:
-            exp_key = paths.get_exp_key_from_dir('.')
-        return paths.get_weights_path(exp_key, self.get_name(), instance_key)
+        return paths.get_weights_path(exp_key, self.get_key(), instance_key)
 
     def save_weights(self,
                      instance_key,
@@ -171,7 +166,7 @@ class FineModel(metaclass=abc.ABCMeta):
             self._load_model()
         return self.model
 
-    def get_name(self):
+    def get_key(self):
         return self.__class__.name
 
     def get_output_shape(self):
@@ -349,7 +344,7 @@ class FineModel(metaclass=abc.ABCMeta):
         Genereates a cra.Result based on predictions against test_collection.
 
         When save_to_instance_key is not None, the results are saved to
-            <model_name>/<save_to_key>/cr_result.json
+            <model_key>/<save_to_instance_key>/cr_result.json
         
         You can explore these results via cra.select_result
         """
@@ -358,7 +353,7 @@ class FineModel(metaclass=abc.ABCMeta):
         test_gen.reset()
         if (verbose):
             print('Generating predictions for {}'.format(
-                self.get_name()).center(80, '-'))
+                self.get_key()).center(80, '-'))
         predictions = model.predict_generator(
             test_gen,
             steps=len(test_gen),
@@ -369,7 +364,7 @@ class FineModel(metaclass=abc.ABCMeta):
         cr_codes = cri.extract_cr_codes(filenames)
 
         if verbose_short_name is None:
-            short_name = self.get_name()
+            short_name = self.get_key()
             dt = datetime.datetime.now()
             short_name += ' analyzed on {}'.format(
                 dt.strftime("%Y-%m-%d %H:%M:%S"))
@@ -378,12 +373,8 @@ class FineModel(metaclass=abc.ABCMeta):
 
         result = cra.Result.from_predictions(predictions, cr_codes, params,
                                              short_name, description)
-
         if save_to_instance_key:
-            if exp_key is None:
-                # Used for scripts that are run within an experiment directory
-                exp_key = paths.get_exp_key_from_dir('.')
-            result.save(self.get_name(), save_to_instance_key, exp_key)
+            result.save(self.get_key(), save_to_instance_key, exp_key)
 
         return result
 
@@ -464,7 +455,7 @@ class FineMobileNet(FineModel):
 
 class FineMobileNetV2(FineModel):
     description = 'Custom fine model'
-    name = 'mobilenetv2'
+    name = 'mobilenet_v2'
     output_shape = (224, 224)
 
     def _load_base_model(self):
@@ -570,7 +561,7 @@ class FineInceptionResNetV2(FineModel):
 
 class FineDenseNet121(FineModel):
     description = 'Custom fine model'
-    name = 'densenet121'
+    name = 'densenet_121'
     output_shape = (224, 224)
     depths = [428, 309, 137, 49, 7, 1, 0]
 
@@ -623,7 +614,7 @@ class FineNASNetLarge(FineModel):
 
 class FineResNet50V2(FineModel):
     description = 'Custom fine model'
-    name = 'resnet50v2'
+    name = 'resnet50_v2'
     output_shape = (224, 224)
     depths = [191, 142, 74, 28, 5, 1, 0]
 
@@ -641,7 +632,7 @@ class FineResNet50V2(FineModel):
 
 class FineMobileNetA25(FineModel):
     description = 'Custom fine model'
-    name = 'mobileneta25'
+    name = 'mobilenet_a25'
     output_shape = (224, 224)
     depths = [88, 74, 37, 24, 11, 1, 0]
 
@@ -660,7 +651,7 @@ class FineMobileNetA25(FineModel):
 
 class FineMobileNetV2A35(FineModel):
     description = 'Custom fine model'
-    name = 'mobilenetv2a35'
+    name = 'mobilenet_v2_a35'
     output_shape = (224, 224)
     depths = [156, 117, 55, 28, 10, 1, 0]
 
@@ -679,7 +670,7 @@ class FineMobileNetV2A35(FineModel):
 
 class BaselineModel(FineModel):
     description = 'Baseline CNN model'
-    name = 'GenericBaselineModel'
+    name = 'generic_baseline_model'
     output_shape = (224, 224)
     depths = [0]  # no layerwise fine-tuning
 
@@ -692,7 +683,7 @@ class BaselineModel(FineModel):
 
 
 class BaselineModelV1(BaselineModel):
-    name = 'baselinemodelv1'
+    name = 'baseline_model_v1'
 
     def _load_base_model(self):
         model = Sequential()

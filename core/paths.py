@@ -10,7 +10,7 @@ experiments/deep3/output/mobilenetv2/D00_L00_E000
 This output directory is comprised of three parts:
 - Experiment key:   deep3
 - Model key:        mobilenetv2
-- Instance key:         D00_L00_E000
+- Instance key:     D00_L00_E000
 
 These keys form a single output key dict:
 {
@@ -70,6 +70,11 @@ def get_exp_key_from_dir(exp_dir=None):
 
 
 def get_instance_path(exp_key, model_key, instance_key):
+    """If exp_key is not specified, assume that the current directory
+    is an experiment directory and infer the exp_key from the directory
+    """
+    if exp_key is None:
+        exp_key = get_exp_key_from_dir()
     return os.path.join(EXP_BASE_DIR, exp_key, OUTPUT_DIR, model_key,
                         instance_key)
 

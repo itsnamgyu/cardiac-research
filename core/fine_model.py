@@ -76,22 +76,11 @@ class FineModel(metaclass=abc.ABCMeta):
         self.base_layer = None
         self.pooling = DEFAULT_POOLING
 
-    @staticmethod
-    def get_input_shape(image_size):
-        """
-        Deprecated: saved as member variable
-
-        Get input shape of conv-nets based on keras backend settings
-
-        Returns
-        tuple(n1, n2, n3)
-        """
-        warnings.warn('deprecated', DeprecationWarning)
-
+        output_shape = self.__class__.output_shape
         if keras.backend.image_data_format() == 'channels_first':
-            return (3, ) + image_size
+            self.input_shape = (3, ) + output_shape
         else:
-            return image_size + (3, )
+            self.input_shape = output_shape + (3, )
 
     def get_weights_path(self, instance_key, exp_key=None):
         return paths.get_weights_path(exp_key, self.get_key(), instance_key)
@@ -428,8 +417,7 @@ class FineXception(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.xception.preprocess_input
@@ -446,8 +434,7 @@ class FineMobileNet(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.mobilenet.preprocess_input
@@ -463,8 +450,7 @@ class FineMobileNetV2(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.mobilenetv2.preprocess_input
@@ -477,12 +463,10 @@ class FineVGG16(FineModel):
     depths = [20, 15, 11, 7, 4, 0]
 
     def _load_base_model(self):
-        return keras.applications.vgg16.VGG16(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return keras.applications.vgg16.VGG16(include_top=False,
+                                              pooling=self.pooling,
+                                              weights='imagenet',
+                                              input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.vgg16.preprocess_input
@@ -494,12 +478,10 @@ class FineVGG19(FineModel):
     output_shape = (224, 224)
 
     def _load_base_model(self):
-        return keras.applications.vgg19.VGG19(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return keras.applications.vgg19.VGG19(include_top=False,
+                                              pooling=self.pooling,
+                                              weights='imagenet',
+                                              input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.vgg19.preprocess_input
@@ -516,8 +498,7 @@ class FineResNet50(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.resnet50.preprocess_input
@@ -534,8 +515,7 @@ class FineInceptionV3(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.inception_v3.preprocess_input
@@ -552,8 +532,7 @@ class FineInceptionResNetV2(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.inception_resnet_v2.preprocess_input
@@ -570,8 +549,7 @@ class FineDenseNet121(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.densenet.preprocess_input
@@ -588,8 +566,7 @@ class FineNASNetMobile(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.nasnet.preprocess_input
@@ -605,8 +582,7 @@ class FineNASNetLarge(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.nasnet.preprocess_input
@@ -619,12 +595,10 @@ class FineResNet50V2(FineModel):
     depths = [191, 142, 74, 28, 5, 1, 0]
 
     def _load_base_model(self):
-        return ka.resnet_v2.ResNet50V2(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.resnet_v2.ResNet50V2(include_top=False,
+                                       pooling=self.pooling,
+                                       weights='imagenet',
+                                       input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.resnet_v2.preprocess_input
@@ -637,13 +611,11 @@ class FineMobileNetA25(FineModel):
     depths = [88, 74, 37, 24, 11, 1, 0]
 
     def _load_base_model(self):
-        return ka.mobilenet.MobileNet(
-            alpha=0.25,
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.mobilenet.MobileNet(alpha=0.25,
+                                      include_top=False,
+                                      pooling=self.pooling,
+                                      weights='imagenet',
+                                      input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.mobilenet.preprocess_input
@@ -656,13 +628,11 @@ class FineMobileNetV2A35(FineModel):
     depths = [156, 117, 55, 28, 10, 1, 0]
 
     def _load_base_model(self):
-        return ka.mobilenet_v2.MobileNetV2(
-            alpha=0.35,
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.mobilenet_v2.MobileNetV2(alpha=0.35,
+                                           include_top=False,
+                                           pooling=self.pooling,
+                                           weights='imagenet',
+                                           input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.mobilenet_v2.preprocess_input
@@ -687,10 +657,7 @@ class BaselineModelV1(BaselineModel):
 
     def _load_base_model(self):
         model = Sequential()
-        model.add(
-            Conv2D(32, (3, 3),
-                   input_shape=FineModel.get_input_shape(
-                       self.__class__.output_shape)))
+        model.add(Conv2D(32, (3, 3), input_shape=self.input_shape))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 

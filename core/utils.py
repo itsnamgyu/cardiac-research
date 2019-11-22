@@ -1,5 +1,4 @@
 import os
-import warnings
 import datetime
 
 EXP_DIR_TOKEN = '.cr_exp_token'
@@ -31,7 +30,7 @@ def validate_exp_dir(exp_dir):
         raise Exception(message)
 
 
-def remove_safe(path):
+def remove_safe(path, verbose=0):
     """
     Use this method when you want to safely remove a file. This effectively
     makes a backup of the file and notifies the user, if it exists.
@@ -40,4 +39,5 @@ def remove_safe(path):
     if os.path.exists(abspath):
         backup_path = abspath + '.' + get_current_time_key() + '.bak'
         os.rename(abspath, backup_path)
-        warnings.warn('Backing up "{}" as "{}"'.format(abspath, backup_path))
+        if verbose:
+            print('Backing up "{}" as "{}"'.format(abspath, backup_path))

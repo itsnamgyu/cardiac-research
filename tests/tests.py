@@ -18,7 +18,7 @@ class IoTest(unittest.TestCase):
             frac=0.05).tri_label().labeled()
         cls.images = cls.collection.load_images(
             target_size=cls.fm.get_output_shape(), stack=True)
-        cls.generator = cls.fm.get_test_generator(cr_collection=cls.collection,
+        cls.generator = cls.fm.get_test_generator(cls.collection,
                                                   parent_dir='temp_images',
                                                   batch_size=16,
                                                   shuffle=False,

@@ -1,6 +1,5 @@
 import abc
 import datetime
-import glob
 import os
 import shutil
 import warnings
@@ -9,20 +8,19 @@ from typing import List
 
 import keras
 import numpy as np
+import pandas as pd
 from keras import optimizers
 from keras.layers import (Activation, Conv2D, Dense, Dropout, Flatten,
                           GlobalAveragePooling2D, GlobalMaxPooling2D,
                           MaxPooling2D)
 from keras.models import Model, Sequential
 from keras.preprocessing.image import ImageDataGenerator
-from tensorflow.contrib.model_pruning.python.pruning import get_weights
 
-import core
 import cr_analysis as cra
 import cr_interface as cri
 import keras_apps as ka
 
-from . import paths, utils
+from . import paths
 
 DEFAULT_POOLING = 'avg'
 TRAINED_WEIGHTS_DIR = 'cr_trained_weights'
@@ -183,19 +181,67 @@ class FineModel(metaclass=abc.ABCMeta):
     def set_depth(self, index=None):
         if self.model is None:
             self._load_model()
-
         if index is None:
             index = -1
-
         for layer in self.model.layers:
             layer.trainable = True
-
         for layer in self.model.layers[:self.get_depths()[index]]:
             layer.trainable = False
 
+    def get_directory_iterator(self,
+                               dataset: cri.CrCollection,
+                               subdirectory,
+                               augment=False,
+                               augment_factor=1,
+                               shuffle=False,
+                               batch_size=None,
+                               parent_dir='temp_images',
+                               verbose=1,
+                               title=None):
+        """
+        Get iterator for the dataset, compatible with this (self) model.
+        Calling this function with the same subdirectory will invalidate the iterator
+        returned from the previous call, as they are dependant on the directory
+        structure.
+        """
+        if verbose:
+            if title is None:
+                title = subdirectory
+            print('Loading image generator for {}'.format(title).center(
+                80, '-'))
+
+        gen = self.get_image_data_generator(augment=augment)
+        path = os.path.join(parent_dir, subdirectory)
+
+        # Refresh directories
+        os.makedirs(path, exist_ok=True)
+        shutil.rmtree(path)
+        os.makedirs(path, exist_ok=True)
+
+        if not augment and augment_factor != 1:
+            warnings.warn(
+                'Augment is False and augment_factor != 1. Reseting factor to 1'
+            )
+            augment_factor = 1
+
+        dataset.export_by_label(path, balancing=augment_factor)
+
+        params = dict()
+        if (batch_size):
+            params['batch_size'] = batch_size
+
+        image_gen = gen.flow_from_directory(
+            path,
+            target_size=self.get_output_shape(),
+            class_mode='categorical',
+            shuffle=shuffle,
+            **params)
+
+        return image_gen
+
     def get_test_generator(
             self,
-            cr_collection: cri.CrCollection,
+            dataset: cri.CrCollection,
             augment=False,
             augment_factor=1,
             shuffle=False,
@@ -203,43 +249,15 @@ class FineModel(metaclass=abc.ABCMeta):
             parent_dir='temp_images',
             verbose=1,
     ):
-        """
-        Get ImageDataGenerator for the test data, compatible with the given model.
-        Note that subsequent calls to this method will invalidate the generator
-        returned from previous calls, as these generators depend on images files being
-        in a specific directory.
-        """
-        if (verbose):
-            print('Loading test image generator'.center(80, '-'))
-
-        gen = self.get_image_data_generator(augment=augment)
-        path = os.path.join(parent_dir, 'test')
-        # refresh directories
-        os.makedirs(path, exist_ok=True)
-        shutil.rmtree(path)
-        os.makedirs(path, exist_ok=True)
-
-        if (augment and augment_factor != 1):
-            warnings.warn(
-                'Augment is True and augment_factor != 1. Reseting factor to 1'
-            )
-            augment_factor = 1
-
-        cr_collection.export_by_label(path, balancing=augment_factor)
-
-        params = dict()
-        if (batch_size):
-            params['batch_size'] = batch_size
-
-        test_gen = gen.flow_from_directory(path,
-                                           target_size=self.get_output_shape(),
-                                           class_mode='categorical',
+        return self.get_directory_iterator(dataset,
+                                           'test',
+                                           augment=augment,
+                                           augment_factor=augment_factor,
                                            shuffle=shuffle,
-                                           **params)
-
-        assert (cr_collection.df.shape[0] == test_gen.n)
-
-        return test_gen
+                                           batch_size=batch_size,
+                                           parent_dir=parent_dir,
+                                           verbose=verbose,
+                                           title='test dataset')
 
     def reset_test_images(self, parent_dir='temp_images'):
         path = os.path.join(parent_dir, 'test')
@@ -262,60 +280,53 @@ class FineModel(metaclass=abc.ABCMeta):
 
         Train/validation images are BOTH BALANCED AND AUGMENTED
 
-        :return: 
+        :return:
         tuple(train_gens, val_gens)
 
         train_gens: list of ImageDataGenerators for the train data in each fold
         val_gens: list of ImageDataGenerators for the validation data in each fold
         """
-        print('Loading Train/Val ImageDataGenerators'.center(80, '-'))
-
-        aug_gen = self.get_image_data_generator(augment=True)
+        print('Loading train/validation ImageDataGenerators'.center(80, '-'))
 
         val_gens = []
         train_gens = []
 
         for i in range(len(folds)):
-            val_dir = os.path.join(parent_dir, 'val_fold_{}'.format(i))
-            train_dir = os.path.join(parent_dir, 'train_fold_{}'.format(i))
-
-            # refresh directories
-            os.makedirs(val_dir, exist_ok=True)
-            os.makedirs(train_dir, exist_ok=True)
-            shutil.rmtree(val_dir)
-            shutil.rmtree(train_dir)
-            os.makedirs(val_dir, exist_ok=True)
-            os.makedirs(train_dir, exist_ok=True)
-
-            fold: cri.CrCollection
-            for j, fold in enumerate(folds):
-                if i == j:
-                    # export validation data for fold i
-                    fold.export_by_label(val_dir, balancing=augment_factor)
-                else:
-                    # export train data for fold i
-                    fold.export_by_label(train_dir, balancing=augment_factor)
-
-            params = dict()
-            if (batch_size):
-                params['batch_size'] = batch_size
-
-            train_gens.append(
-                aug_gen.flow_from_directory(
-                    train_dir,
-                    target_size=self.get_output_shape(),
-                    class_mode='categorical',
-                    **params))
+            val_dataset = folds[i]
+            val_dir = 'val_fold_{}'.format(i)
+            val_title = 'validation fold #{}'.format(i)
             val_gens.append(
-                aug_gen.flow_from_directory(
-                    val_dir,
-                    target_size=self.get_output_shape(),
-                    class_mode='categorical',
-                    **params))
+                self.get_directory_iterator(val_dataset,
+                                            val_dir,
+                                            augment=True,
+                                            augment_factor=augment_factor,
+                                            shuffle=shuffle,
+                                            batch_size=batch_size,
+                                            parent_dir=parent_dir,
+                                            verbose=verbose,
+                                            title=val_title))
 
-            print(
-                'Fold {}: {:<4} train images / {:<4} validation images'.format(
-                    i + 1, train_gens[-1].n, val_gens[-1].n))
+            train_folds = folds[:i] + folds[i + 1:]
+            train_fold_pds = map(lambda collection: collection.df, train_folds)
+            assert (len(train_folds) == len(folds) - 1)
+            train_dataset = cri.CrCollection(
+                pd.concat(train_fold_pds, copy=True))
+            train_dir = 'train_fold_{}'.format(i)
+            train_title = 'training fold #{}'.format(i)
+            train_gens.append(
+                self.get_directory_iterator(train_dataset,
+                                            train_dir,
+                                            augment=True,
+                                            augment_factor=augment_factor,
+                                            shuffle=shuffle,
+                                            batch_size=batch_size,
+                                            parent_dir=parent_dir,
+                                            verbose=verbose,
+                                            title=train_title))
+
+            if verbose:
+                print('Fold {}: {:<4} train images / {:<4} validation images'.
+                      format(i + 1, train_gens[-1].n, val_gens[-1].n))
 
         return train_gens, val_gens
 
@@ -325,10 +336,10 @@ class FineModel(metaclass=abc.ABCMeta):
                              save_to_instance_key=None,
                              exp_key=None,
                              verbose_short_name=None,
-                             params={},
-                             use_multiprocessing=False,
+                             description='',
                              workers=4,
-                             description=''):
+                             use_multiprocessing=False,
+                             params=None):
         """
         Genereates a cra.Result based on predictions against test_collection.
 
@@ -346,25 +357,25 @@ class FineModel(metaclass=abc.ABCMeta):
         predictions = model.predict_generator(
             test_gen,
             steps=len(test_gen),
-            use_multiprocessing=use_multiprocessing,
             workers=workers,
+            use_multiprocessing=use_multiprocessing,
             verbose=1)
-        filenames = test_gen.filenames
-        cr_codes = cri.extract_cr_codes(filenames)
+
+        cr_codes = cri.extract_cr_codes(test_gen.filenames)
 
         if verbose_short_name is None:
             short_name = self.get_key()
-            dt = datetime.datetime.now()
             short_name += ' analyzed on {}'.format(
-                dt.strftime("%Y-%m-%d %H:%M:%S"))
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         else:
             short_name = verbose_short_name
 
+        if params is None:
+            params = dict()
         result = cra.Result.from_predictions(predictions, cr_codes, params,
                                              short_name, description)
         if save_to_instance_key:
             result.save(self.get_key(), save_to_instance_key, exp_key)
-
         return result
 
     def predict(self, image: np.ndarray):
@@ -644,9 +655,13 @@ class BaselineModel(FineModel):
     output_shape = (224, 224)
     depths = [0]  # no layerwise fine-tuning
 
-    def set_depth(self, *args, **kwargs):
+    @abstractmethod
+    def _load_base_model(self):
+        raise NotImplementedError()
+
+    def set_depth(self, index=None):
         warnings.warn('You should not call set_depth() on BaselineModels')
-        return super(BaselineModel, self).set_depth(*args, **kwargs)
+        return super(BaselineModel, self).set_depth(index=index)
 
     def _get_preprocess_func(self):
         return ka.imagenet_utils.preprocess_input

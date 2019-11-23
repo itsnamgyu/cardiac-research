@@ -79,7 +79,7 @@ class Result():
     def save_to_path(self, path):
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
-            json.dump(self.data, f)
+            json.dump(self.data, f, indent=4)
 
     @staticmethod
     def select():

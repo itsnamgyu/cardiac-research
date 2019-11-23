@@ -38,14 +38,14 @@ def run(fm: FineModel,
         workers=MULTIPROCESSING_WORKERS):
     """
     Train model and evalute results. Output files are saved to
-    `output/<model_key>/D0_FINAL/`. These include:
+    `output/<model_key>/D00_FINAL/`. These include:
 
     - Intemediate model weights
     - Final model weights
     - Test set result
     - Training history
     """
-    instance_key = 'D0_FINAL'
+    instance_key = 'D00_FINAL'
     _epoch_key = instance_key + "_E{:03}"
 
     fm.set_depth(0)

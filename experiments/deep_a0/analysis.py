@@ -157,8 +157,8 @@ def analyze_depth(fm,
     axes = axes.flatten()
     histories_by_lr = dict()
     output_dir = os.path.join(
-        FIGURE_DIR, '{model}_D{depth}'.format(model=fm.get_key(),
-                                              depth=depth_index))
+        FIGURE_DIR, '{model}_D{depth:02d}'.format(model=fm.get_key(),
+                                                  depth=depth_index))
     os.makedirs(output_dir, exist_ok=True)
     for i, ax in enumerate(axes):
         lr = lr_list[i]
@@ -212,8 +212,8 @@ def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value,
         if history is not None and not history.empty:
             histories.append(history)
     output_dir = os.path.join(
-        FIGURE_DIR, '{model}_D{depth}'.format(model=fm.get_key(),
-                                              depth=depth_index))
+        FIGURE_DIR, '{model}_D{depth:02d}'.format(model=fm.get_key(),
+                                                  depth=depth_index))
     os.makedirs(output_dir, exist_ok=True)
     name = 'Fold {} [LR={:.1E}].eps'.format(metric.upper(), lr_value)
     path = os.path.join(output_dir, name)

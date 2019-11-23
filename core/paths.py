@@ -29,7 +29,7 @@ OUTPUT_DIR = 'output'  # relative to EXP_DIR
 
 WEIGHTS_BASENAME = 'trained_weights.hd5'
 TEST_RESULT_BASENAME = 'test_result.json'
-HISTORY_BASENAME = 'train_val_history.json'
+HISTORY_BASENAME = 'train_val_history.csv'
 
 
 def get_exp_keys():

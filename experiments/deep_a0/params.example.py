@@ -12,10 +12,11 @@ T = 10
 # multiplier for out_of_myocardial (OAP, OBS) slices
 BALANCE = 5
 LEARNING_RATES = [0.01, 0.001, 0.0001]
-EPOCHS = 5
+EPOCHS = 50
 # Fraction of dataset to use during train/validation. Set to 0.05-0.10 for sanity
 # checking. Set to None to use entire dataset.
-SAMPLE = 0.05
+SAMPLE = None
+# SAMPLE = 0.05
 # seed for k-fold split
 K_SPLIT_SEED = 1
 # models to train

@@ -22,6 +22,7 @@ These keys form a single output key dict:
 import glob
 import os
 import warnings
+import json
 
 PROJECT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 EXP_BASE_DIR = os.path.join(PROJECT_DIR, 'experiments')
@@ -36,8 +37,10 @@ def get_exp_keys():
     return get_subdirectory_basenames(EXP_BASE_DIR)
 
 
-def get_subdirectory_basenames(parent):
+def get_subdirectory_basenames(parent, only_directory=True):
     children = glob.glob(os.path.join(parent, '*'))
+    if only_directory:
+        children = filter(os.path.isdir, children)
     basenames = [os.path.relpath(c, parent) for c in children]
     return basenames
 
@@ -48,8 +51,8 @@ def get_model_keys(exp_key):
 
 
 def get_instance_keys(exp_key, model_key):
-    model_dir = os.path.join(EXP_BASE_DIR, exp_key, model_key)
-    return get_subdirectory_basenames(instance_keys)
+    model_dir = os.path.join(EXP_BASE_DIR, exp_key, OUTPUT_DIR, model_key)
+    return get_subdirectory_basenames(model_dir)
 
 
 def get_exp_key_from_dir(exp_dir=None):
@@ -103,8 +106,9 @@ def get_output_tree():
     experiments = dict()
     for exp_key in get_exp_keys():
         models = dict()
-        for model_key in get_model_keys():
-            instances = get_instance_keys()
+        print(get_model_keys(exp_key))
+        for model_key in get_model_keys(exp_key):
+            instances = get_instance_keys(exp_key, model_key)
             if instances:
                 models[model_key] = instances
         if len(models.values()):
@@ -115,14 +119,21 @@ def get_output_tree():
 def main():
     """Manual unit tests
     """
-    print('Experiment keys:')
+
+    print('Experiment Keys'.center(80, '-'))
     keys = get_exp_keys()
     print(keys)
 
+    print()
+    print('get_exp_from_dir Test'.center(80, '-'))
     test_key = keys[0]
     test_experiment_dir = os.path.join(EXP_BASE_DIR, test_key)
     print('Reverse key search match: {}'.format(
         test_key == get_exp_key_from_dir(test_experiment_dir)))
+
+    print()
+    print('Output Tree'.center(80, '-'))
+    print(json.dumps(get_output_tree(), indent=4))
 
 
 if __name__ == '__main__':

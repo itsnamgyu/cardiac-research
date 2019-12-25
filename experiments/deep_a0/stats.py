@@ -1,10 +1,13 @@
 import pandas as pd
-from params import *
+import cr_interface as cri
 from cr_interface import CrCollection
+
+from params import *
 
 
 def print_collection_stats(collection: CrCollection, title='Dataset'):
     df = collection.df
+    print('{} Stats'.format(title).center(80, '-'))
     print('{:<3} patients / {:<4} images'.format(df.pid.unique().shape[0],
                                                  df.shape[0]))
     print(df.label.value_counts().to_string())
@@ -48,3 +51,12 @@ def print_fold_stats(folds):
                 print('{:<16s}'.format(''), end='')
         print()
     print()
+
+
+if __name__ == '__main__':
+    train = cri.CrCollection.load().filter_by(
+        dataset_index=0).tri_label().labeled()
+    print_collection_stats(train, title="Train Set")
+    test = cri.CrCollection.load().filter_by(
+        dataset_index=1).tri_label().labeled()
+    print_collection_stats(test, title="Test Set")

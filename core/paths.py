@@ -103,10 +103,18 @@ def test_result_exists(exp_key, model_key, instance_key):
 
 
 def get_output_tree():
+    """{
+        exp_key: {
+            model_key: [
+                instance_key_0,
+                instance_key_1,
+            ]
+        }
+    }
+    """
     experiments = dict()
     for exp_key in get_exp_keys():
         models = dict()
-        print(get_model_keys(exp_key))
         for model_key in get_model_keys(exp_key):
             instances = get_instance_keys(exp_key, model_key)
             if instances:
@@ -114,6 +122,36 @@ def get_output_tree():
         if len(models.values()):
             experiments[exp_key] = models
     return experiments
+
+
+def select_output(condition=None) -> (str, str, str):
+    """Interactive
+    """
+    print(' Select Output '.center(80, '-'))
+    print('{:>3}   {:<20} {:<20} {:<20}'.format('IDX', 'EXP', 'MODEL',
+                                                'INSTANCE'))
+    fmt = '{:>3}   {:<20} {:<20} {:<20}'
+    keys = []
+    for e, models in get_output_tree().items():
+        for m, instances in models.items():
+            for i in instances:
+                if not condition or condition(e, m, i):
+                    print(fmt.format(len(keys), e, m, i))
+                    keys.append((e, m, i))
+    print('-' * 80)
+    while True:
+        choice = input('Enter selection (q to cancel): ')
+        if choice.lower() == 'q':
+            print('Quitting')
+            return
+        try:
+            choice = int(choice)
+            key = keys[choice]
+            break
+        except (ValueError, IndexError):
+            print('Please enter a valid index')
+
+    return key
 
 
 def main():

@@ -16,14 +16,13 @@ from keras.layers import (Activation, Conv2D, Dense, Dropout, Flatten,
 from keras.models import Model, Sequential
 from keras.preprocessing.image import ImageDataGenerator
 
-import cr_analysis as cra
 import cr_interface as cri
 import keras_apps as ka
 
-from . import paths
+from core import paths
+from core.result import Result
 
 DEFAULT_POOLING = 'avg'
-TRAINED_WEIGHTS_DIR = 'cr_trained_weights'
 
 
 def _get_prediction_index(percentages):
@@ -339,14 +338,12 @@ class FineModel(metaclass=abc.ABCMeta):
                              description='',
                              workers=4,
                              use_multiprocessing=False,
-                             params=None):
+                             params=None) -> Result:
         """
-        Genereates a cra.Result based on predictions against test_collection.
+        Genereates a Result based on predictions against test_collection.
 
         When save_to_instance_key is not None, the results are saved to
             <model_key>/<save_to_instance_key>/cr_result.json
-        
-        You can explore these results via cra.select_result
         """
         model = self.get_model()
         test_gen = self.get_test_generator(test_collection)
@@ -372,7 +369,7 @@ class FineModel(metaclass=abc.ABCMeta):
 
         if params is None:
             params = dict()
-        result = cra.Result.from_predictions(predictions, cr_codes, params,
+        result = Result.from_predictions(predictions, cr_codes, params,
                                              short_name, description)
         if save_to_instance_key:
             result.save(self.get_key(), save_to_instance_key, exp_key)
@@ -408,6 +405,10 @@ class FineModel(metaclass=abc.ABCMeta):
             FineNASNetMobile,
             BaselineModelV1,
         ]
+
+    @classmethod
+    def load_by_key(cls, model_key) -> 'FineModel':
+        return cls.get_dict()[model_key]()
 
     @classmethod
     def get_dict(cls):

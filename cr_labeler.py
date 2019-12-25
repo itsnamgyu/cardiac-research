@@ -10,8 +10,8 @@ import scipy.ndimage
 from sklearn import linear_model
 
 import cr_interface as cri
-import cr_analysis as cra
-from core import cam
+from core import cam, paths
+from core.result import Result
 from core.fine_model import FineModel
 
 LABELS = [None, 'oap', 'in', 'obs']
@@ -40,7 +40,7 @@ show_chart = False
 all_bars = []
 
 current_label = None
-fig = plt.figure()
+fig = plt.figure(figsize=(12, 9))
 index = 0
 last_index = None
 '''
@@ -74,13 +74,6 @@ def update_plot():
     global metadata, results, predictions, percentages, image_collection
     global index, last_index, current_label, show_chart, all_bars, all_texts, show_predictions
 
-    def regress(values):
-        # values: [ 0, 2, 1, 3 ]
-        # output: [ 0, 1, 2, 3 ]
-        regr = linear_model.LinearRegression()
-        regr.fit(np.arange(len(values)).reshape(-1, 1), values)
-        return regr.predict(np.arange(len(values)).reshape(-1, 1))
-
     patient = image_collection[index]
 
     if last_index != index:
@@ -109,7 +102,7 @@ def update_plot():
                 axes[i].imshow(image, extent=extent)
             else:
                 # Display grayscale image
-                axes[i].imshow(image, cmap=plt.cm.gray, extent=extent)
+                axes[i].imshow(image, cmap='gray', extent=extent)
 
             if show_predictions:
                 patient_percentages = []
@@ -158,7 +151,6 @@ def update_plot():
             for i, label in enumerate(LABELS[1:]):
                 avg += float(percentages[cr_code][label]) * (i + 1)
             weighted_averages.append(avg)
-        regressed_averages = regress(weighted_averages)
 
     for i, cr_code in enumerate(patient[1]):
         # hotfix: convert to tri-label
@@ -171,7 +163,7 @@ def update_plot():
         if show_predictions:
             prediction = DISPLAY_NAME[predictions[cr_code]]
 
-            label = '{} / {} (P)'.format(origin, prediction)
+            label = 'T={} / P={}'.format(origin, prediction)
             #label += ' [{:.2f}]'.format(regressed_averages[i])
             if truth == '-':
                 color = (0.2, 0.2, 0.2)
@@ -263,9 +255,8 @@ def main():
             print(p['label'])
 
     parser = argparse.ArgumentParser()
-    description = \
-        '''Start in prediction mode. Note that in predicitons mode,
-    you can press the spacebar to use the predictions to label the images'''
+    description = 'Start in prediction mode. Note that in predicitons mode,' \
+        'you can press the spacebar to use the predictions to label the images'
     parser.add_argument('-P',
                         '--predictions',
                         help=description,
@@ -278,12 +269,27 @@ def main():
     show_predictions = args.predictions or args.cam
 
     if show_predictions:
-        result_key, result = cra.select_result(return_key=True)
+        if args.cam:
+
+            def _output_filter(e, m, i):
+                result = paths.get_test_result_path(e, m, i)
+                weights = paths.get_weights_path(e, m, i)
+                return os.path.exists(result) and os.path.exists(weights)
+        else:
+
+            def _output_filter(e, m, i):
+                result = paths.get_test_result_path(e, m, i)
+                return os.path.exists(result)
+
+    if show_predictions:
+        output_key = paths.select_output(_output_filter)
+        if not output_key:
+            return None
+        e, m, i = output_key
+        result = Result.load(exp_key=e, model_key=m, instance_key=i)
         result_dict = result.data
 
         p = result_dict['predictions']
-        import json
-        print('Predictions: {}'.format(json.dumps(p, indent=4)))
 
         # hotfix
         if cri.is_tri_label_result(result_dict):
@@ -313,14 +319,10 @@ def main():
             image_collection[tuple(cr[:3])].append(cr_code)
 
     if show_cam:
-        print('Loading model for CAM analysis')
         try:
-            model_name, weight_key = result_key.split(os.sep)
-            print(
-                'Loading model {} with weight key {} for CAM analysis'.format(
-                    model_name, weight_key))
-            fm = FineModel.get_dict()[model_name]()
-            fm.load_weights(weight_key)
+            print('Loading {} for CAM analysis'.format(output_key))
+            fm = FineModel.load_by_key(m)
+            fm.load_weights(exp_key=e, instance_key=i)
         except Exception:
             raise RuntimeError('Failed to load corresponding model weights')
         cam_fm = fm

@@ -10,7 +10,6 @@ import parse
 import datetime
 
 import cr_interface as cri
-import cr_analysis as cra
 
 import core.fine_model
 from core.fine_model import FineModel

@@ -1,6 +1,7 @@
 import os
 import argparse
 import collections
+from tqdm import tqdm
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -247,7 +248,7 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, percentages, image_collection, LABELS, show_cam, cam_fm, show_predictions
+    global metadata, results, predictions, percentages, image_collection, LABELS, show_cam, cam_fm, show_predictions, index
 
     metadata = cri.load_metadata()
     for p in metadata:
@@ -263,6 +264,11 @@ def main():
                         action='store_true')
     description = 'Show class activation maps in prediction mode'
     parser.add_argument('-C', '--cam', help=description, action='store_true')
+    description = 'Export all plots'
+    parser.add_argument('-E',
+                        '--export',
+                        help=description,
+                        action='store_true')
     args = parser.parse_args()
 
     show_cam = args.cam
@@ -338,8 +344,26 @@ def main():
                         left=0,
                         hspace=0.2,
                         wspace=0)
-    update()
-    plt.show()
+
+    if args.export:
+        export_dir = os.path.abspath('labeler_exports')
+        os.makedirs(export_dir, exist_ok=True)
+        print('Exporting all images to {}'.format(export_dir))
+        for i in tqdm(range(len(image_collection))):
+            index = i
+            update()
+            patient = image_collection[i]
+            basename = '[{:03d}] D{:02d}_P{:08d}.png'.format(
+                i, patient[0][0], patient[0][1])
+            path = os.path.join(export_dir, basename)
+            plt.savefig(path,
+                        dpi=320,
+                        transparent=False,
+                        bbox_inches=None,
+                        pad_inches=0.1)
+    else:
+        update()
+        plt.show()
 
     cri.save_metadata(metadata)
 

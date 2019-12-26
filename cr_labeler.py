@@ -2,6 +2,7 @@ import os
 import argparse
 import collections
 from tqdm import tqdm
+import warnings
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -106,52 +107,47 @@ def update_plot():
                 axes[i].imshow(image, cmap='gray', extent=extent)
 
             if show_predictions:
-                patient_percentages = []
-                for label in LABELS[1:]:
-                    patient_percentages.append(
-                        float(percentages[cr_code][label]))
-
-                # hotfix: convert to tri-label
-                truth = metadata[cr_code].get('label', None)
-                if 'in' in LABELS:
-                    if truth and truth in 'apmdbs':
-                        truth = 'in'
-
-                if not truth or predictions[cr_code] == truth:
-                    wrong_color = (0.75, 0.75, 0.75)
-                    right_color = (0.75, 0.75, 0.75)
+                if cr_code not in predictions or cr_code not in percentages:
+                    warnings.warn('{} not in predictions'.format(cr_code))
                 else:
-                    wrong_color = (1, 0, 0)
-                    right_color = (0, 1, 0)
+                    patient_percentages = []
+                    for label in LABELS[1:]:
+                        patient_percentages.append(
+                            float(percentages[cr_code][label]))
 
-                x_locations = np.linspace(1, 9, len(patient_percentages))
-                bars = axes[i].bar(x_locations,
-                                   np.array(patient_percentages) * 8,
-                                   color=wrong_color)
-                all_bars.extend(bars)
-                for j, p in enumerate(patient_percentages):
-                    text = axes[i].text(x_locations[j],
-                                        p * 8 + 0.5,
-                                        '%d' % (p * 100),
-                                        color=(1, 1, 0),
-                                        horizontalalignment='center',
-                                        bbox=dict(facecolor='black',
-                                                  alpha=0.5))
-                    text.set_fontsize(8)
-                    all_texts.append(text)
+                    # hotfix: convert to tri-label
+                    truth = metadata[cr_code].get('label', None)
+                    if 'in' in LABELS:
+                        if truth and truth in 'apmdbs':
+                            truth = 'in'
 
-                if truth:
-                    bars[LABELS[1:].index(truth)].set_color(right_color)
+                    if not truth or predictions[cr_code] == truth:
+                        wrong_color = (0.75, 0.75, 0.75)
+                        right_color = (0.75, 0.75, 0.75)
+                    else:
+                        wrong_color = (1, 0, 0)
+                        right_color = (0, 1, 0)
+
+                    x_locations = np.linspace(1, 9, len(patient_percentages))
+                    bars = axes[i].bar(x_locations,
+                                       np.array(patient_percentages) * 8,
+                                       color=wrong_color)
+                    all_bars.extend(bars)
+                    for j, p in enumerate(patient_percentages):
+                        text = axes[i].text(x_locations[j],
+                                            p * 8 + 0.5,
+                                            '%d' % (p * 100),
+                                            color=(1, 1, 0),
+                                            horizontalalignment='center',
+                                            bbox=dict(facecolor='black',
+                                                      alpha=0.5))
+                        text.set_fontsize(8)
+                        all_texts.append(text)
+
+                    if truth:
+                        bars[LABELS[1:].index(truth)].set_color(right_color)
 
             axes[i].set_axis_off()
-
-    if show_predictions:
-        weighted_averages = []
-        for cr_code in patient[1]:
-            avg = 0
-            for i, label in enumerate(LABELS[1:]):
-                avg += float(percentages[cr_code][label]) * (i + 1)
-            weighted_averages.append(avg)
 
     for i, cr_code in enumerate(patient[1]):
         # hotfix: convert to tri-label
@@ -162,17 +158,20 @@ def update_plot():
         truth = DISPLAY_NAME[truth]
         origin = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
         if show_predictions:
-            prediction = DISPLAY_NAME[predictions[cr_code]]
-
-            label = 'T={} / P={}'.format(origin, prediction)
-            #label += ' [{:.2f}]'.format(regressed_averages[i])
-            if truth == '-':
-                color = (0.2, 0.2, 0.2)
+            if cr_code not in predictions or cr_code not in percentages:
+                warnings.warn('{} not in predictions'.format(cr_code))
             else:
-                if truth == prediction:
-                    color = (0, 0.6, 0)
+                prediction = DISPLAY_NAME[predictions[cr_code]]
+
+                label = 'T={} / P={}'.format(origin, prediction)
+                #label += ' [{:.2f}]'.format(regressed_averages[i])
+                if truth == '-':
+                    color = (0.2, 0.2, 0.2)
                 else:
-                    color = (0.75, 0, 0)
+                    if truth == prediction:
+                        color = (0, 0.6, 0)
+                    else:
+                        color = (0.75, 0, 0)
         else:
             color = (0, 0, 0)
             label = truth

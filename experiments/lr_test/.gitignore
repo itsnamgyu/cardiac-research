@@ -4,3 +4,4 @@ cr_log.txt*
 cr_train_val_history
 params.py
 params_final.py
+time.csv

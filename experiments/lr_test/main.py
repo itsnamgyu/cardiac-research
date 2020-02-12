@@ -163,9 +163,7 @@ def run_all_lrs(model_key,
     for lr_index, lr in enumerated_learning_rates:
         print("Starting training {} lr={}".format(fm.get_key(),
                                                   lr).center(100, "-"))
-        print("Skip!")  # debug
         start = time.time()
-        """
         run_all_folds(fm,
                       depth_index,
                       lr_index,
@@ -174,8 +172,6 @@ def run_all_lrs(model_key,
                       val_gens,
                       fold_index,
                       generate_plots=False)
-        """
-        time.sleep(5)
         end = time.time()
         if not os.path.exists(RECORD_FILE):
             with open(RECORD_FILE, "w") as f:

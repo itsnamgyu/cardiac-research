@@ -11,6 +11,7 @@ import argparse
 import time
 import datetime
 import os
+from memory_profiler import profile
 
 import core.history as ch
 from core.fine_model import FineModel
@@ -25,8 +26,10 @@ from params import (BATCH_SIZE, K, SAVE_ALL_WEIGHTS, T, BALANCE,
                     FOLD_INDEX, USE_MULTIPROCESSING, MULTIPROCESSING_WORKERS)
 
 RECORD_FILE = "time.csv"
+PROFILE_FP = open('memory_profiler.log', 'w+')
 
 
+@profile(stream=PROFILE_FP)
 def run_all_folds(
         fm: FineModel,
         depth_index,

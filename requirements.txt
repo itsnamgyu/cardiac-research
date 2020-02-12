@@ -16,3 +16,4 @@ requests
 bayesian-optimization
 yapf
 parse
+memory-profiler

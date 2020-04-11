@@ -42,7 +42,7 @@ show_chart = False
 all_bars = []
 
 current_label = None
-fig = plt.figure(figsize=(12, 9))
+fig = plt.figure(figsize=(8, 5))
 index = 0
 last_index = None
 '''

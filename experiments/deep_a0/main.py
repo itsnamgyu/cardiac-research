@@ -14,14 +14,13 @@ from core.fine_model import FineModel
 import cr_interface as cri
 
 from lib import notify
-import results
 import analysis
 import stats
 
 from params import (BATCH_SIZE, K, SAVE_ALL_WEIGHTS, T, BALANCE,
-                    LEARNING_RATES, EPOCHS, SAMPLE, K_SPLIT_SEED, MODEL_KEYS,
-                    LR_INDEX, FOLD_INDEX, USE_MULTIPROCESSING,
-                    MULTIPROCESSING_WORKERS)
+                     LEARNING_RATES, DEPTH_INDEX, EPOCHS, SAMPLE, K_SPLIT_SEED, MODEL_KEYS,
+                     LR_INDEX, FOLD_INDEX, USE_MULTIPROCESSING,
+                     MULTIPROCESSING_WORKERS)
 
 
 def run_all_folds(
@@ -66,6 +65,7 @@ def run_all_folds(
     If specified, will only run the specific fold index
     """
     _depth_key = "D{:02}"
+    _final_key = _depth_key + "_FINAL"
     _fold_key = _depth_key + "_L{:02}_F{:02}"
     _epoch_key = _fold_key + "_E{:03}"
 
@@ -87,7 +87,7 @@ def run_all_folds(
         if previous_depth_index < 0:
             fm.reload_model()
         else:
-            fm.load_weights(_depth_key.format(previous_depth_index))
+            fm.load_weights(_final_key.format(previous_depth_index))
         fm.set_depth(depth_index)
         fm.compile_model(lr=lr)
         model = fm.get_model()
@@ -141,7 +141,7 @@ def run_all_folds(
 
 def run_all_lrs(model_key,
                 train_folds,
-                depth_index=0,
+                depth_index,
                 lr_index=None,
                 fold_index=None):
     print(" MODEL: {} ".format(model_key).center(100, "#"))
@@ -192,7 +192,7 @@ def main():
     stats.print_fold_stats(folds)
 
     for key in MODEL_KEYS:
-        run_all_lrs(key, folds, lr_index=LR_INDEX, fold_index=FOLD_INDEX)
+        run_all_lrs(key, folds, depth_index=DEPTH_INDEX, lr_index=LR_INDEX, fold_index=FOLD_INDEX)
 
 
 if __name__ == "__main__":

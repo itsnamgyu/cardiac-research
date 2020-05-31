@@ -178,14 +178,18 @@ class FineModel(metaclass=abc.ABCMeta):
         return self.__class__.depths
 
     def set_depth(self, index=None):
+        depth = None
+        if index is not None:
+            depth = self.get_depths()[index]
+
         if self.model is None:
             self._load_model()
-        if index is None:
-            index = -1
+
         for layer in self.model.layers:
             layer.trainable = True
-        for layer in self.model.layers[:self.get_depths()[index]]:
-            layer.trainable = False
+        if depth is not None:
+            for layer in self.model.layers[:depth]:
+                layer.trainable = False
 
     def get_directory_iterator(self,
                                dataset: cri.CrCollection,
@@ -370,7 +374,7 @@ class FineModel(metaclass=abc.ABCMeta):
         if params is None:
             params = dict()
         result = Result.from_predictions(predictions, cr_codes, params,
-                                             short_name, description)
+                                         short_name, description)
         if save_to_instance_key:
             result.save(self.get_key(), save_to_instance_key, exp_key)
         return result
@@ -422,7 +426,10 @@ class FineXception(FineModel):
     description = 'Custom fine model'
     name = 'xception'
     output_shape = (299, 299)
-    depths = [133, 116, 26, 16, 7, 1, 0]
+    # Depths based on "blocks" used in the layer names of the keras-applications
+    # model.This includes two blocks from the exit flow of the original paper
+    # and middle flow blocks.
+    depths = [133, 125, 115, 105]
 
     def _load_base_model(self):
         return keras.applications.xception.Xception(
@@ -439,7 +446,7 @@ class FineMobileNet(FineModel):
     description = 'Custom fine model'
     name = 'mobilenet'
     output_shape = (224, 224)
-    depths = [88, 74, 37, 24, 11, 0]  # depreciated format
+    depths = [88, 74, 37, 24, 11, 0]  # needs confirmation
 
     def _load_base_model(self):
         return keras.applications.mobilenet.MobileNet(
@@ -472,6 +479,8 @@ class FineVGG16(FineModel):
     description = 'Custom fine model'
     name = 'vgg16'
     output_shape = (224, 224)
+    # Depth based on blocks each consisting of N conv layers and a single
+    # pooling layer.
     depths = [20, 15, 11, 7, 4, 0]
 
     def _load_base_model(self):
@@ -503,7 +512,7 @@ class FineResNet50(FineModel):
     description = 'Custom fine model'
     name = 'resnet50'
     output_shape = (224, 224)
-    depths = [176, 143, 81, 39, 7, 0]  # depreciated format
+    depths = [176, 143, 81, 39, 7, 0]  # need confirmation
 
     def _load_base_model(self):
         return keras.applications.resnet50.ResNet50(
@@ -520,7 +529,8 @@ class FineInceptionV3(FineModel):
     description = 'Custom fine model'
     name = 'inception_v3'
     output_shape = (299, 299)
-    depths = [312, 229, 87, 18, 11, 1, 0]
+    # Depth based on blocks defined in original paper.
+    depths = [312, 279, 248, 228]
 
     def _load_base_model(self):
         return keras.applications.inception_v3.InceptionV3(
@@ -537,7 +547,9 @@ class FineInceptionResNetV2(FineModel):
     description = 'Custom fine model'
     name = 'inception_resnet_v2'
     output_shape = (299, 299)
-    depths = [781, 595, 267, 18, 11, 1, 0]
+    # Depth based on blocks defined in original paper. Final block includes the
+    # penultimate pointwise convolution.
+    depths = [781, 761, 745, 729]
 
     def _load_base_model(self):
         return keras.applications.inception_resnet_v2.InceptionResNetV2(
@@ -554,7 +566,10 @@ class FineDenseNet121(FineModel):
     description = 'Custom fine model'
     name = 'densenet_121'
     output_shape = (224, 224)
-    depths = [428, 309, 137, 49, 7, 1, 0]
+    # Depths are based on dense blocks defined in original paper. Transition layers
+    # are considered part of the preceding dense block. E.g., 141-312 consists
+    # of a dense block (141-308) and a transition layer (309-312).
+    depths = [428, 313, 141, 53]
 
     def _load_base_model(self):
         return keras.applications.densenet.DenseNet121(
@@ -571,7 +586,9 @@ class FineNASNetMobile(FineModel):
     description = 'Custom fine model'
     name = 'nasnet_mobile'
     output_shape = (224, 224)
-    depths = [770, 533, 296, 53, 5, 1, 0]
+    # Depths are based on normal and reductions blocks defined in the original
+    # paper.
+    depths = [770, 723, 678, 633, 585]
 
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetMobile(
@@ -604,7 +621,9 @@ class FineResNet50V2(FineModel):
     description = 'Custom fine model'
     name = 'resnet50_v2'
     output_shape = (224, 224)
-    depths = [191, 142, 74, 28, 5, 1, 0]
+    # Depth based on 3-layer bottleneck blocks described in section 4.2 (50-layer
+    # ResNet) of original paper.
+    depths = [191, 177, 166, 154]
 
     def _load_base_model(self):
         return ka.resnet_v2.ResNet50V2(include_top=False,
@@ -620,7 +639,9 @@ class FineMobileNetA25(FineModel):
     description = 'Custom fine model'
     name = 'mobilenet_a25'
     output_shape = (224, 224)
-    depths = [88, 74, 37, 24, 11, 1, 0]
+    # Depths based on blocks each comprised of a depthwise conv layer and
+    # pointwise conv layer.
+    depths = [88, 81, 74, 68]
 
     def _load_base_model(self):
         return ka.mobilenet.MobileNet(alpha=0.25,
@@ -637,7 +658,9 @@ class FineMobileNetV2A35(FineModel):
     description = 'Custom fine model'
     name = 'mobilenet_v2_a35'
     output_shape = (224, 224)
-    depths = [156, 117, 55, 28, 10, 1, 0]
+    # Depths based on bottleneck blocks. The final block includes the
+    # penultimate pointwise convolution.
+    depths = [156, 144, 135, 126]
 
     def _load_base_model(self):
         return ka.mobilenet_v2.MobileNetV2(alpha=0.35,

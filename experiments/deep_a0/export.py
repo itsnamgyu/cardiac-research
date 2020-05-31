@@ -7,7 +7,7 @@ output_dir = os.path.abspath('output_export')
 shutil.rmtree(output_dir, ignore_errors=True)
 os.makedirs(output_dir, exist_ok=True)
 
-ls = list(glob.glob('output/**/*'))
+ls = list(glob.glob('output/**/*', recursive=True))
 ls_path = os.path.join(output_dir, 'ls.txt')
 with open(ls_path, 'w') as f:
     f.write('\n'.join(ls))

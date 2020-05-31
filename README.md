@@ -18,7 +18,7 @@ pip install -r requirements.txt
 python3 setup.py develop
 ```
 
-## Run Latest Feature Extraction Setting Expriment
+## Run Latest Feature Extraction Setting Experiment
 
 ```
 cd experiments/deep_a0

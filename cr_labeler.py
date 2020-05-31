@@ -1,18 +1,17 @@
-import os
 import argparse
 import collections
+import os
+import warnings
 
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 from PIL import Image
-import scipy.misc
-import scipy.ndimage
-from sklearn import linear_model
+from tqdm import tqdm
 
 import cr_interface as cri
-import cr_analysis as cra
-from core import cam
+from core import cam, paths
 from core.fine_model import FineModel
+from core.result import Result
 
 LABELS = [None, 'oap', 'in', 'obs']
 
@@ -40,7 +39,7 @@ show_chart = False
 all_bars = []
 
 current_label = None
-fig = plt.figure()
+fig = plt.figure(figsize=(8, 5))
 index = 0
 last_index = None
 '''
@@ -74,13 +73,6 @@ def update_plot():
     global metadata, results, predictions, percentages, image_collection
     global index, last_index, current_label, show_chart, all_bars, all_texts, show_predictions
 
-    def regress(values):
-        # values: [ 0, 2, 1, 3 ]
-        # output: [ 0, 1, 2, 3 ]
-        regr = linear_model.LinearRegression()
-        regr.fit(np.arange(len(values)).reshape(-1, 1), values)
-        return regr.predict(np.arange(len(values)).reshape(-1, 1))
-
     patient = image_collection[index]
 
     if last_index != index:
@@ -109,56 +101,50 @@ def update_plot():
                 axes[i].imshow(image, extent=extent)
             else:
                 # Display grayscale image
-                axes[i].imshow(image, cmap=plt.cm.gray, extent=extent)
+                axes[i].imshow(image, cmap='gray', extent=extent)
 
             if show_predictions:
-                patient_percentages = []
-                for label in LABELS[1:]:
-                    patient_percentages.append(
-                        float(percentages[cr_code][label]))
-
-                # hotfix: convert to tri-label
-                truth = metadata[cr_code].get('label', None)
-                if 'in' in LABELS:
-                    if truth and truth in 'apmdbs':
-                        truth = 'in'
-
-                if not truth or predictions[cr_code] == truth:
-                    wrong_color = (0.75, 0.75, 0.75)
-                    right_color = (0.75, 0.75, 0.75)
+                if cr_code not in predictions or cr_code not in percentages:
+                    warnings.warn('{} not in predictions'.format(cr_code))
                 else:
-                    wrong_color = (1, 0, 0)
-                    right_color = (0, 1, 0)
+                    patient_percentages = []
+                    for label in LABELS[1:]:
+                        patient_percentages.append(
+                            float(percentages[cr_code][label]))
 
-                x_locations = np.linspace(1, 9, len(patient_percentages))
-                bars = axes[i].bar(x_locations,
-                                   np.array(patient_percentages) * 8,
-                                   color=wrong_color)
-                all_bars.extend(bars)
-                for j, p in enumerate(patient_percentages):
-                    text = axes[i].text(x_locations[j],
-                                        p * 8 + 0.5,
-                                        '%d' % (p * 100),
-                                        color=(1, 1, 0),
-                                        horizontalalignment='center',
-                                        bbox=dict(facecolor='black',
-                                                  alpha=0.5))
-                    text.set_fontsize(8)
-                    all_texts.append(text)
+                    # hotfix: convert to tri-label
+                    truth = metadata[cr_code].get('label', None)
+                    if 'in' in LABELS:
+                        if truth and truth in 'apmdbs':
+                            truth = 'in'
 
-                if truth:
-                    bars[LABELS[1:].index(truth)].set_color(right_color)
+                    if not truth or predictions[cr_code] == truth:
+                        wrong_color = (0.75, 0.75, 0.75)
+                        right_color = (0.75, 0.75, 0.75)
+                    else:
+                        wrong_color = (1, 0, 0)
+                        right_color = (0, 1, 0)
+
+                    x_locations = np.linspace(1, 9, len(patient_percentages))
+                    bars = axes[i].bar(x_locations,
+                                       np.array(patient_percentages) * 8,
+                                       color=wrong_color)
+                    all_bars.extend(bars)
+                    for j, p in enumerate(patient_percentages):
+                        text = axes[i].text(x_locations[j],
+                                            p * 8 + 0.5,
+                                            '%d' % (p * 100),
+                                            color=(1, 1, 0),
+                                            horizontalalignment='center',
+                                            bbox=dict(facecolor='black',
+                                                      alpha=0.5))
+                        text.set_fontsize(8)
+                        all_texts.append(text)
+
+                    if truth:
+                        bars[LABELS[1:].index(truth)].set_color(right_color)
 
             axes[i].set_axis_off()
-
-    if show_predictions:
-        weighted_averages = []
-        for cr_code in patient[1]:
-            avg = 0
-            for i, label in enumerate(LABELS[1:]):
-                avg += float(percentages[cr_code][label]) * (i + 1)
-            weighted_averages.append(avg)
-        regressed_averages = regress(weighted_averages)
 
     for i, cr_code in enumerate(patient[1]):
         # hotfix: convert to tri-label
@@ -169,17 +155,20 @@ def update_plot():
         truth = DISPLAY_NAME[truth]
         origin = DISPLAY_NAME[metadata[cr_code].get('label', 'nan')]
         if show_predictions:
-            prediction = DISPLAY_NAME[predictions[cr_code]]
-
-            label = '{} / {} (P)'.format(origin, prediction)
-            #label += ' [{:.2f}]'.format(regressed_averages[i])
-            if truth == '-':
-                color = (0.2, 0.2, 0.2)
+            if cr_code not in predictions or cr_code not in percentages:
+                warnings.warn('{} not in predictions'.format(cr_code))
             else:
-                if truth == prediction:
-                    color = (0, 0.6, 0)
+                prediction = DISPLAY_NAME[predictions[cr_code]]
+
+                label = 'T={} / P={}'.format(origin, prediction)
+                #label += ' [{:.2f}]'.format(regressed_averages[i])
+                if truth == '-':
+                    color = (0.2, 0.2, 0.2)
                 else:
-                    color = (0.75, 0, 0)
+                    if truth == prediction:
+                        color = (0, 0.6, 0)
+                    else:
+                        color = (0.75, 0, 0)
         else:
             color = (0, 0, 0)
             label = truth
@@ -255,7 +244,7 @@ def on_button_press(event):
 
 
 def main():
-    global metadata, results, predictions, percentages, image_collection, LABELS, show_cam, cam_fm, show_predictions
+    global metadata, results, predictions, percentages, image_collection, LABELS, show_cam, cam_fm, show_predictions, index
 
     metadata = cri.load_metadata()
     for p in metadata:
@@ -263,22 +252,43 @@ def main():
             print(p['label'])
 
     parser = argparse.ArgumentParser()
-    description = \
-        '''Start in prediction mode. Note that in predicitons mode,
-    you can press the spacebar to use the predictions to label the images'''
+    description = 'Start in prediction mode. Note that in predicitons mode,' \
+        'you can press the spacebar to use the predictions to label the images'
     parser.add_argument('-P',
                         '--predictions',
                         help=description,
                         action='store_true')
     description = 'Show class activation maps in prediction mode'
     parser.add_argument('-C', '--cam', help=description, action='store_true')
+    description = 'Export all plots'
+    parser.add_argument('-E',
+                        '--export',
+                        help=description,
+                        action='store_true')
     args = parser.parse_args()
 
     show_cam = args.cam
     show_predictions = args.predictions or args.cam
 
     if show_predictions:
-        result_key, result = cra.select_result(return_key=True)
+        if args.cam:
+
+            def _output_filter(e, m, i):
+                result = paths.get_test_result_path(e, m, i)
+                weights = paths.get_weights_path(e, m, i)
+                return os.path.exists(result) and os.path.exists(weights)
+        else:
+
+            def _output_filter(e, m, i):
+                result = paths.get_test_result_path(e, m, i)
+                return os.path.exists(result)
+
+    if show_predictions:
+        output_key = paths.select_output(_output_filter)
+        if not output_key:
+            return None
+        e, m, i = output_key
+        result = Result.load(exp_key=e, model_key=m, instance_key=i)
         result_dict = result.data
 
         p = result_dict['predictions']
@@ -313,14 +323,10 @@ def main():
             image_collection[tuple(cr[:3])].append(cr_code)
 
     if show_cam:
-        print('Loading model for CAM analysis')
         try:
-            model_name, weight_key = result_key.split(os.sep)
-            print(
-                'Loading model {} with weight key {} for CAM analysis'.format(
-                    model_name, weight_key))
-            fm = FineModel.get_dict()[model_name]()
-            fm.load_weights(weight_key)
+            print('Loading {} for CAM analysis'.format(output_key))
+            fm = FineModel.load_by_key(m)
+            fm.load_weights(exp_key=e, instance_key=i)
         except Exception:
             raise RuntimeError('Failed to load corresponding model weights')
         cam_fm = fm
@@ -336,8 +342,26 @@ def main():
                         left=0,
                         hspace=0.2,
                         wspace=0)
-    update()
-    plt.show()
+
+    if args.export:
+        export_dir = os.path.abspath('labeler_exports')
+        os.makedirs(export_dir, exist_ok=True)
+        print('Exporting all images to {}'.format(export_dir))
+        for i in tqdm(range(len(image_collection))):
+            index = i
+            update()
+            patient = image_collection[i]
+            basename = '[{:03d}] D{:02d}_P{:08d}.png'.format(
+                i, patient[0][0], patient[0][1])
+            path = os.path.join(export_dir, basename)
+            plt.savefig(path,
+                        dpi=320,
+                        transparent=False,
+                        bbox_inches=None,
+                        pad_inches=0.1)
+    else:
+        update()
+        plt.show()
 
     cri.save_metadata(metadata)
 

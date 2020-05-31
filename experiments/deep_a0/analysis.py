@@ -1,23 +1,20 @@
-from core import history as ch
-from core.fine_model import FineModel
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import traceback
 import warnings
 import os
+import argparse
 
-_depth_key = 'EXP{:02}_D{:02}'
-_fold_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}'
-_epoch_key = 'EXP{:02}_D{:02}_L{:02}_F{:02}_E{:03}'
+from core import history as ch
+from core.fine_model import FineModel
 
-K = 5
-DIR = 'figures'
+_depth_key = 'D{:02}'
+_fold_key = 'D{:02}_L{:02}_F{:02}'
+_epoch_key = 'D{:02}_L{:02}_F{:02}_E{:03}'
 
-default_lr_list = [
-    0.001,
-    0.0001,
-    0.00001,
-]
+from params import *
+
+FIGURE_DIR = 'figures'
 
 metric_names = {
     'val_loss': 'Validation Loss',
@@ -146,56 +143,61 @@ def analyze_depth(fm,
                   verbose_model_name,
                   depth_index,
                   metric,
-                  lr_list=default_lr_list,
-                  exp=1):
-    model_name = fm.get_name()
+                  lr_list=LEARNING_RATES):
+    """
+    Plot training history for all learning rates + their average
+    """
+    model_key = fm.get_key()
 
     print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index,
                                             lr_list))
 
     title = verbose_model_name
-    fig, axes = plt.subplots(1, 3, squeeze=True, figsize=(18, 6))
+    fig, axes = plt.subplots(1, len(lr_list), squeeze=True, figsize=(18, 6))
     axes = axes.flatten()
     histories_by_lr = dict()
+    output_dir = os.path.join(
+        FIGURE_DIR, '{model}_D{depth:02d}'.format(model=fm.get_key(),
+                                                  depth=depth_index))
+    os.makedirs(output_dir, exist_ok=True)
     for i, ax in enumerate(axes):
         lr = lr_list[i]
         histories = list()
         for k in range(K):
-            fold_key = _fold_key.format(exp, depth_index, i, k)
-            history = ch.load_history(model_name, fold_key)
+            fold_key = _fold_key.format(depth_index, i, k)
+            history = ch.load_history(model_key, fold_key)
             if history is not None and not history.empty:
                 histories.append(history)
         if len(histories):
             histories_by_lr[lr] = histories
-            name = 'Fold {} [{}D{}].eps'.format(metric.upper(), model_name,
-                                                depth_index)
-            path = os.path.join(DIR, name)
-            os.makedirs(DIR, exist_ok=True)
+            name = 'Fold {}.eps'.format(metric.upper())
+            path = os.path.join(output_dir, name)
             plot_average_by_fold(histories,
-                                 title=verbose_model_name,
+                                 title='Learning Rate {:.1E}'.format(lr),
                                  metric=metric,
                                  ax=ax)
-            fig.savefig(path, format='eps', dpi=320, bbox_inches='tight')
+    fig.savefig(path,
+                format='eps',
+                dpi=320,
+                bbox_inches='tight',
+                transparent=False)
 
     lr_ax = plot_average_by_lr(histories_by_lr, title=title, metric=metric)
-    name = 'Average {} [{}D{}].eps'.format(metric.upper(), model_name,
-                                           depth_index)
-    path = os.path.join(DIR, name)
-    os.makedirs(DIR, exist_ok=True)
+    name = 'Average {}.eps'.format(metric.upper())
+    path = os.path.join(output_dir, name)
     lr_ax.get_figure().savefig(path,
                                format='eps',
                                dpi=320,
-                               bbox_inches='tight')
+                               bbox_inches='tight',
+                               transparent=False)
 
 
-def analyze_lr(fm,
-               verbose_model_name,
-               depth_index,
-               lr_index,
-               lr_value,
-               metric,
-               exp=1):
-    model_name = fm.get_name()
+def analyze_lr(fm, verbose_model_name, depth_index, lr_index, lr_value,
+               metric):
+    """
+    Plot training history for all K folds + their average
+    """
+    model_key = fm.get_key()
 
     print('Analyzing {} D={}, LR={}'.format(verbose_model_name, depth_index,
                                             lr_value))
@@ -205,22 +207,28 @@ def analyze_lr(fm,
     histories = list()
     histories_by_lr[lr_value] = histories
     for k in range(K):
-        fold_key = _fold_key.format(exp, depth_index, lr_index, k)
-        history = ch.load_history(model_name, fold_key)
+        fold_key = _fold_key.format(depth_index, lr_index, k)
+        history = ch.load_history(model_key, fold_key)
         if history is not None and not history.empty:
             histories.append(history)
-    name = 'Fold {} [{}D{}@{:.1E}].eps'.format(metric.upper(), model_name,
-                                               depth_index, lr_value)
-    path = os.path.join(DIR, name)
-    os.makedirs(DIR, exist_ok=True)
+    output_dir = os.path.join(
+        FIGURE_DIR, '{model}_D{depth:02d}'.format(model=fm.get_key(),
+                                                  depth=depth_index))
+    os.makedirs(output_dir, exist_ok=True)
+    name = 'Fold {} [LR={:.1E}].eps'.format(metric.upper(), lr_value)
+    path = os.path.join(output_dir, name)
     ax = plot_average_by_fold(histories, title=title, metric=metric)
-    ax.get_figure().savefig(path, format='eps', dpi=320, bbox_inches='tight')
+    ax.get_figure().savefig(path,
+                            format='eps',
+                            dpi=320,
+                            bbox_inches='tight',
+                            transparent=False)
 
 
 def analyze_all(fm, verbose_model_name, depth_index, lr_list=None):
     if lr_list is None:
         warnings.warn('You should specify lr_list for analyze_all')
-        lr_list = default_lr_list
+        lr_list = LEARNING_RATES
 
     metrics = metric_names.keys()
     for metric in metrics:
@@ -228,12 +236,12 @@ def analyze_all(fm, verbose_model_name, depth_index, lr_list=None):
             verbose_model_name, metric, depth_index))
         analyze_depth(fm,
                       verbose_model_name,
-                      lr_list=default_lr_list,
+                      lr_list=LEARNING_RATES,
                       depth_index=depth_index,
                       metric=metric)
 
 
 if __name__ == '__main__':
-    fm = FineModel.get_dict()['mobileneta25']()
+    fm = FineModel.get_dict()['mobilenet_a25']()
     verbose_model_name = 'MobileNet(a=25)'
     analyze_all(fm, verbose_model_name, depth_index=0)

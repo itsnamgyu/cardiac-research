@@ -6,14 +6,16 @@ EXP_DIR_TOKEN = '.cr_exp_token'
 
 
 def get_current_time_key():
-    """Get current time in the following format: YYYYMMDD_HHMMSS_mmmmmm.
+    """
+    Get current time in the following format: YYYYMMDD_HHMMSS_mmmmmm.
     mmmmmm refers to microsecond. Here is an example: 20190101_164901_000000.
     """
     return datetime.datetime.now().strftime('%Y%m%d_%H%M%S_%f')
 
 
 def validate_exp_dir(exp_dir):
-    """Validate that the directory is a valid base directory for experiments.
+    """
+    Validate that the directory is a valid base directory for experiments.
     Valid experiment directories should be manually marked by including an
     empty file whose basename is the value of EXP_DIR_TOKEN.
     """
@@ -29,12 +31,14 @@ def validate_exp_dir(exp_dir):
         raise Exception(message)
 
 
-def remove_safe(path):
-    """Use this method when you want to safely remove a file. This effectively
+def remove_safe(path, verbose=0):
+    """
+    Use this method when you want to safely remove a file. This effectively
     makes a backup of the file and notifies the user, if it exists.
     """
     abspath = os.path.abspath(path)
     if os.path.exists(abspath):
         backup_path = abspath + '.' + get_current_time_key() + '.bak'
         os.rename(abspath, backup_path)
-        warnings.warn('Backing up "{}" as "{}"'.format(abspath, backup_path))
+        if verbose:
+            print('Backing up "{}" as "{}"'.format(abspath, backup_path))

@@ -4,15 +4,12 @@ import shutil
 from typing import Dict
 import re
 import glob
-import argparse
 from collections import defaultdict
 import warnings
 
 import keras
 from tqdm import tqdm
 import numpy as np
-import scipy.ndimage
-import matplotlib.pyplot as plt
 import pandas as pd
 
 PROJECT_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -23,6 +20,7 @@ METADATA_FILE = os.path.join(PROJECT_DIR, 'data/metadata.json')
 
 OUTPUT_DIR = os.path.join(PROJECT_DIR, 'output')
 RESULTS_DIR = os.path.join(OUTPUT_DIR, 'results')
+TRAINED_WEIGHTS_DIR = os.path.join(OUTPUT_DIR, 'trained_weights')
 '''
 cr_metadata.json
 {

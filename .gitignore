@@ -1,4 +1,9 @@
+/local
+
 # Data related files
+/output
+/results.csv
+/labeler_exports
 data
 .data.bak
 datasets
@@ -8,8 +13,7 @@ bottlenecks
 history
 weights
 images
-/output
-/results.csv
+temp_images
 
 # Etc
 .DS_Store

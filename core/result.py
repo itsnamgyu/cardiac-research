@@ -1,9 +1,10 @@
-import argparse
+import errno
 import glob
 import json
 import os
 import traceback
 import warnings
+import argparse
 
 import keras
 import numpy as np
@@ -11,9 +12,8 @@ import pandas as pd
 from sklearn.metrics import f1_score, roc_auc_score
 
 import cr_interface as cri
-from core import paths
 
-metadata = cri.load_metadata()
+from core import paths
 
 DEFAULT_CLASSES = ['in', 'oap', 'obs']
 RESULTS_SCHEMA_VERSION = '2.0'
@@ -21,17 +21,14 @@ RESULTS_SCHEMA_VERSION = '2.0'
 # params that should be passed manually while calling from_predictions
 CORE_PARAMS = ['epochs', 'lr']
 
-results = None
-currently_loaded_results_dir = None
-
-
-warnings.warn('cr_analysis is deprecated. Please use core.results instead.')
+cached_results = None
 
 
 class Result():
     def __init__(self, data: dict):
         self.data = data
         self.df = Result._generate_dataframe(data)
+        self.cr_metadata = cri.load_metadata()
 
     @staticmethod
     def _key_to_dir(key):
@@ -67,7 +64,7 @@ class Result():
             data = json.load(f)
         result = cls(data)
 
-        # update legacy result files
+        # Update legacy result files
         if 'schema_version' not in result.data:
             result.data['schema_version'] = '1.0'
         if result.data['schema_version'] != RESULTS_SCHEMA_VERSION:
@@ -81,10 +78,6 @@ class Result():
         os.makedirs(os.path.dirname(path), exist_ok=True)
         with open(path, 'w') as f:
             json.dump(self.data, f, indent=4)
-
-    @staticmethod
-    def select():
-        return select_result()
 
     @classmethod
     def from_predictions(cls,
@@ -115,8 +108,7 @@ class Result():
         # Returns
         Result instance
         '''
-        global metadata
-
+        metadata = cri.load_metadata()
         if not set(CORE_PARAMS) <= set(params.keys()):
             warnings.warn("params doesn't contain {}".format(CORE_PARAMS))
 
@@ -362,126 +354,64 @@ class Result():
         return soft_accuracy
 
 
-def get_results(results_dir=cri.RESULTS_DIR, force_reload=False):
-    global results
-    global currently_loaded_results_dir
-    if results is None or results_dir != currently_loaded_results_dir or force_reload:
-        results = dict()
-        result_paths = glob.glob(os.path.join(results_dir,
-                                              '**/cr_result.json'),
-                                 recursive=True)
-        result_paths = map(lambda path: path[len(results_dir) + 1:],
-                           result_paths)
-        result_dirs = map(os.path.dirname, result_paths)
+def generate_result_from_weights() -> Result:
+    """Interactive method
+    """
+    def _has_weights_but_no_result(e, m, i):
+        weights = paths.get_weights_path(e, m, i)
+        result = paths.get_test_result_path(e, m, i)
+        return os.path.exists(weights) and not os.path.exists(result)
 
-        for result_dir in result_dirs:
-            result_path = os.path.join(result_dir, paths.TEST_RESULT_BASENAME)
-            try:
-                result = Result.load_from_path(result_path)
-            except Exception as e:
-                warnings.warn('Invalid result file: {}'.format(result_path))
-                print(traceback.format_exc())
-                print(e)
-                continue
+    key = paths.select_output(_has_weights_but_no_result)
+    if not key:
+        return None
 
-            results[result_dir] = result
+    print('Generating results for {}'.format(key))
+    from core.fine_model import FineModel
+    e, m, i = key
+    fm = FineModel.load_by_key(m)
+    fm.load_weights(exp_key=e, instance_key=i)
+    test = cri.CrCollection.load().filter_by(
+        dataset_index=1).tri_label().labeled()
+    result = fm.generate_test_result(test, save_to_instance_key=i, exp_key=e)
+    print('Complete!')
 
-    return results
+    return result
 
 
-def export_csv(path='results.csv',
-               full_path=False,
-               results_dir=cri.RESULTS_DIR):
-    if full_path:
-        export_path = path
-    else:
-        export_path = os.path.join(cri.PROJECT_DIR, path)
+def select_result() -> Result:
+    """Interactive method
+    """
+    def _has_result(e, m, i):
+        result = paths.get_test_result_path(e, m, i)
+        return os.path.exists(result)
 
-    print('Exporting csv to {}'.format(export_path))
+    key = paths.select_output(_has_result)
+    if not key:
+        return None
+    e, m, i = key
 
-    metrics = [
-        'accuracy',
-        'soft_accuracy',
-        'f1_macro',
-        'auc_macro',
-        'f1_micro',
-        'auc_micro',
-    ]
-
-    results = get_results(results_dir, force_reload=True)
-    result_pairs = results.items()
-    result_pairs = sorted(result_pairs, key=lambda t: t[0])
-
-    with open(export_path, 'w') as f:
-        f.write('key,')
-        f.write(','.join(metrics))
-        f.write('\n')
-        for key, result in result_pairs:
-            f.write(key + ',')
-            metric_values = [
-                str(result.data['metrics'][metric]) for metric in metrics
-            ]
-            f.write(','.join(metric_values))
-            f.write('\n')
-
-
-def select_result(force_reload=False, return_key=False):
-    results = get_results(results_dir=cri.RESULTS_DIR,
-                          force_reload=force_reload)
-
-    result_pairs = results.items()
-    result_pairs = sorted(result_pairs, key=lambda t: t[0])
-
-    print(' Results List '.center(80, '-'))
-    print('  #. {:40s}{:10s}{:10s}'.format('KEY', 'ACC', 'F1_MACRO'))
-    print('-' * 80)
-    fmt = '{:3d}. {:40s}{:<10.4f}{:<10.4f}'
-    for i, result_pair in enumerate(result_pairs):
-        key, result = result_pair
-        acc = result.data['metrics']['accuracy']
-        f1_macro = result.data['metrics']['f1_macro']
-        print(fmt.format(i, key, float(acc), float(f1_macro)))
-    print('-' * 80)
-
-    while True:
-        try:
-            index = int(input('Which of the results would you like to use? '))
-            result_pair = result_pairs[index]
-            if return_key:
-                return result_pair
-            else:
-                return result_pair[1]
-        except (IndexError, ValueError):
-            print('Invalid index')
-            continue
-
-
-def evaluate_model(model: keras.models.Model,
-                   input_data,
-                   cr_codes,
-                   classes=DEFAULT_CLASSES):
-    '''
-    Convenience function to quickly evaluate model performance
-    '''
-    predictions = model.predict(input_data)
-    params = dict(epochs=0, lr=0)
-
-    result = Result.from_predictions(predictions, cr_codes, params,
-                                     'AUTO_EVAL', '')
-    print(result.describe())
+    return Result.load(exp_key=e, model_key=m, instance_key=i)
 
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    description = 'Select result and print details'
-    parser.add_argument('-S',
-                        '--select',
+    description = 'Generate result from weights'
+    parser.add_argument('-G',
+                        '--generate',
+                        help=description,
+                        action='store_true')
+    description = 'Describe selected results'
+    parser.add_argument('-D',
+                        '--describe',
                         help=description,
                         action='store_true')
     args = parser.parse_args()
 
-    if args.select:
+    if args.generate:
+        generate_result_from_weights()
+    elif args.describe:
         result = select_result()
         print(result.describe())
     else:
-        export_csv()
+        parser.print_help()

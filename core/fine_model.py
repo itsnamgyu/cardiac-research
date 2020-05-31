@@ -1,23 +1,24 @@
 import abc
-from abc import abstractmethod
 import datetime
-import glob
 import os
 import shutil
-from typing import List
 import warnings
+from abc import abstractmethod
+from typing import List
 
 import keras
+import numpy as np
+import pandas as pd
 from keras import optimizers
-from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
+from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, \
+    GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
 from keras.models import Sequential, Model
 from keras.preprocessing.image import ImageDataGenerator
-import numpy as np
 
-import core
 import cr_interface as cri
-import cr_analysis as cra
 import keras_apps as ka
+from core import paths
+from core.result import Result
 
 DEFAULT_POOLING = 'avg'
 
@@ -53,7 +54,7 @@ class FineModel(metaclass=abc.ABCMeta):
     """
 
     description = 'Default fine model'
-    name = 'DefaultFineModel'
+    name = 'default_finemodel'
     depths = []
     output_shape = (224, 224)
 
@@ -70,75 +71,46 @@ class FineModel(metaclass=abc.ABCMeta):
         self.base_layer = None
         self.pooling = DEFAULT_POOLING
 
-    @staticmethod
-    def get_input_shape(image_size):
-        """
-        Deprecated: saved as member variable
-
-        Get input shape of conv-nets based on keras backend settings
-
-        Returns
-        tuple(n1, n2, n3)
-        """
-        warnings.warn('deprecated', DeprecationWarning)
-
+        output_shape = self.__class__.output_shape
         if keras.backend.image_data_format() == 'channels_first':
-            return (3, ) + image_size
+            self.input_shape = (3,) + output_shape
         else:
-            return image_size + (3, )
+            self.input_shape = output_shape + (3,)
 
-    def _get_weight_path(self, key, directory, makedirs=True):
-        if directory == None:
-            path = os.path.join(core.BASE_DIR, '.fine_model_weights')
-        else:
-            path = directory
-        path = os.path.join(path, type(self).name)
-        if key:
-            path = os.path.join(path, key + '.hd5')
-        else:
-            path = os.path.join(path, 'default.hd5')
+    def get_weights_path(self, instance_key, exp_key=None):
+        return paths.get_weights_path(exp_key, self.get_key(), instance_key)
 
-        if makedirs:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
-
-        return path
-
-    def save_weights(self, key=None, directory=None, verbose=1):
+    def save_weights(self,
+                     instance_key,
+                     exp_key=None,
+                     makedirs=True,
+                     verbose=1):
         if self.model is None:
             warnings.warn('saving weights for unloaded model')
-        model = self.get_model()
-        path = self._get_weight_path(key, directory)
+        path = self.get_weights_path(instance_key, exp_key)
+        if makedirs:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         if verbose:
-            print('Saving weights to {}...'.format(path), end='')
+            print('Saving weights to {}...'.format(path))
+        model = self.get_model()
         model.save_weights(path)
         if verbose:
-            print('complete!')
+            print('Save weights complete')
 
-    def load_weights(self, key=None, directory=None, verbose=1):
+    def load_weights(self,
+                     instance_key,
+                     exp_key=None,
+                     makedirs=True,
+                     verbose=1):
         model = self.get_model()
-        path = self._get_weight_path(key, directory)
+        path = self.get_weights_path(instance_key, exp_key)
+        if makedirs:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
         if verbose:
-            print('Loading weights from {}...'.format(path), end='')
+            print('Loading weights from {}...'.format(path))
         model.load_weights(path)
         if verbose:
-            print('complete!')
-
-    def get_weight_keys(self, directory=None, makedirs=True):
-        if directory is None:
-            path = os.path.join(core.BASE_DIR, '.fine_model_weights')
-        else:
-            path = directory
-        path = os.path.join(path, type(self).name)
-        paths = [
-            os.path.splitext(os.path.basename(d))[0]
-            for d in glob.glob(os.path.join(path, '*'))
-        ]
-        paths.sort()
-        return paths
-
-    def load_weights_by_index(self, index, directory=None):
-        key = self.get_weight_keys(directory)[index]
-        self.load_weights(key, directory)
+            print('Weights loaded')
 
     def compile_model(self, lr=1e-4, decay=1e-6, optimizer=None):
         if optimizer is None:
@@ -178,7 +150,7 @@ class FineModel(metaclass=abc.ABCMeta):
             self._load_model()
         return self.model
 
-    def get_name(self):
+    def get_key(self):
         return self.__class__.name
 
     def get_output_shape(self):
@@ -204,21 +176,73 @@ class FineModel(metaclass=abc.ABCMeta):
         return self.__class__.depths
 
     def set_depth(self, index=None):
+        depth = None
+        if index is not None:
+            depth = self.get_depths()[index]
+
         if self.model is None:
             self._load_model()
 
-        if index is None:
-            index = -1
-
         for layer in self.model.layers:
             layer.trainable = True
+        if depth is not None:
+            for layer in self.model.layers[:depth]:
+                layer.trainable = False
 
-        for layer in self.model.layers[:self.get_depths()[index]]:
-            layer.trainable = False
+    def get_directory_iterator(self,
+                               dataset: cri.CrCollection,
+                               subdirectory,
+                               augment=False,
+                               augment_factor=1,
+                               shuffle=False,
+                               batch_size=None,
+                               parent_dir='temp_images',
+                               verbose=1,
+                               title=None):
+        """
+        Get iterator for the dataset, compatible with this (self) model.
+        Calling this function with the same subdirectory will invalidate the iterator
+        returned from the previous call, as they are dependant on the directory
+        structure.
+        """
+        if verbose:
+            if title is None:
+                title = subdirectory
+            print('Loading image generator for {}'.format(title).center(
+                80, '-'))
+
+        gen = self.get_image_data_generator(augment=augment)
+        path = os.path.join(parent_dir, subdirectory)
+
+        # Refresh directories
+        os.makedirs(path, exist_ok=True)
+        shutil.rmtree(path)
+        os.makedirs(path, exist_ok=True)
+
+        if not augment and augment_factor != 1:
+            warnings.warn(
+                'Augment is False and augment_factor != 1. Reseting factor to 1'
+            )
+            augment_factor = 1
+
+        dataset.export_by_label(path, balancing=augment_factor)
+
+        params = dict()
+        if (batch_size):
+            params['batch_size'] = batch_size
+
+        image_gen = gen.flow_from_directory(
+            path,
+            target_size=self.get_output_shape(),
+            class_mode='categorical',
+            shuffle=shuffle,
+            **params)
+
+        return image_gen
 
     def get_test_generator(
             self,
-            cr_collection: cri.CrCollection,
+            dataset: cri.CrCollection,
             augment=False,
             augment_factor=1,
             shuffle=False,
@@ -226,43 +250,15 @@ class FineModel(metaclass=abc.ABCMeta):
             parent_dir='temp_images',
             verbose=1,
     ):
-        """
-        Get ImageDataGenerator for the test data, compatible with the given model.
-        Note that subsequent calls to this method will invalidate the generator
-        returned from previous calls, as these generators depend on images files being
-        in a specific directory.
-        """
-        if (verbose):
-            print('Loading test image generator'.center(80, '-'))
-
-        gen = self.get_image_data_generator(augment=augment)
-        path = os.path.join(parent_dir, 'test')
-        # refresh directories
-        os.makedirs(path, exist_ok=True)
-        shutil.rmtree(path)
-        os.makedirs(path, exist_ok=True)
-
-        if (augment and augment_factor != 1):
-            warnings.warn(
-                'Augment is True and augment_factor != 1. Reseting factor to 1'
-            )
-            augment_factor = 1
-
-        cr_collection.export_by_label(path, balancing=augment_factor)
-
-        params = dict()
-        if (batch_size):
-            params['batch_size'] = batch_size
-
-        test_gen = gen.flow_from_directory(path,
-                                           target_size=self.get_output_shape(),
-                                           class_mode='categorical',
+        return self.get_directory_iterator(dataset,
+                                           'test',
+                                           augment=augment,
+                                           augment_factor=augment_factor,
                                            shuffle=shuffle,
-                                           **params)
-
-        assert (cr_collection.df.shape[0] == test_gen.n)
-
-        return test_gen
+                                           batch_size=batch_size,
+                                           parent_dir=parent_dir,
+                                           verbose=verbose,
+                                           title='test dataset')
 
     def reset_test_images(self, parent_dir='temp_images'):
         path = os.path.join(parent_dir, 'test')
@@ -285,109 +281,100 @@ class FineModel(metaclass=abc.ABCMeta):
 
         Train/validation images are BOTH BALANCED AND AUGMENTED
 
-        :return: 
+        :return:
         tuple(train_gens, val_gens)
 
         train_gens: list of ImageDataGenerators for the train data in each fold
         val_gens: list of ImageDataGenerators for the validation data in each fold
         """
-        print('Loading Train/Val ImageDataGenerators'.center(80, '-'))
-
-        aug_gen = self.get_image_data_generator(augment=True)
+        print('Loading train/validation ImageDataGenerators'.center(80, '-'))
 
         val_gens = []
         train_gens = []
 
         for i in range(len(folds)):
-            val_dir = os.path.join(parent_dir, 'val_fold_{}'.format(i))
-            train_dir = os.path.join(parent_dir, 'train_fold_{}'.format(i))
-
-            # refresh directories
-            os.makedirs(val_dir, exist_ok=True)
-            os.makedirs(train_dir, exist_ok=True)
-            shutil.rmtree(val_dir)
-            shutil.rmtree(train_dir)
-            os.makedirs(val_dir, exist_ok=True)
-            os.makedirs(train_dir, exist_ok=True)
-
-            fold: cri.CrCollection
-            for j, fold in enumerate(folds):
-                if i == j:
-                    # export validation data for fold i
-                    fold.export_by_label(val_dir, balancing=augment_factor)
-                else:
-                    # export train data for fold i
-                    fold.export_by_label(train_dir, balancing=augment_factor)
-
-            params = dict()
-            if (batch_size):
-                params['batch_size'] = batch_size
-
-            train_gens.append(
-                aug_gen.flow_from_directory(
-                    train_dir,
-                    target_size=self.get_output_shape(),
-                    class_mode='categorical',
-                    **params))
+            val_dataset = folds[i]
+            val_dir = 'val_fold_{}'.format(i)
+            val_title = 'validation fold #{}'.format(i)
             val_gens.append(
-                aug_gen.flow_from_directory(
-                    val_dir,
-                    target_size=self.get_output_shape(),
-                    class_mode='categorical',
-                    **params))
+                self.get_directory_iterator(val_dataset,
+                                            val_dir,
+                                            augment=True,
+                                            augment_factor=augment_factor,
+                                            shuffle=shuffle,
+                                            batch_size=batch_size,
+                                            parent_dir=parent_dir,
+                                            verbose=verbose,
+                                            title=val_title))
 
-            print(
-                'Fold {}: {:<4} train images / {:<4} validation images'.format(
-                    i + 1, train_gens[-1].n, val_gens[-1].n))
+            train_folds = folds[:i] + folds[i + 1:]
+            train_fold_pds = map(lambda collection: collection.df, train_folds)
+            assert (len(train_folds) == len(folds) - 1)
+            train_dataset = cri.CrCollection(
+                pd.concat(train_fold_pds, copy=True))
+            train_dir = 'train_fold_{}'.format(i)
+            train_title = 'training fold #{}'.format(i)
+            train_gens.append(
+                self.get_directory_iterator(train_dataset,
+                                            train_dir,
+                                            augment=True,
+                                            augment_factor=augment_factor,
+                                            shuffle=shuffle,
+                                            batch_size=batch_size,
+                                            parent_dir=parent_dir,
+                                            verbose=verbose,
+                                            title=train_title))
+
+            if verbose:
+                print('Fold {}: {:<4} train images / {:<4} validation images'.
+                      format(i + 1, train_gens[-1].n, val_gens[-1].n))
 
         return train_gens, val_gens
 
     def generate_test_result(self,
                              test_collection: cri.CrCollection,
                              verbose=1,
-                             save_to_key=None,
+                             save_to_instance_key=None,
+                             exp_key=None,
                              verbose_short_name=None,
-                             params={},
-                             use_multiprocessing=False,
+                             description='',
                              workers=4,
-                             description=''):
+                             use_multiprocessing=False,
+                             params=None) -> Result:
         """
-        Genereates a cra.Result based on predictions against test_collection.
+        Genereates a Result based on predictions against test_collection.
 
-        When save_to_key is not None, the results are saved to
-            <model_name>/<save_to_key>/cr_result.json
-        
-        You can explore these results via cra.select_result
+        When save_to_instance_key is not None, the results are saved to
+            <model_key>/<save_to_instance_key>/cr_result.json
         """
         model = self.get_model()
         test_gen = self.get_test_generator(test_collection)
         test_gen.reset()
         if (verbose):
             print('Generating predictions for {}'.format(
-                self.get_name()).center(80, '-'))
+                self.get_key()).center(80, '-'))
         predictions = model.predict_generator(
             test_gen,
             steps=len(test_gen),
-            use_multiprocessing=use_multiprocessing,
             workers=workers,
+            use_multiprocessing=use_multiprocessing,
             verbose=1)
-        filenames = test_gen.filenames
-        cr_codes = cri.extract_cr_codes(filenames)
+
+        cr_codes = cri.extract_cr_codes(test_gen.filenames)
 
         if verbose_short_name is None:
-            short_name = self.get_name()
-            dt = datetime.datetime.now()
+            short_name = self.get_key()
             short_name += ' analyzed on {}'.format(
-                dt.strftime("%Y-%m-%d %H:%M:%S"))
+                datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
         else:
             short_name = verbose_short_name
 
-        result = cra.Result.from_predictions(predictions, cr_codes, params,
-                                             short_name, description)
-
-        if save_to_key:
-            result.to_json([self.get_name(), save_to_key])
-
+        if params is None:
+            params = dict()
+        result = Result.from_predictions(predictions, cr_codes, params,
+                                         short_name, description)
+        if save_to_instance_key:
+            result.save(self.get_key(), save_to_instance_key, exp_key)
         return result
 
     def predict(self, image: np.ndarray):
@@ -422,6 +409,10 @@ class FineModel(metaclass=abc.ABCMeta):
         ]
 
     @classmethod
+    def load_by_key(cls, model_key) -> 'FineModel':
+        return cls.get_dict()[model_key]()
+
+    @classmethod
     def get_dict(cls):
         d = dict()
         for sub in cls.get_list():
@@ -433,15 +424,17 @@ class FineXception(FineModel):
     description = 'Custom fine model'
     name = 'xception'
     output_shape = (299, 299)
-    depths = [133, 116, 26, 16, 7, 1, 0]
+    # Depths based on "blocks" used in the layer names of the keras-applications
+    # model.This includes two blocks from the exit flow of the original paper
+    # and middle flow blocks.
+    depths = [133, 125, 115, 105]
 
     def _load_base_model(self):
         return keras.applications.xception.Xception(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.xception.preprocess_input
@@ -451,15 +444,14 @@ class FineMobileNet(FineModel):
     description = 'Custom fine model'
     name = 'mobilenet'
     output_shape = (224, 224)
-    depths = [88, 74, 37, 24, 11, 0]  # depreciated format
+    depths = [88, 74, 37, 24, 11, 0]  # needs confirmation
 
     def _load_base_model(self):
         return keras.applications.mobilenet.MobileNet(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.mobilenet.preprocess_input
@@ -467,7 +459,7 @@ class FineMobileNet(FineModel):
 
 class FineMobileNetV2(FineModel):
     description = 'Custom fine model'
-    name = 'mobilenetv2'
+    name = 'mobilenet_v2'
     output_shape = (224, 224)
 
     def _load_base_model(self):
@@ -475,8 +467,7 @@ class FineMobileNetV2(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.mobilenetv2.preprocess_input
@@ -486,15 +477,15 @@ class FineVGG16(FineModel):
     description = 'Custom fine model'
     name = 'vgg16'
     output_shape = (224, 224)
+    # Depth based on blocks each consisting of N conv layers and a single
+    # pooling layer.
     depths = [20, 15, 11, 7, 4, 0]
 
     def _load_base_model(self):
-        return keras.applications.vgg16.VGG16(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return keras.applications.vgg16.VGG16(include_top=False,
+                                              pooling=self.pooling,
+                                              weights='imagenet',
+                                              input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.vgg16.preprocess_input
@@ -506,12 +497,10 @@ class FineVGG19(FineModel):
     output_shape = (224, 224)
 
     def _load_base_model(self):
-        return keras.applications.vgg19.VGG19(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return keras.applications.vgg19.VGG19(include_top=False,
+                                              pooling=self.pooling,
+                                              weights='imagenet',
+                                              input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.vgg19.preprocess_input
@@ -521,15 +510,14 @@ class FineResNet50(FineModel):
     description = 'Custom fine model'
     name = 'resnet50'
     output_shape = (224, 224)
-    depths = [176, 143, 81, 39, 7, 0]  # depreciated format
+    depths = [176, 143, 81, 39, 7, 0]  # need confirmation
 
     def _load_base_model(self):
         return keras.applications.resnet50.ResNet50(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.resnet50.preprocess_input
@@ -539,15 +527,15 @@ class FineInceptionV3(FineModel):
     description = 'Custom fine model'
     name = 'inception_v3'
     output_shape = (299, 299)
-    depths = [312, 229, 87, 18, 11, 1, 0]
+    # Depth based on blocks defined in original paper.
+    depths = [312, 279, 248, 228]
 
     def _load_base_model(self):
         return keras.applications.inception_v3.InceptionV3(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.inception_v3.preprocess_input
@@ -557,15 +545,16 @@ class FineInceptionResNetV2(FineModel):
     description = 'Custom fine model'
     name = 'inception_resnet_v2'
     output_shape = (299, 299)
-    depths = [781, 595, 267, 18, 11, 1, 0]
+    # Depth based on blocks defined in original paper. Final block includes the
+    # penultimate pointwise convolution.
+    depths = [781, 761, 745, 729]
 
     def _load_base_model(self):
         return keras.applications.inception_resnet_v2.InceptionResNetV2(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.inception_resnet_v2.preprocess_input
@@ -573,17 +562,19 @@ class FineInceptionResNetV2(FineModel):
 
 class FineDenseNet121(FineModel):
     description = 'Custom fine model'
-    name = 'densenet121'
+    name = 'densenet_121'
     output_shape = (224, 224)
-    depths = [428, 309, 137, 49, 7, 1, 0]
+    # Depths are based on dense blocks defined in original paper. Transition layers
+    # are considered part of the preceding dense block. E.g., 141-312 consists
+    # of a dense block (141-308) and a transition layer (309-312).
+    depths = [428, 313, 141, 53]
 
     def _load_base_model(self):
         return keras.applications.densenet.DenseNet121(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.densenet.preprocess_input
@@ -593,15 +584,16 @@ class FineNASNetMobile(FineModel):
     description = 'Custom fine model'
     name = 'nasnet_mobile'
     output_shape = (224, 224)
-    depths = [770, 533, 296, 53, 5, 1, 0]
+    # Depths are based on normal and reductions blocks defined in the original
+    # paper.
+    depths = [770, 723, 678, 633, 585]
 
     def _load_base_model(self):
         return keras.applications.nasnet.NASNetMobile(
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.nasnet.preprocess_input
@@ -617,8 +609,7 @@ class FineNASNetLarge(FineModel):
             include_top=False,
             pooling=self.pooling,
             weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+            input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return keras.applications.nasnet.preprocess_input
@@ -626,17 +617,17 @@ class FineNASNetLarge(FineModel):
 
 class FineResNet50V2(FineModel):
     description = 'Custom fine model'
-    name = 'resnet50v2'
+    name = 'resnet50_v2'
     output_shape = (224, 224)
-    depths = [191, 142, 74, 28, 5, 1, 0]
+    # Depth based on 3-layer bottleneck blocks described in section 4.2 (50-layer
+    # ResNet) of original paper.
+    depths = [191, 177, 166, 154]
 
     def _load_base_model(self):
-        return ka.resnet_v2.ResNet50V2(
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.resnet_v2.ResNet50V2(include_top=False,
+                                       pooling=self.pooling,
+                                       weights='imagenet',
+                                       input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.resnet_v2.preprocess_input
@@ -644,18 +635,18 @@ class FineResNet50V2(FineModel):
 
 class FineMobileNetA25(FineModel):
     description = 'Custom fine model'
-    name = 'mobileneta25'
+    name = 'mobilenet_a25'
     output_shape = (224, 224)
-    depths = [88, 74, 37, 24, 11, 1, 0]
+    # Depths based on blocks each comprised of a depthwise conv layer and
+    # pointwise conv layer.
+    depths = [88, 81, 74, 68]
 
     def _load_base_model(self):
-        return ka.mobilenet.MobileNet(
-            alpha=0.25,
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.mobilenet.MobileNet(alpha=0.25,
+                                      include_top=False,
+                                      pooling=self.pooling,
+                                      weights='imagenet',
+                                      input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.mobilenet.preprocess_input
@@ -663,18 +654,18 @@ class FineMobileNetA25(FineModel):
 
 class FineMobileNetV2A35(FineModel):
     description = 'Custom fine model'
-    name = 'mobilenetv2a35'
+    name = 'mobilenet_v2_a35'
     output_shape = (224, 224)
-    depths = [156, 117, 55, 28, 10, 1, 0]
+    # Depths based on bottleneck blocks. The final block includes the
+    # penultimate pointwise convolution.
+    depths = [156, 144, 135, 126]
 
     def _load_base_model(self):
-        return ka.mobilenet_v2.MobileNetV2(
-            alpha=0.35,
-            include_top=False,
-            pooling=self.pooling,
-            weights='imagenet',
-            input_shape=FineModel.get_input_shape(self.__class__.output_shape),
-        )
+        return ka.mobilenet_v2.MobileNetV2(alpha=0.35,
+                                           include_top=False,
+                                           pooling=self.pooling,
+                                           weights='imagenet',
+                                           input_shape=self.input_shape)
 
     def _get_preprocess_func(self):
         return ka.mobilenet_v2.preprocess_input
@@ -682,27 +673,28 @@ class FineMobileNetV2A35(FineModel):
 
 class BaselineModel(FineModel):
     description = 'Baseline CNN model'
-    name = 'GenericBaselineModel'
+    name = 'generic_baseline_model'
     output_shape = (224, 224)
     depths = [0]  # no layerwise fine-tuning
 
-    def set_depth(self, *args, **kwargs):
+    @abstractmethod
+    def _load_base_model(self):
+        raise NotImplementedError()
+
+    def set_depth(self, index=None):
         warnings.warn('You should not call set_depth() on BaselineModels')
-        return super(BaselineModel, self).set_depth(*args, **kwargs)
+        return super(BaselineModel, self).set_depth(index=index)
 
     def _get_preprocess_func(self):
         return ka.imagenet_utils.preprocess_input
 
 
 class BaselineModelV1(BaselineModel):
-    name = 'baselinemodelv1'
+    name = 'baseline_model_v1'
 
     def _load_base_model(self):
         model = Sequential()
-        model.add(
-            Conv2D(32, (3, 3),
-                   input_shape=FineModel.get_input_shape(
-                       self.__class__.output_shape)))
+        model.add(Conv2D(32, (3, 3), input_shape=self.input_shape))
         model.add(Activation('relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
 

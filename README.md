@@ -1,23 +1,27 @@
 # Cardiac Research
 
-Automatic classification of short axis cardiac CINE MRI images.
+Automatic classification of short axis cardiac CINE MRI images. A comparison between
+the feature extraction setting and layerwise fine-tuning.
 
-## Module Explanation
-TODO
+## Environment
 
-## Environment Setup
-1. Install Keras 2.2.4 and your TensorFlow build of choice.
-2. Install required Python packages in `requirements.txt`.
-3. Run the setup script in development mode.
-```
+- python>=3.6
+- tensorflow 1.11+ (tested on 1.11, 1.15)
+- keras~=2.2.4
+
+## Setup
+
+Virtual environment recommended. Will not add instructions on venv.
+
+```sh
+pip install -r requirements.txt
 python3 setup.py develop
 ```
-## Run Latest Deep Tuning Optimization Script
-```
-cd experiments/deep_1
-python3 run_single.py
-```
 
-Fix line 13 in run_single.py to change the base network
+## Run Latest Feature Extraction Setting Expriment
+
 ```
-fm = models['mobileneta25']()  # change key 'mobileneta25'
+cd experiments/deep_a0
+cp params.example.py params.py
+python3 main.py
+```

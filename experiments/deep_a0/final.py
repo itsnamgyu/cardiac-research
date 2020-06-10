@@ -23,13 +23,14 @@ import results
 import stats
 
 from params_final import (BATCH_SIZE, SAVE_ALL_WEIGHTS, T, BALANCE,
-                          LEARNING_RATE, EPOCHS, SAMPLE, MODEL_KEY,
+                          DEPTH_INDEX, LEARNING_RATE, EPOCHS, SAMPLE, MODEL_KEY,
                           USE_MULTIPROCESSING, MULTIPROCESSING_WORKERS)
 
 
 def run(fm: FineModel,
         training_set: cri.CrCollection,
         epochs=EPOCHS,
+        depth_index=DEPTH_INDEX,
         batch_size=BATCH_SIZE,
         augment_factor=BALANCE,
         learning_rate=LEARNING_RATE,
@@ -45,10 +46,13 @@ def run(fm: FineModel,
     - Test set result
     - Training history
     """
-    instance_key = 'D00_FINAL'
+    _depth_key = 'D{:02d}_FINAL'
+    instance_key = _depth_key.format(depth_index)
     _epoch_key = instance_key + "_E{:03}"
 
-    fm.set_depth(0)
+    if depth_index >= 1:
+        fm.load_weights(_depth_key.format(depth_index - 1))
+    fm.set_depth(depth_index)
     fm.compile_model(lr=learning_rate)
     model = fm.get_model()
 

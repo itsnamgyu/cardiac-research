@@ -149,6 +149,7 @@ def run_all_lrs(model_key,
     models = FineModel.get_dict()
     fm: FineModel = models[model_key]()
     train_gens, val_gens = fm.get_train_val_generators(train_folds,
+                                                       batch_size=BATCH_SIZE,
                                                        augment_factor=BALANCE)
 
     enumerated_learning_rates = list(enumerate(LEARNING_RATES))

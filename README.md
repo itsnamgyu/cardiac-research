@@ -3,6 +3,8 @@
 Automatic classification of short axis cardiac CINE MRI images. A comparison between
 the feature extraction setting and layerwise fine-tuning.
 
+_Accepted for ISMRM 27th (2019) poster in Montreal! Journal submission pending. 💃🕺_
+
 ## Environment
 
 - python>=3.6

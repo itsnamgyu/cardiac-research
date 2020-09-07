@@ -19,3 +19,4 @@ yapf
 parse
 memory-profiler
 seaborn
+opencv-python

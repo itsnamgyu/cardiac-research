@@ -4,10 +4,13 @@ import os
 from typing import List
 from abc import ABC, abstractmethod
 
+import matplotlib as mpl
+import matplotlib.image
 import pydicom
 from skimage import exposure
-import scipy.misc
 import numpy as np
+import cv2
+
 
 
 class DataReference(ABC):
@@ -23,7 +26,7 @@ class DataReference(ABC):
         self.original_name: str = name
 
     @abstractmethod
-    def save_image_as_jpg(self, path: str) -> None:
+    def save_image(self, path: str) -> None:
         pass
 
 
@@ -36,12 +39,12 @@ class DcmDataReference(DataReference):
     @staticmethod
     def scale_color(pixel_array):
         p2, p98 = np.percentile(pixel_array, (2, 98))
-        return exposure.rescale_intensity(pixel_array, in_range=(p2, p98))
+        return exposure.rescale_intensity(pixel_array, in_range=(p2, p98), out_range="uint16")
 
-    def save_image_as_jpg(self, path: str) -> None:
+    def save_image(self, path: str) -> None:
         img = self.dcm.pixel_array
         img = DcmDataReference.scale_color(img)
-        scipy.misc.imsave(path, img)
+        cv2.imwrite(path, img)
 
 
 # Interface for loading modules
@@ -53,7 +56,7 @@ class DataImporter(ABC):
     def load_data_references(self) -> List[DataReference]:
         pass
 
-    def import_data(self, dataset_index: int, test=False):
+    def import_data(self, dataset_index: int, test=False, extension='.jpg'):
         metadata = cri.load_metadata()
 
         # load using loader
@@ -71,13 +74,13 @@ class DataImporter(ABC):
                 print('{} already exists in database'.format(cr_code))
                 continue
 
-            path = os.path.join(cri.DATABASE_DIR, cr_code + '.jpg')
+            path = os.path.join(cri.DATABASE_DIR, cr_code + extension)
             if test:
                 print('\t'.join((cr_code, r.original_name, r.original_filepath, path)))
             else:
                 metadata[cr_code] = {}
                 metadata[cr_code]['original_filepath'] = r.original_filepath
                 metadata[cr_code]['original_name'] = r.original_name
-                r.save_image_as_jpg(path)
+                r.save_image(path)
 
         cri.save_metadata(metadata)

@@ -14,6 +14,7 @@ from core.fine_model import FineModel
 from core.result import Result
 
 LABELS = [None, 'oap', 'in', 'obs']
+# LABELS = [None, 'oap', 'ap', 'md', 'bs', 'obs']
 
 DISPLAY_NAME = {
     'oap': 'OUT_AP',

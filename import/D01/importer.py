@@ -1,31 +1,30 @@
 # Loader interface for CAP challenge images
 
 import sys
-sys.path.append('../..');
 
 import os
 import glob
 import re
-from typing import List, Dict, Tuple
+from typing import List, Dict
 
 import pydicom
-import numpy as np
 from natsort import natsorted
 
 import cr_interface as cri
 import cr_importer
 
 
-LOAD_PHASE = 14
+LOAD_PHASE_LIST = [0, 14]
 IMPORT_DIR = 'CAP_challenge_training_set'
 DATASET_INDEX = 0
-IMPORT_DIR = 'Validation'
-DATASET_INDEX = 1
+# IMPORT_DIR = 'CAP Validation'
+# DATASET_INDEX = 1
 
 
 class DataImporter(cr_importer.DataImporter):
-    def __init__(self, import_path=IMPORT_DIR):
-        self.import_path = os.path.join(cri.DATASET_DIR, import_path);
+    def __init__(self, import_path=IMPORT_DIR, phase=0):
+        self.import_path = os.path.join(cri.DATASET_DIR, import_path)
+        self.phase = phase
         super().__init__()
 
     DEFAULT_DCM_PATH_FORMAT = '**/DET*SA*ph*.dcm'
@@ -60,7 +59,7 @@ class DataImporter(cr_importer.DataImporter):
             slice_index = int(slice_index)
             phase_index = int(phase_index)
 
-            if phase_index == LOAD_PHASE:
+            if phase_index == self.phase:
                 if patient_index not in patient_dict:
                     patient_dict[patient_index] = []
                 patient_dict[patient_index].append([pydicom.dcmread(dcm_path), slice_index,
@@ -84,8 +83,9 @@ class DataImporter(cr_importer.DataImporter):
 
 
 def main():
-    importer = DataImporter()
-    importer.import_data(dataset_index=DATASET_INDEX)
+    for phase in LOAD_PHASE_LIST:  # hotfix for batch multi-phase import
+        importer = DataImporter(phase=phase)
+        importer.import_data(dataset_index=DATASET_INDEX, extension=".jpg")
 
 
 if __name__ == "__main__":

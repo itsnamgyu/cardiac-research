@@ -20,6 +20,16 @@ pip install -r requirements.txt
 python3 setup.py develop
 ```
 
+## Setup for conda (recommended for GPU)
+
+```
+conda create -n envname python=3.7
+conda install tensorflow-gpu==1.6  # -gpu optional
+conda activate envname
+pip install -r requirements.txt
+python3 setup.py develop
+```
+
 ## Run Latest Feature Extraction Setting Experiment
 
 ```
@@ -27,3 +37,4 @@ cd experiments/deep_a0
 cp params.example.py params.py
 python3 main.py
 ```
+

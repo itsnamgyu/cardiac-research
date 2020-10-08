@@ -1,4 +1,5 @@
 scipy==1.1.0
+keras~=2.2.4
 setuptools
 tensorflow_hub
 requests
@@ -11,7 +12,6 @@ pandas
 natsort
 progress
 imageio
-keras
 tqdm
 requests
 bayesian-optimization

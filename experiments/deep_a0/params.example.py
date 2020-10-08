@@ -42,6 +42,10 @@ MODEL_KEYS = [
     #'nasnet_mobile',
     #'xception',
     #'baseline_model_v1'
+    #'cbt_large_t',
+    #'cbt_large_w',
+    #'cbt_small',
+    #'cbt_tiny',
 ]
 
 # Setup the module to train for one specific learning rate (0...2)

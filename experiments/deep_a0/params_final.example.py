@@ -27,16 +27,20 @@ LEARNING_RATE = 0.001
 
 # Model
 MODEL_KEY = 'mobilenet_a25'
-#'vgg16',
-#'mobilenet_a25',
-#'mobilenet_v2_a35',
-#'resnet50_v2',
-#'inception_v3',
-#'inception_resnet_v2',
-#'densenet_121',
-#'nasnet_mobile',
-#'xception',
+#'vgg16'
+#'mobilenet_a25'
+#'mobilenet_v2_a35'
+#'resnet50_v2'
+#'inception_v3'
+#'inception_resnet_v2'
+#'densenet_121'
+#'nasnet_mobile'
+#'xception'
 #'baseline_model_v1'
+#'cbt_large_t'
+#'cbt_large_w'
+#'cbt_small'
+#'cbt_tiny'
 
 # use_multiprocessing, workers arguments for fit/predict functions
 USE_MULTIPROCESSING = False

@@ -5,6 +5,7 @@ import matplotlib as mpl
 # Don't display mpl windows (will cause error in non-gui environment)
 mpl.use("Agg")
 
+import tensorflow as tf
 import keras
 import traceback
 
@@ -21,6 +22,19 @@ from params import (BATCH_SIZE, K, SAVE_ALL_WEIGHTS, T, BALANCE,
                      LEARNING_RATES, DEPTH_INDEX, EPOCHS, SAMPLE, K_SPLIT_SEED, MODEL_KEYS,
                      LR_INDEX, FOLD_INDEX, USE_MULTIPROCESSING,
                      MULTIPROCESSING_WORKERS)
+
+
+gpus = tf.config.experimental.list_physical_devices('GPU')
+if gpus:
+  try:
+    # Currently, memory growth needs to be the same across GPUs
+    for gpu in gpus:
+      tf.config.experimental.set_memory_growth(gpu, True)
+    logical_gpus = tf.config.experimental.list_logical_devices('GPU')
+    print(len(gpus), "Physical GPUs,", len(logical_gpus), "Logical GPUs")
+  except RuntimeError as e:
+    # Memory growth must be set before GPUs have been initialized
+    print(e)
 
 
 def run_all_folds(

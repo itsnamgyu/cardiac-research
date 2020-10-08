@@ -11,7 +11,7 @@ import numpy as np
 import pandas as pd
 from keras import optimizers
 from keras.layers import Dense, Dropout, Flatten, GlobalAveragePooling2D, \
-    GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D
+    GlobalMaxPooling2D, Conv2D, Activation, MaxPooling2D, BatchNormalization
 from keras.models import Sequential, Model
 from keras.preprocessing.image import ImageDataGenerator
 
@@ -406,6 +406,10 @@ class FineModel(metaclass=abc.ABCMeta):
             FineDenseNet121,
             FineNASNetMobile,
             BaselineModelV1,
+            CBTLargeT,
+            CBTLargeW,
+            CBTSmall,
+            CBTTiny,
         ]
 
     @classmethod
@@ -712,3 +716,81 @@ class BaselineModelV1(BaselineModel):
             model.add(GlobalMaxPooling2D())
 
         return model
+
+
+class CBTLargeT(BaselineModel):
+    """
+    Transfusion: Understanding Transfer Learning with Applications to Medical Imaging. Raghu et at., 2019
+    """
+    name = 'cbt_large_t'
+    pooling = "avg"
+
+    def _load_base_model(self):
+        model = Sequential()
+
+        for i in range(5, 10):
+            model.add(Conv2D(2 ** i, (7, 7), input_shape=self.input_shape))
+            model.add(BatchNormalization())
+            model.add(Activation('relu'))
+            model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        if self.pooling == 'avg':
+            model.add(GlobalAveragePooling2D())
+        elif self.pooling == 'max':
+            model.add(GlobalMaxPooling2D())
+
+        return model
+
+
+class CBTBaselineModel(BaselineModel):
+    """
+    Based on CBT family of models from Transfusion: "Understanding Transfer
+    Learning with Applications to Medical Imaging", Raghu et at., 2019
+    """
+    pooling = "avg"
+    conv_size = None
+    filter_counts = None
+
+    def _load_base_model(self):
+        if self.conv_size is None or self.filter_counts is None:
+            raise NotImplementedError(
+                "conv_size, filter_counts must be provided. Did you attempt to use the base class?")
+
+        model = Sequential()
+
+        for f in self.filter_counts:
+            model.add(Conv2D(f, self.conv_size, input_shape=self.input_shape))
+            model.add(BatchNormalization())
+            model.add(Activation('relu'))
+            model.add(MaxPooling2D(pool_size=(2, 2)))
+
+        if self.pooling == 'avg':
+            model.add(GlobalAveragePooling2D())
+        elif self.pooling == 'max':
+            model.add(GlobalMaxPooling2D())
+
+        return model
+
+
+class CBTLargeT(CBTBaselineModel):
+    name = 'cbt_large_t'
+    conv_size = (7, 7)
+    filter_counts = [32, 64, 128, 256, 512]
+
+
+class CBTLargeW(CBTBaselineModel):
+    name = 'cbt_large_w'
+    conv_size = (7, 7)
+    filter_counts = [64, 128, 256, 512]
+
+
+class CBTSmall(CBTBaselineModel):
+    name = 'cbt_large_w'
+    conv_size = (7, 7)
+    filter_counts = [32, 64, 128, 256]
+
+
+class CBTTiny(CBTBaselineModel):
+    name = 'cbt_large_w'
+    conv_size = (5, 5)
+    filter_counts = [64, 128, 256, 512]

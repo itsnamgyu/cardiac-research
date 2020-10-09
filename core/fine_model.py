@@ -785,12 +785,12 @@ class CBTLargeW(CBTBaselineModel):
 
 
 class CBTSmall(CBTBaselineModel):
-    name = 'cbt_large_w'
+    name = 'cbt_small'
     conv_size = (7, 7)
     filter_counts = [32, 64, 128, 256]
 
 
 class CBTTiny(CBTBaselineModel):
-    name = 'cbt_large_w'
+    name = 'cbt_tiny'
     conv_size = (5, 5)
     filter_counts = [64, 128, 256, 512]

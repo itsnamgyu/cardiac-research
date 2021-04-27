@@ -1,9 +1,11 @@
 # Cardiac Research
 
+Official code for Ho, N., Kim, YC. Evaluation of transfer learning in deep convolutional neural network models for cardiac short axis slice classification. Sci Rep 11, 1839 (2021). https://doi.org/10.1038/s41598-021-81525-9
+
+Major clean-up pending.
+
 Automatic classification of short axis cardiac CINE MRI images. A comparison between
 the feature extraction setting and layerwise fine-tuning.
-
-_Accepted for ISMRM 27th (2019) poster in Montreal! Journal submission pending. 💃🕺_
 
 ## Environment
 
